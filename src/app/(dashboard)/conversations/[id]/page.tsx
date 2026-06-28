@@ -123,14 +123,16 @@ export default function ConversationPage() {
 
       <div className="border-t bg-white p-4">
         <div className="flex items-end gap-2">
-          <Textarea
-            placeholder="Digite uma mensagem..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 min-w-0 min-h-[44px] max-h-32 resize-none"
-            rows={1}
-          />
+          <div className="flex-1 min-w-0">
+            <Textarea
+              placeholder="Digite uma mensagem..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="min-h-[44px] max-h-32 resize-none"
+              rows={1}
+            />
+          </div>
           <Button
             size="icon"
             variant="whatsapp"

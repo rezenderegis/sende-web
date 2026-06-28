@@ -122,13 +122,13 @@ export default function ConversationPage() {
       </div>
 
       <div className="border-t bg-white p-4">
-        <div className="flex gap-3">
+        <div className="flex items-end gap-2">
           <Textarea
-            placeholder="Digite uma mensagem... (Enter para enviar)"
+            placeholder="Digite uma mensagem..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="min-h-[44px] max-h-32 resize-none"
+            className="flex-1 min-w-0 min-h-[44px] max-h-32 resize-none"
             rows={1}
           />
           <Button
@@ -136,13 +136,13 @@ export default function ConversationPage() {
             variant="whatsapp"
             onClick={handleSend}
             disabled={!message.trim() || sendMutation.isPending}
-            className="shrink-0"
+            className="shrink-0 h-11 w-11"
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Shift+Enter para enviar. Mensagens de texto requerem janela ativa de 24h.
+          Mensagens de texto requerem janela ativa de 24h.
         </p>
       </div>
     </div>

@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Menu } from 'lucide-react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { useAuthStore } from '@/store/auth.store'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { token, hydrate } = useAuthStore()
+  const { hydrate } = useAuthStore()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     hydrate()
@@ -22,8 +24,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="flex h-14 items-center border-b bg-white px-4 md:hidden">
+          <button onClick={() => setSidebarOpen(true)} className="p-1 text-gray-600">
+            <Menu className="h-6 w-6" />
+          </button>
+        </header>
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
     </div>
   )
 }

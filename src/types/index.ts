@@ -51,6 +51,15 @@ export interface Contact {
   updatedAt: string
 }
 
+export interface Tag {
+  id: string
+  name: string
+  color: string
+  companyId: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Conversation {
   id: string
   companyId: string
@@ -62,6 +71,7 @@ export interface Conversation {
   lastMessageAt: string
   assignedUserId?: string
   assignedUser?: User
+  tags: Tag[]
   createdAt: string
   updatedAt: string
 }

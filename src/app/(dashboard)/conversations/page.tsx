@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
-import { timeAgo, formatPhone } from '@/lib/utils'
-import type { Conversation, WhatsappNumber } from '@/types'
+import { timeAgo, formatPhone, cn } from '@/lib/utils'
+import type { Conversation, WhatsappNumber, Tag } from '@/types'
 
 const statusLabel: Record<string, string> = {
   open: 'Aberta',
@@ -30,6 +30,7 @@ export default function ConversationsPage() {
   const router = useRouter()
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
+  const [activeTagId, setActiveTagId] = useState<string | null>(null)
   const [showNew, setShowNew] = useState(false)
   const [form, setForm] = useState({
     whatsappNumberId: '',
@@ -38,9 +39,18 @@ export default function ConversationsPage() {
     templateLanguage: 'pt_BR',
   })
 
+  const { data: tagsData = [] } = useQuery<Tag[]>({
+    queryKey: ['tags'],
+    queryFn: () => api.get('/tags').then((r) => r.data),
+  })
+
   const { data, isLoading } = useQuery<{ data: Conversation[]; total: number }>({
-    queryKey: ['conversations'],
-    queryFn: () => api.get('/conversations?limit=50').then((r) => r.data),
+    queryKey: ['conversations', activeTagId],
+    queryFn: () => {
+      const params = new URLSearchParams({ limit: '50' })
+      if (activeTagId) params.set('tagId', activeTagId)
+      return api.get(`/conversations?${params}`).then((r) => r.data)
+    },
     refetchInterval: 10000,
   })
 
@@ -98,6 +108,23 @@ export default function ConversationsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        {tagsData.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {tagsData.map((tag) => (
+              <button
+                key={tag.id}
+                onClick={() => setActiveTagId(activeTagId === tag.id ? null : tag.id)}
+                className={cn(
+                  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white transition-opacity',
+                  activeTagId !== null && activeTagId !== tag.id && 'opacity-40',
+                )}
+                style={{ backgroundColor: tag.color }}
+              >
+                {tag.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {showNew && (
@@ -209,11 +236,20 @@ export default function ConversationsPage() {
                   {timeAgo(conv.lastMessageAt || conv.updatedAt)}
                 </span>
               </div>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 <span className="truncate text-sm text-muted-foreground">
                   {conv.whatsappNumber?.phoneNumber}
                 </span>
                 <Badge variant={statusVariant[conv.status]}>{statusLabel[conv.status]}</Badge>
+                {conv.tags?.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white"
+                    style={{ backgroundColor: tag.color }}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
               </div>
             </div>
           </button>

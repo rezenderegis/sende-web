@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { MessageSquare, Users, Phone, Settings, LogOut, LayoutDashboard, Contact } from 'lucide-react'
+import { MessageSquare, Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ const settingsItems = [
   { href: '/settings/numbers', icon: Phone, label: 'Números WhatsApp' },
   { href: '/settings/users', icon: Users, label: 'Usuários' },
   { href: '/settings/company', icon: Settings, label: 'Empresa' },
+  { href: '/settings/tags', icon: Tag, label: 'Tags' },
 ]
 
 interface SidebarProps {

@@ -8,6 +8,7 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { TagSelector } from '@/components/tags/tag-selector'
 import { toast } from '@/hooks/use-toast'
 import { formatTime, formatPhone } from '@/lib/utils'
 import type { Conversation, Message } from '@/types'
@@ -76,23 +77,42 @@ export default function ConversationPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-4 border-b bg-white px-6 py-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/conversations')}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
-          {contact?.name?.charAt(0).toUpperCase() || '?'}
+      <div className="border-b bg-white">
+        <div className="flex items-center gap-4 px-6 py-4">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/conversations')}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
+            {contact?.name?.charAt(0).toUpperCase() || '?'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 truncate">{contact?.name || formatPhone(contact?.phone || '')}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Phone className="h-3 w-3" />
+              {formatPhone(contact?.phone || '')}
+            </p>
+          </div>
+          <Badge variant={conversation?.status === 'open' ? 'success' : 'secondary'}>
+            {conversation?.status === 'open' ? 'Aberta' : conversation?.status === 'pending' ? 'Pendente' : 'Fechada'}
+          </Badge>
         </div>
-        <div className="flex-1">
-          <p className="font-semibold text-gray-900">{contact?.name || formatPhone(contact?.phone || '')}</p>
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <Phone className="h-3 w-3" />
-            {formatPhone(contact?.phone || '')}
-          </p>
+        <div className="flex items-center gap-2 flex-wrap px-6 pb-3">
+          {conversation?.tags?.map((tag) => (
+            <span
+              key={tag.id}
+              className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+              style={{ backgroundColor: tag.color }}
+            >
+              {tag.name}
+            </span>
+          ))}
+          {conversation && (
+            <TagSelector
+              conversationId={id}
+              assignedTags={conversation.tags ?? []}
+            />
+          )}
         </div>
-        <Badge variant={conversation?.status === 'open' ? 'success' : 'secondary'}>
-          {conversation?.status === 'open' ? 'Aberta' : conversation?.status === 'pending' ? 'Pendente' : 'Fechada'}
-        </Badge>
       </div>
 
       <div className="flex-1 overflow-auto bg-gray-100 p-4 space-y-2">

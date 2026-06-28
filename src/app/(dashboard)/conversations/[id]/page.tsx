@@ -66,7 +66,7 @@ export default function ConversationPage() {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && e.shiftKey) {
       e.preventDefault()
       handleSend()
     }
@@ -136,12 +136,13 @@ export default function ConversationPage() {
             variant="whatsapp"
             onClick={handleSend}
             disabled={!message.trim() || sendMutation.isPending}
+            className="shrink-0"
           >
             <Send className="h-4 w-4" />
           </Button>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Shift+Enter para nova linha. Mensagens de texto requerem janela ativa de 24h.
+          Shift+Enter para enviar. Mensagens de texto requerem janela ativa de 24h.
         </p>
       </div>
     </div>

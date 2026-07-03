@@ -1,6 +1,7 @@
 export type CompanyPlan = 'free' | 'starter' | 'pro' | 'enterprise'
 export type UserRole = 'owner' | 'admin' | 'agent'
 export type ConversationStatus = 'open' | 'closed' | 'pending'
+export type AiState = 'waiting_name' | 'human_requested' | null
 export type MessageDirection = 'inbound' | 'outbound'
 export type MessageType = 'text' | 'image' | 'audio' | 'video' | 'document' | 'template'
 export type MessageStatus = 'sent' | 'delivered' | 'read' | 'failed'
@@ -36,6 +37,7 @@ export interface WhatsappNumber {
   displayName: string
   isActive: boolean
   webhookVerifyToken: string
+  systemPrompt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -68,6 +70,7 @@ export interface Conversation {
   whatsappNumberId: string
   whatsappNumber: WhatsappNumber
   status: ConversationStatus
+  aiState: AiState
   lastMessageAt: string
   assignedUserId?: string
   assignedUser?: User

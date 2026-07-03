@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Phone, CheckCheck, Check, Clock, X } from 'lucide-react'
+import { ArrowLeft, Send, Phone, CheckCheck, Check, Clock, X, Bot } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -42,6 +42,17 @@ export default function ConversationPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const enableBotMutation = useMutation({
+    mutationFn: () => api.post(`/conversations/${id}/bot/enable`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversation', id] })
+      toast({ title: 'Bot reativado', variant: 'success' })
+    },
+    onError: () => {
+      toast({ title: 'Erro', description: 'Não foi possível reativar o bot', variant: 'destructive' })
+    },
+  })
 
   const sendMutation = useMutation({
     mutationFn: (text: string) =>
@@ -114,6 +125,24 @@ export default function ConversationPage() {
           )}
         </div>
       </div>
+
+      {conversation?.aiState === 'human_requested' && (
+        <div className="flex items-center justify-between gap-3 border-b bg-amber-50 px-6 py-2.5">
+          <div className="flex items-center gap-2 text-sm text-amber-800">
+            <Bot className="h-4 w-4 shrink-0" />
+            <span>Bot pausado — cliente solicitou atendimento humano</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 border-amber-400 text-amber-800 hover:bg-amber-100"
+            onClick={() => enableBotMutation.mutate()}
+            disabled={enableBotMutation.isPending}
+          >
+            {enableBotMutation.isPending ? 'Reativando...' : 'Reativar bot'}
+          </Button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-auto bg-gray-100 p-4 space-y-2">
         {messages?.data?.map((msg) => (

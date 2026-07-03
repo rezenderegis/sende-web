@@ -34,7 +34,30 @@ export default function ConversationPage() {
 
   const { data: messages } = useQuery<{ data: Message[] }>({
     queryKey: ['messages', id],
-    queryFn: () => api.get(`/conversations/${id}/messages`).then((r) => r.data),
+    queryFn: async () => {
+      const LIMIT = 50
+      const first = await api
+        .get(`/conversations/${id}/messages?page=1&limit=${LIMIT}`)
+        .then((r) => r.data)
+
+      const totalPages = Math.ceil(first.total / LIMIT)
+
+      if (totalPages <= 1) return { data: first.data }
+
+      const rest = await Promise.all(
+        Array.from({ length: totalPages - 1 }, (_, i) =>
+          api
+            .get(`/conversations/${id}/messages?page=${i + 2}&limit=${LIMIT}`)
+            .then((r) => r.data.data as Message[]),
+        ),
+      )
+
+      const all = [...first.data, ...rest.flat()].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      )
+
+      return { data: all }
+    },
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
   })

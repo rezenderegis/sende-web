@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Phone, CheckCheck, Check, Clock, X, Bot } from 'lucide-react'
+import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,7 +12,7 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { toast } from '@/hooks/use-toast'
 import { formatTime, formatPhone } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import type { Conversation, Message } from '@/types'
+import type { Conversation, Message, User } from '@/types'
 
 const statusIcon: Record<string, any> = {
   sent: <Clock className="h-3 w-3 text-gray-400" />,
@@ -27,9 +27,21 @@ export default function ConversationPage() {
   const qc = useQueryClient()
   const { user } = useAuthStore()
   const [message, setMessage] = useState('')
+  const [assignOpen, setAssignOpen] = useState(false)
+  const assignRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const firstName = user?.name?.split(' ')[0] ?? ''
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (assignRef.current && !assignRef.current.contains(e.target as Node)) {
+        setAssignOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const { data: conversation } = useQuery<Conversation>({
     queryKey: ['conversation', id],
@@ -69,6 +81,26 @@ export default function ConversationPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ['users'],
+    queryFn: () => api.get('/users').then((r) => r.data),
+  })
+
+  const assignMutation = useMutation({
+    mutationFn: (assignedUserId: string | null) =>
+      api.patch(`/conversations/${id}`, {
+        status: conversation?.status,
+        assignedUserId,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversation', id] })
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+      setAssignOpen(false)
+      toast({ title: 'Conversa delegada', variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao delegar conversa', variant: 'destructive' }),
+  })
 
   const enableBotMutation = useMutation({
     mutationFn: () => api.post(`/conversations/${id}/bot/enable`),
@@ -142,36 +174,34 @@ export default function ConversationPage() {
               {formatPhone(contact?.phone || '')}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {conversation?.aiState === 'human_requested' ? (
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5 border-amber-400 text-amber-700 hover:bg-amber-50"
-                onClick={() => enableBotMutation.mutate()}
-                disabled={enableBotMutation.isPending}
-              >
-                <Bot className="h-3.5 w-3.5" />
-                {enableBotMutation.isPending ? 'Reativando...' : 'Reativar bot'}
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5 text-muted-foreground hover:text-gray-900"
-                onClick={() => disableBotMutation.mutate()}
-                disabled={disableBotMutation.isPending}
-              >
-                <Bot className="h-3.5 w-3.5" />
-                {disableBotMutation.isPending ? 'Pausando...' : 'Pausar bot'}
-              </Button>
-            )}
-            <Badge variant={conversation?.status === 'open' ? 'success' : 'secondary'}>
-              {conversation?.status === 'open' ? 'Aberta' : conversation?.status === 'pending' ? 'Pendente' : 'Fechada'}
-            </Badge>
-          </div>
+          <Badge variant={conversation?.status === 'open' ? 'success' : 'secondary'} className="shrink-0">
+            {conversation?.status === 'open' ? 'Aberta' : conversation?.status === 'pending' ? 'Pendente' : 'Fechada'}
+          </Badge>
         </div>
         <div className="flex items-center gap-2 flex-wrap px-6 pb-3">
+          {conversation?.aiState === 'human_requested' ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 border-amber-400 text-amber-700 hover:bg-amber-50 h-7 text-xs"
+              onClick={() => enableBotMutation.mutate()}
+              disabled={enableBotMutation.isPending}
+            >
+              <Bot className="h-3 w-3" />
+              {enableBotMutation.isPending ? 'Reativando...' : 'Reativar bot'}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-muted-foreground hover:text-gray-900 h-7 text-xs"
+              onClick={() => disableBotMutation.mutate()}
+              disabled={disableBotMutation.isPending}
+            >
+              <Bot className="h-3 w-3" />
+              {disableBotMutation.isPending ? 'Pausando...' : 'Pausar bot'}
+            </Button>
+          )}
           {conversation?.tags?.map((tag) => (
             <span
               key={tag.id}
@@ -187,6 +217,53 @@ export default function ConversationPage() {
               assignedTags={conversation.tags ?? []}
             />
           )}
+
+          <div ref={assignRef} className="relative">
+            <button
+              onClick={() => setAssignOpen((v) => !v)}
+              className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              <UserCircle className="h-3 w-3" />
+              {conversation?.assignedUser
+                ? conversation.assignedUser.name.split(' ')[0]
+                : 'Delegar'}
+              <ChevronDown className="h-3 w-3" />
+            </button>
+
+            {assignOpen && (
+              <div className="absolute left-0 top-full z-50 mt-1 w-52 rounded-lg border bg-white shadow-lg">
+                <div className="p-1">
+                  {users.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => assignMutation.mutate(u.id)}
+                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-600">
+                        {u.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="flex-1 text-left truncate">{u.name}</span>
+                      {conversation?.assignedUserId === u.id && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                  {conversation?.assignedUserId && (
+                    <>
+                      <div className="my-1 border-t" />
+                      <button
+                        onClick={() => assignMutation.mutate(null)}
+                        className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-50"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Remover delegação
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

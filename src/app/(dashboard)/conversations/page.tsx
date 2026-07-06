@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Search, MessageSquare, Plus, X } from 'lucide-react'
+import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { timeAgo, formatPhone, cn } from '@/lib/utils'
-import type { Conversation, WhatsappNumber, Tag } from '@/types'
+import type { Conversation, WhatsappNumber, Tag, User } from '@/types'
 
 const statusLabel: Record<string, string> = {
   open: 'Aberta',
@@ -31,7 +31,22 @@ export default function ConversationsPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [activeTagId, setActiveTagId] = useState<string | null>(null)
+  const [activeUserId, setActiveUserId] = useState<string | null>(null)
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false)
+  const [userSearch, setUserSearch] = useState('')
   const [showNew, setShowNew] = useState(false)
+  const userFilterRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (userFilterRef.current && !userFilterRef.current.contains(e.target as Node)) {
+        setUserDropdownOpen(false)
+        setUserSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
   const [form, setForm] = useState({
     whatsappNumberId: '',
     to: '',
@@ -42,6 +57,11 @@ export default function ConversationsPage() {
   const { data: tagsData = [] } = useQuery<Tag[]>({
     queryKey: ['tags'],
     queryFn: () => api.get('/tags').then((r) => r.data),
+  })
+
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ['users'],
+    queryFn: () => api.get('/users').then((r) => r.data),
   })
 
   const { data, isLoading } = useQuery<{ data: Conversation[]; total: number }>({
@@ -83,11 +103,16 @@ export default function ConversationsPage() {
     },
   })
 
-  const conversations = data?.data?.filter((c) =>
-    !search ||
-    c.contact?.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.contact?.phone?.includes(search),
-  ) ?? []
+  const activeUser = users.find((u) => u.id === activeUserId)
+  const filteredUsers = users.filter((u) =>
+    u.name.toLowerCase().includes(userSearch.toLowerCase()),
+  )
+
+  const conversations = data?.data?.filter((c) => {
+    if (search && !c.contact?.name?.toLowerCase().includes(search.toLowerCase()) && !c.contact?.phone?.includes(search)) return false
+    if (activeUserId && c.assignedUserId !== activeUserId) return false
+    return true
+  }) ?? []
 
   return (
     <div className="flex h-full flex-col">
@@ -108,23 +133,98 @@ export default function ConversationsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        {tagsData.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {tagsData.map((tag) => (
-              <button
-                key={tag.id}
-                onClick={() => setActiveTagId(activeTagId === tag.id ? null : tag.id)}
-                className={cn(
-                  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white transition-opacity',
-                  activeTagId !== null && activeTagId !== tag.id && 'opacity-40',
-                )}
-                style={{ backgroundColor: tag.color }}
-              >
-                {tag.name}
-              </button>
-            ))}
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {/* Filtro por atendente */}
+          <div ref={userFilterRef} className="relative">
+            <button
+              onClick={() => setUserDropdownOpen((v) => !v)}
+              className={cn(
+                'flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
+                activeUserId
+                  ? 'border-blue-400 bg-blue-50 text-blue-700'
+                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50',
+              )}
+            >
+              <UserCircle className="h-3 w-3" />
+              {activeUser ? activeUser.name.split(' ')[0] : 'Atendente'}
+              {activeUserId ? (
+                <X
+                  className="h-3 w-3"
+                  onClick={(e) => { e.stopPropagation(); setActiveUserId(null) }}
+                />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+            </button>
+
+            {userDropdownOpen && (
+              <div className="absolute left-0 top-full z-50 mt-1 w-56 rounded-lg border bg-white shadow-lg">
+                <div className="p-2">
+                  <input
+                    autoFocus
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Buscar atendente..."
+                    className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div className="max-h-52 overflow-y-auto pb-1">
+                  {!userSearch && (
+                    <button
+                      onClick={() => { setActiveUserId(null); setUserDropdownOpen(false) }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-500">
+                        —
+                      </div>
+                      <span className="flex-1 text-left text-gray-600">Todos</span>
+                      {activeUserId === null && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                      )}
+                    </button>
+                  )}
+                  {filteredUsers.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        setActiveUserId(activeUserId === u.id ? null : u.id)
+                        setUserDropdownOpen(false)
+                        setUserSearch('')
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-600">
+                        {u.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="flex-1 text-left truncate">{u.name}</span>
+                      {activeUserId === u.id && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                  {filteredUsers.length === 0 && (
+                    <p className="px-3 py-2 text-xs text-gray-400">Nenhum atendente encontrado</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Filtro por tag */}
+          {tagsData.map((tag) => (
+            <button
+              key={tag.id}
+              onClick={() => setActiveTagId(activeTagId === tag.id ? null : tag.id)}
+              className={cn(
+                'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white transition-opacity',
+                activeTagId !== null && activeTagId !== tag.id && 'opacity-40',
+              )}
+              style={{ backgroundColor: tag.color }}
+            >
+              {tag.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {showNew && (
@@ -232,9 +332,23 @@ export default function ConversationsPage() {
                 <span className="truncate font-medium text-gray-900">
                   {conv.contact?.name || formatPhone(conv.contact?.phone || '')}
                 </span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {timeAgo(conv.lastMessageAt || conv.updatedAt)}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {(() => {
+                    const assigned = conv.assignedUser ?? users.find((u) => u.id === conv.assignedUserId)
+                    if (!assigned) return null
+                    return (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600">
+                          {assigned.name.charAt(0).toUpperCase()}
+                        </div>
+                        {assigned.name.split(' ')[0]}
+                      </span>
+                    )
+                  })()}
+                  <span className="text-xs text-muted-foreground">
+                    {timeAgo(conv.lastMessageAt || conv.updatedAt)}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 <span className="truncate text-sm text-muted-foreground">

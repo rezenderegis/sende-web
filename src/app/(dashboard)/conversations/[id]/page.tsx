@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { TagSelector } from '@/components/tags/tag-selector'
 import { toast } from '@/hooks/use-toast'
 import { formatTime, formatPhone } from '@/lib/utils'
+import { useAuthStore } from '@/store/auth.store'
 import type { Conversation, Message } from '@/types'
 
 const statusIcon: Record<string, any> = {
@@ -24,8 +25,11 @@ export default function ConversationPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const qc = useQueryClient()
+  const { user } = useAuthStore()
   const [message, setMessage] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  const firstName = user?.name?.split(' ')[0] ?? ''
 
   const { data: conversation } = useQuery<Conversation>({
     queryKey: ['conversation', id],
@@ -97,7 +101,8 @@ export default function ConversationPage() {
   function handleSend() {
     const text = message.trim()
     if (!text) return
-    sendMutation.mutate(text)
+    const payload = firstName ? `*${firstName}:* ${text}` : text
+    sendMutation.mutate(payload)
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {

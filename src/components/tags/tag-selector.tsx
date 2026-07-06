@@ -113,10 +113,10 @@ export function TagSelector({ conversationId, assignedTags }: TagSelectorProps) 
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2 py-0.5 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
+        className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm hover:bg-gray-50 hover:text-gray-900 transition-colors"
       >
         <TagIcon className="h-3 w-3" />
-        <span>Tags</span>
+        <span>+ Tag</span>
       </button>
 
       {open && (

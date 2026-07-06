@@ -81,6 +81,17 @@ export default function ConversationPage() {
     },
   })
 
+  const disableBotMutation = useMutation({
+    mutationFn: () => api.post(`/conversations/${id}/bot/disable`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversation', id] })
+      toast({ title: 'Bot pausado', variant: 'success' })
+    },
+    onError: () => {
+      toast({ title: 'Erro', description: 'Não foi possível pausar o bot', variant: 'destructive' })
+    },
+  })
+
   const sendMutation = useMutation({
     mutationFn: (text: string) =>
       api.post('/whatsapp/messages/send', {
@@ -131,9 +142,34 @@ export default function ConversationPage() {
               {formatPhone(contact?.phone || '')}
             </p>
           </div>
-          <Badge variant={conversation?.status === 'open' ? 'success' : 'secondary'}>
-            {conversation?.status === 'open' ? 'Aberta' : conversation?.status === 'pending' ? 'Pendente' : 'Fechada'}
-          </Badge>
+          <div className="flex items-center gap-2 shrink-0">
+            {conversation?.aiState === 'human_requested' ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 border-amber-400 text-amber-700 hover:bg-amber-50"
+                onClick={() => enableBotMutation.mutate()}
+                disabled={enableBotMutation.isPending}
+              >
+                <Bot className="h-3.5 w-3.5" />
+                {enableBotMutation.isPending ? 'Reativando...' : 'Reativar bot'}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-muted-foreground hover:text-gray-900"
+                onClick={() => disableBotMutation.mutate()}
+                disabled={disableBotMutation.isPending}
+              >
+                <Bot className="h-3.5 w-3.5" />
+                {disableBotMutation.isPending ? 'Pausando...' : 'Pausar bot'}
+              </Button>
+            )}
+            <Badge variant={conversation?.status === 'open' ? 'success' : 'secondary'}>
+              {conversation?.status === 'open' ? 'Aberta' : conversation?.status === 'pending' ? 'Pendente' : 'Fechada'}
+            </Badge>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap px-6 pb-3">
           {conversation?.tags?.map((tag) => (
@@ -153,24 +189,6 @@ export default function ConversationPage() {
           )}
         </div>
       </div>
-
-      {conversation?.aiState === 'human_requested' && (
-        <div className="flex items-center justify-between gap-3 border-b bg-amber-50 px-6 py-2.5">
-          <div className="flex items-center gap-2 text-sm text-amber-800">
-            <Bot className="h-4 w-4 shrink-0" />
-            <span>Bot pausado — cliente solicitou atendimento humano</span>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="shrink-0 border-amber-400 text-amber-800 hover:bg-amber-100"
-            onClick={() => enableBotMutation.mutate()}
-            disabled={enableBotMutation.isPending}
-          >
-            {enableBotMutation.isPending ? 'Reativando...' : 'Reativar bot'}
-          </Button>
-        </div>
-      )}
 
       <div className="flex-1 overflow-auto bg-gray-100 p-4 space-y-2">
         {messages?.data?.map((msg) => (

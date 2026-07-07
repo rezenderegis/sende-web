@@ -405,11 +405,23 @@ function NewBroadcastContent() {
             <div className="space-y-2">
               <Label>Mensagem</Label>
               <Textarea
-                placeholder="Olá! Temos uma oferta especial para você..."
+                placeholder="Olá, {{nome}}! Temos uma oferta especial para você..."
                 value={form.message}
                 onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                 className="min-h-32 resize-none"
               />
+              <div className="flex flex-wrap gap-1.5">
+                {[['{{nome}}', 'nome completo'], ['{{primeiro_nome}}', 'primeiro nome']].map(([tag, label]) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, message: f.message + tag }))}
+                    className="rounded border border-dashed border-gray-300 px-2 py-0.5 text-xs text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors font-mono"
+                  >
+                    {tag} <span className="font-sans not-italic text-gray-400">— {label}</span>
+                  </button>
+                ))}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Requer janela ativa de 24h com o contato.
               </p>

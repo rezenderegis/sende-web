@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown } from 'lucide-react'
+import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -360,6 +360,12 @@ export default function ConversationsPage() {
                   )}
                 </span>
                 <Badge variant={statusVariant[conv.status]}>{statusLabel[conv.status]}</Badge>
+                {conv.campaignPrompt && conv.campaignExpiresAt && new Date(conv.campaignExpiresAt) > new Date() && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                    <Zap className="h-3 w-3" />
+                    Campanha
+                  </span>
+                )}
                 {conv.tags?.map((tag) => (
                   <span
                     key={tag.id}

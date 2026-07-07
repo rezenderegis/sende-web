@@ -86,6 +86,8 @@ export interface Conversation {
   updatedAt: string
 }
 
+export type AiPromptSource = 'campaign' | 'system' | 'default'
+
 export interface Message {
   id: string
   conversationId: string
@@ -96,11 +98,26 @@ export interface Message {
   whatsappMessageId?: string
   status: MessageStatus
   metadata?: Record<string, any>
+  aiPromptSource: AiPromptSource | null
   sentAt?: string
   deliveredAt?: string
   readAt?: string
   createdAt: string
   updatedAt: string
+}
+
+export type ConversationEventType =
+  | 'campaign_activated'
+  | 'campaign_reset_human'
+  | 'campaign_reset_manual'
+  | 'campaign_expired'
+
+export interface ConversationEvent {
+  id: string
+  conversationId: string
+  type: ConversationEventType
+  metadata: Record<string, any> | null
+  createdAt: string
 }
 
 export interface SavedMessage {

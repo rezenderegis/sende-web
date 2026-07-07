@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap } from 'lucide-react'
+import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,7 +12,7 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { toast } from '@/hooks/use-toast'
 import { formatTime, formatPhone } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import type { Conversation, Message, User, SavedMessage } from '@/types'
+import type { Conversation, ConversationEvent, Message, User, SavedMessage } from '@/types'
 
 function campaignTimeLeft(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now()
@@ -40,6 +40,7 @@ export default function ConversationPage() {
   const [assignOpen, setAssignOpen] = useState(false)
   const [savedOpen, setSavedOpen] = useState(false)
   const [savedSearch, setSavedSearch] = useState('')
+  const [showHistory, setShowHistory] = useState(false)
   const assignRef = useRef<HTMLDivElement>(null)
   const savedRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -102,6 +103,12 @@ export default function ConversationPage() {
   const { data: savedMessages = [] } = useQuery<SavedMessage[]>({
     queryKey: ['saved-messages'],
     queryFn: () => api.get('/saved-messages').then((r) => r.data),
+  })
+
+  const { data: events = [] } = useQuery<ConversationEvent[]>({
+    queryKey: ['conversation-events', id],
+    queryFn: () => api.get(`/conversations/${id}/events`).then((r) => r.data),
+    enabled: showHistory,
   })
 
   const assignMutation = useMutation({
@@ -262,6 +269,19 @@ export default function ConversationPage() {
             />
           )}
 
+          <button
+            onClick={() => setShowHistory((v) => !v)}
+            title="Histórico de contexto"
+            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
+              showHistory
+                ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            }`}
+          >
+            <History className="h-3 w-3" />
+            Histórico
+          </button>
+
           <div ref={assignRef} className="relative">
             <button
               onClick={() => setAssignOpen((v) => !v)}
@@ -311,6 +331,45 @@ export default function ConversationPage() {
         </div>
       </div>
 
+      {showHistory && (
+        <div className="shrink-0 border-b bg-indigo-50 px-4 py-3 max-h-56 overflow-y-auto">
+          <p className="text-xs font-semibold text-indigo-700 mb-2 uppercase tracking-wide">Histórico de contexto</p>
+          {events.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Nenhum evento registrado.</p>
+          ) : (
+            <ol className="space-y-2">
+              {events.map((ev) => {
+                const label: Record<string, string> = {
+                  campaign_activated: '⚡ Campanha ativada',
+                  campaign_reset_human: '👤 Atendente encerrou campanha',
+                  campaign_reset_manual: '✕ Reset manual da campanha',
+                  campaign_expired: '⏱ Campanha expirada',
+                }
+                return (
+                  <li key={ev.id} className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-indigo-900">{label[ev.type] ?? ev.type}</span>
+                      <span className="text-xs text-indigo-400">{new Date(ev.createdAt).toLocaleString('pt-BR')}</span>
+                    </div>
+                    {ev.type === 'campaign_activated' && ev.metadata && (
+                      <div className="text-xs text-indigo-700 ml-1">
+                        <span className="font-medium">Broadcast:</span> {ev.metadata.broadcastName}
+                        {ev.metadata.expiresAt && (
+                          <> · <span className="font-medium">Expira:</span> {new Date(ev.metadata.expiresAt).toLocaleString('pt-BR')}</>
+                        )}
+                        {ev.metadata.promptPreview && (
+                          <p className="text-indigo-500 mt-0.5 italic truncate">&ldquo;{ev.metadata.promptPreview}&rdquo;</p>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+        </div>
+      )}
+
       <div className="flex-1 overflow-auto bg-gray-100 p-4 space-y-2">
         {messages?.data?.map((msg) => (
           <div
@@ -328,6 +387,15 @@ export default function ConversationPage() {
               <div className={`flex items-center justify-end gap-1 mt-1 ${
                 msg.direction === 'outbound' ? 'text-green-100' : 'text-gray-400'
               }`}>
+                {msg.direction === 'outbound' && msg.aiPromptSource && (
+                  <span className={`text-xs rounded-full px-1.5 py-0 mr-1 ${
+                    msg.aiPromptSource === 'campaign'
+                      ? 'bg-orange-400/30 text-orange-100'
+                      : 'bg-white/20 text-white/70'
+                  }`}>
+                    {msg.aiPromptSource === 'campaign' ? '⚡ campanha' : msg.aiPromptSource === 'system' ? 'prompt do número' : 'padrão'}
+                  </span>
+                )}
                 <span className="text-xs">{formatTime(msg.createdAt)}</span>
                 {msg.direction === 'outbound' && statusIcon[msg.status]}
               </div>

@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Megaphone, Plus, CheckCircle2, Clock, XCircle, Pause, Send } from 'lucide-react'
+import { Megaphone, Plus, CheckCircle2, Clock, XCircle, Pause, Send, AlertTriangle } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -34,10 +34,18 @@ export default function BroadcastsPage() {
           <h1 className="text-xl font-semibold text-gray-900">Broadcasts</h1>
           <p className="text-sm text-muted-foreground">Envie mensagens em massa para seus contatos.</p>
         </div>
-        <Button className="gap-2" onClick={() => router.push('/broadcasts/new')}>
-          <Plus className="h-4 w-4" />
-          Novo broadcast
-        </Button>
+        <div className="flex items-center gap-2">
+          {broadcasts.some((b) => b.failedCount > 0) && (
+            <Button variant="outline" className="gap-2 border-red-200 text-red-600 hover:bg-red-50" onClick={() => router.push('/broadcasts/failures')}>
+              <AlertTriangle className="h-4 w-4" />
+              Ver falhas
+            </Button>
+          )}
+          <Button className="gap-2" onClick={() => router.push('/broadcasts/new')}>
+            <Plus className="h-4 w-4" />
+            Novo broadcast
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">

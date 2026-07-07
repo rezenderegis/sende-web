@@ -81,9 +81,10 @@ export default function ConversationPage() {
         ),
       )
 
-      const all = [...first.data, ...rest.flat()].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      )
+      const seen = new Set<string>()
+      const all = [...first.data, ...rest.flat()]
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        .filter((msg) => { if (seen.has(msg.id)) return false; seen.add(msg.id); return true })
 
       return { data: all }
     },
@@ -176,7 +177,7 @@ export default function ConversationPage() {
 
   function handleSend() {
     const text = message.trim()
-    if (!text) return
+    if (!text || sendMutation.isPending) return
     const payload = firstName ? `*${firstName}:* ${text}` : text
     sendMutation.mutate(payload)
   }

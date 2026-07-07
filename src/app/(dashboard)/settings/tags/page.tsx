@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trash2, Plus, ChevronRight, X, Users, CheckSquare, Square } from 'lucide-react'
+import { Trash2, Plus, ChevronRight, X, Users, CheckSquare, Square, ArrowLeft } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +25,7 @@ function ConfirmDialog({
   onCancel: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-sm rounded-2xl border bg-white p-6 shadow-xl">
         <p className="text-sm text-gray-700 mb-5">{message}</p>
         <div className="flex gap-3">
@@ -61,11 +61,7 @@ function TagContactsPanel({ tag, onClose }: { tag: Tag; onClose: () => void }) {
   const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id))
 
   function toggleAll() {
-    if (allSelected) {
-      setSelected(new Set())
-    } else {
-      setSelected(new Set(allIds))
-    }
+    setSelected(allSelected ? new Set() : new Set(allIds))
   }
 
   function toggleOne(id: string) {
@@ -91,7 +87,7 @@ function TagContactsPanel({ tag, onClose }: { tag: Tag; onClose: () => void }) {
   }
 
   return (
-    <div className="flex flex-col h-full border-l bg-white">
+    <div className="flex flex-col h-full bg-white">
       {confirm && (
         <ConfirmDialog
           message={
@@ -106,12 +102,24 @@ function TagContactsPanel({ tag, onClose }: { tag: Tag; onClose: () => void }) {
 
       {/* Header */}
       <div className="shrink-0 flex items-center gap-3 border-b px-4 py-3">
+        <button
+          onClick={onClose}
+          className="md:hidden p-1 -ml-1 text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <span
           className="h-3 w-3 rounded-full shrink-0"
           style={{ backgroundColor: tag.color }}
         />
         <span className="font-medium text-gray-900 flex-1 truncate">{tag.name}</span>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
+        <span className="text-xs text-muted-foreground shrink-0">
+          {contacts.length} contato{contacts.length !== 1 ? 's' : ''}
+        </span>
+        <button
+          onClick={onClose}
+          className="hidden md:block text-gray-400 hover:text-gray-700 transition-colors ml-2"
+        >
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -144,7 +152,6 @@ function TagContactsPanel({ tag, onClose }: { tag: Tag; onClose: () => void }) {
 
         {contacts.length > 0 && (
           <>
-            {/* Select all row */}
             <button
               onClick={toggleAll}
               className="flex w-full items-center gap-3 border-b px-4 py-2.5 text-xs text-muted-foreground hover:bg-gray-50"
@@ -233,7 +240,7 @@ export default function TagsSettingsPage() {
   })
 
   return (
-    <div className="flex h-full">
+    <div className="relative flex h-full overflow-hidden">
       {confirmDelete && (
         <ConfirmDialog
           message={`Excluir a tag "${confirmDelete.name}"? Ela será removida de todos os contatos e conversas.`}
@@ -242,84 +249,117 @@ export default function TagsSettingsPage() {
         />
       )}
 
-      {/* Lista de tags */}
-      <div className={cn('flex flex-col p-6 overflow-y-auto', selectedTag ? 'w-80 shrink-0' : 'w-full max-w-2xl')}>
-        <h1 className="text-lg font-semibold text-gray-900 mb-1">Tags</h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          Crie tags coloridas para categorizar seus contatos e conversas.
-        </p>
+      {/* Lista de tags — no mobile fica escondida quando painel está aberto */}
+      <div className={cn(
+        'flex flex-col overflow-y-auto transition-all duration-200',
+        // Mobile: full width quando nada selecionado, esconde quando selecionado
+        selectedTag
+          ? 'hidden md:flex md:w-72 md:shrink-0 md:border-r'
+          : 'w-full md:max-w-2xl',
+      )}>
+        <div className="p-4 md:p-6">
+          <h1 className="text-lg font-semibold text-gray-900 mb-1">Tags</h1>
+          <p className="text-sm text-muted-foreground mb-5">
+            Crie tags coloridas para categorizar seus contatos e conversas.
+          </p>
 
-        {/* Form nova tag */}
-        <div className="rounded-lg border bg-white p-4 mb-6">
-          <p className="text-sm font-medium text-gray-700 mb-3">Nova tag</p>
-          <div className="flex flex-col gap-3">
-            <Input
-              placeholder="Nome da tag (ex: Urgente)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={50}
-              onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) createMutation.mutate() }}
-            />
-            <div>
-              <p className="text-xs text-gray-500 mb-2">Cor</p>
-              <div className="flex flex-wrap gap-2">
-                {COLORS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setColor(c)}
-                    className={cn('h-7 w-7 rounded-full transition-transform hover:scale-110', color === c && 'ring-2 ring-offset-2 ring-gray-400')}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
+          {/* Form nova tag */}
+          <div className="rounded-lg border bg-white p-4 mb-5">
+            <p className="text-sm font-medium text-gray-700 mb-3">Nova tag</p>
+            <div className="flex flex-col gap-3">
+              <Input
+                placeholder="Nome da tag (ex: Urgente)"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={50}
+                onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) createMutation.mutate() }}
+              />
+              <div>
+                <p className="text-xs text-gray-500 mb-2">Cor</p>
+                <div className="flex flex-wrap gap-2">
+                  {COLORS.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setColor(c)}
+                      className={cn(
+                        'h-7 w-7 rounded-full transition-transform hover:scale-110',
+                        color === c && 'ring-2 ring-offset-2 ring-gray-400',
+                      )}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {name.trim() && (
+                  <span
+                    className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                    style={{ backgroundColor: color }}
+                  >
+                    {name.trim()}
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  disabled={!name.trim() || createMutation.isPending}
+                  onClick={() => createMutation.mutate()}
+                >
+                  <Plus className="h-4 w-4" />
+                  Criar tag
+                </Button>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {name.trim() && (
-                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: color }}>
-                  {name.trim()}
-                </span>
-              )}
-              <Button size="sm" className="gap-2" disabled={!name.trim() || createMutation.isPending} onClick={() => createMutation.mutate()}>
-                <Plus className="h-4 w-4" />
-                Criar tag
-              </Button>
-            </div>
           </div>
-        </div>
 
-        {/* Lista */}
-        <div className="rounded-lg border bg-white divide-y">
-          {isLoading && <p className="px-4 py-3 text-sm text-muted-foreground">Carregando...</p>}
-          {!isLoading && tags.length === 0 && (
-            <p className="px-4 py-3 text-sm text-muted-foreground">Nenhuma tag criada ainda.</p>
-          )}
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() => setSelectedTag(selectedTag?.id === tag.id ? null : tag)}
-              className={cn(
-                'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50',
-                selectedTag?.id === tag.id && 'bg-gray-50',
-              )}
-            >
-              <span className="h-4 w-4 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
-              <span className="flex-1 text-sm font-medium text-gray-900">{tag.name}</span>
-              <ChevronRight className={cn('h-4 w-4 text-gray-300 transition-transform shrink-0', selectedTag?.id === tag.id && 'rotate-90')} />
-              <button
-                onClick={(e) => { e.stopPropagation(); setConfirmDelete(tag) }}
-                disabled={deleteMutation.isPending}
-                className="p-1 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+          {/* Lista */}
+          <div className="rounded-lg border bg-white divide-y">
+            {isLoading && (
+              <p className="px-4 py-3 text-sm text-muted-foreground">Carregando...</p>
+            )}
+            {!isLoading && tags.length === 0 && (
+              <p className="px-4 py-3 text-sm text-muted-foreground">Nenhuma tag criada ainda.</p>
+            )}
+            {tags.map((tag) => (
+              <div
+                key={tag.id}
+                className={cn(
+                  'flex items-center gap-3 px-4 py-3 transition-colors',
+                  selectedTag?.id === tag.id && 'bg-gray-50',
+                )}
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </button>
-          ))}
+                <button
+                  onClick={() => setSelectedTag(selectedTag?.id === tag.id ? null : tag)}
+                  className="flex flex-1 items-center gap-3 min-w-0 text-left"
+                >
+                  <span
+                    className="h-4 w-4 rounded-full shrink-0"
+                    style={{ backgroundColor: tag.color }}
+                  />
+                  <span className="flex-1 text-sm font-medium text-gray-900 truncate">
+                    {tag.name}
+                  </span>
+                  <ChevronRight className={cn(
+                    'h-4 w-4 text-gray-300 transition-transform shrink-0',
+                    selectedTag?.id === tag.id && 'rotate-90',
+                  )} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(tag) }}
+                  disabled={deleteMutation.isPending}
+                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Painel de contatos */}
+      {/* Painel de contatos — no mobile ocupa tela toda como push navigation */}
       {selectedTag && (
-        <div className="flex-1 min-w-0">
+        <div className="absolute inset-0 md:relative md:inset-auto md:flex-1 md:min-w-0">
           <TagContactsPanel
             key={selectedTag.id}
             tag={selectedTag}

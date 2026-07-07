@@ -61,7 +61,7 @@ function ImportModal({ onClose }: { onClose: () => void }) {
       toast({
         title: 'Importação concluída',
         description: `${result.created} criados · ${result.updated} atualizados · ${result.failed} erros`,
-        variant: result.failed > 0 ? 'warning' : 'success',
+        variant: result.failed > 0 ? 'destructive' : 'success',
       })
       onClose()
     },

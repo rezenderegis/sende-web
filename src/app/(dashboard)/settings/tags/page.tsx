@@ -83,7 +83,7 @@ function TagContactsPanel({ tag, onClose }: { tag: Tag; onClose: () => void }) {
       setSelected((prev) => { const n = new Set(prev); n.delete(confirm.contactId!); return n })
       toast({ title: 'Contato removido da tag' })
     } else if (confirm.type === 'bulk') {
-      await Promise.all([...selected].map((id) => removeTagMutation.mutateAsync(id)))
+      await Promise.all(Array.from(selected).map((id) => removeTagMutation.mutateAsync(id)))
       setSelected(new Set())
       toast({ title: `${selected.size} contato(s) removidos da tag`, variant: 'success' })
     }

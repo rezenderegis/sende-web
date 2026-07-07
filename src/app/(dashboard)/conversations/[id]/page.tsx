@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,7 +12,17 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { toast } from '@/hooks/use-toast'
 import { formatTime, formatPhone } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import type { Conversation, Message, User } from '@/types'
+import type { Conversation, Message, User, SavedMessage } from '@/types'
+
+function campaignTimeLeft(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now()
+  if (diff <= 0) return 'expirado'
+  const hours = Math.floor(diff / 3600000)
+  if (hours >= 24) return `expira em ${Math.floor(hours / 24)}d`
+  if (hours >= 1) return `expira em ${hours}h`
+  const minutes = Math.floor(diff / 60000)
+  return `expira em ${minutes}min`
+}
 
 const statusIcon: Record<string, any> = {
   sent: <Clock className="h-3 w-3 text-gray-400" />,
@@ -28,16 +38,18 @@ export default function ConversationPage() {
   const { user } = useAuthStore()
   const [message, setMessage] = useState('')
   const [assignOpen, setAssignOpen] = useState(false)
+  const [savedOpen, setSavedOpen] = useState(false)
+  const [savedSearch, setSavedSearch] = useState('')
   const assignRef = useRef<HTMLDivElement>(null)
+  const savedRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const firstName = user?.name?.split(' ')[0] ?? ''
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (assignRef.current && !assignRef.current.contains(e.target as Node)) {
-        setAssignOpen(false)
-      }
+      if (assignRef.current && !assignRef.current.contains(e.target as Node)) setAssignOpen(false)
+      if (savedRef.current && !savedRef.current.contains(e.target as Node)) { setSavedOpen(false); setSavedSearch('') }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -87,6 +99,11 @@ export default function ConversationPage() {
     queryFn: () => api.get('/users').then((r) => r.data),
   })
 
+  const { data: savedMessages = [] } = useQuery<SavedMessage[]>({
+    queryKey: ['saved-messages'],
+    queryFn: () => api.get('/saved-messages').then((r) => r.data),
+  })
+
   const assignMutation = useMutation({
     mutationFn: (assignedUserId: string | null) =>
       api.patch(`/conversations/${id}`, {
@@ -122,6 +139,15 @@ export default function ConversationPage() {
     onError: () => {
       toast({ title: 'Erro', description: 'Não foi possível pausar o bot', variant: 'destructive' })
     },
+  })
+
+  const resetCampaignMutation = useMutation({
+    mutationFn: () => api.patch(`/conversations/${id}/campaign/reset`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversation', id] })
+      toast({ title: 'Contexto de campanha encerrado' })
+    },
+    onError: () => toast({ title: 'Erro ao encerrar campanha', variant: 'destructive' }),
   })
 
   const sendMutation = useMutation({
@@ -202,6 +228,22 @@ export default function ConversationPage() {
               {disableBotMutation.isPending ? 'Pausando...' : 'Pausar bot'}
             </Button>
           )}
+          {conversation?.campaignPrompt &&
+           conversation?.campaignExpiresAt &&
+           new Date(conversation.campaignExpiresAt) > new Date() && (
+            <div className="flex items-center gap-1.5 rounded-full border border-orange-300 bg-orange-50 px-2.5 py-0.5 text-xs text-orange-700">
+              <Zap className="h-3 w-3 shrink-0" />
+              <span>Campanha ativa · {campaignTimeLeft(conversation.campaignExpiresAt)}</span>
+              <button
+                onClick={() => resetCampaignMutation.mutate()}
+                disabled={resetCampaignMutation.isPending}
+                className="ml-0.5 rounded-full hover:text-orange-900 disabled:opacity-50"
+                title="Encerrar contexto de campanha"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
           {conversation?.tags?.map((tag) => (
             <span
               key={tag.id}
@@ -213,8 +255,10 @@ export default function ConversationPage() {
           ))}
           {conversation && (
             <TagSelector
-              conversationId={id}
               assignedTags={conversation.tags ?? []}
+              addEndpoint={`/conversations/${id}/tags`}
+              removeEndpoint={(tagId) => `/conversations/${id}/tags/${tagId}`}
+              invalidateKeys={[['conversation', id], ['conversations']]}
             />
           )}
 
@@ -295,6 +339,45 @@ export default function ConversationPage() {
 
       <div className="border-t bg-white p-4">
         <div className="flex items-end gap-2">
+          <div ref={savedRef} className="relative shrink-0">
+            <button
+              onClick={() => setSavedOpen((v) => !v)}
+              className="flex h-11 w-11 items-center justify-center rounded-md border text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+              title="Mensagens salvas"
+            >
+              <BookMarked className="h-4 w-4" />
+            </button>
+            {savedOpen && (
+              <div className="absolute bottom-full left-0 z-50 mb-1 w-72 rounded-lg border bg-white shadow-lg">
+                <div className="p-2">
+                  <input
+                    autoFocus
+                    value={savedSearch}
+                    onChange={(e) => setSavedSearch(e.target.value)}
+                    placeholder="Buscar mensagem..."
+                    className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div className="max-h-60 overflow-y-auto pb-1">
+                  {savedMessages
+                    .filter((m) => m.name.toLowerCase().includes(savedSearch.toLowerCase()) || m.content.toLowerCase().includes(savedSearch.toLowerCase()))
+                    .map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => { setMessage(m.content); setSavedOpen(false); setSavedSearch('') }}
+                        className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-gray-50"
+                      >
+                        <span className="text-sm font-medium text-gray-900">{m.name}</span>
+                        <span className="text-xs text-muted-foreground line-clamp-1">{m.content}</span>
+                      </button>
+                    ))}
+                  {savedMessages.length === 0 && (
+                    <p className="px-3 py-2 text-xs text-gray-400">Nenhuma mensagem salva.</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex-1 min-w-0">
             <Textarea
               placeholder="Digite uma mensagem..."

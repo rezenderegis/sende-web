@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Phone, Trash2, Copy, Settings2 } from 'lucide-react'
+import { Plus, Phone, Trash2, Copy, Settings2, AlertTriangle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -11,12 +11,84 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
+import { useAuthStore } from '@/store/auth.store'
 import type { WhatsappNumber } from '@/types'
+
+function DeleteNumberDialog({
+  number,
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  number: WhatsappNumber
+  onConfirm: () => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  const [typed, setTyped] = useState('')
+  const match = typed.trim() === number.displayName.trim()
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-2xl border bg-white shadow-2xl p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-gray-900">Excluir número WhatsApp</h2>
+            <p className="text-xs text-muted-foreground">Esta ação é irreversível</p>
+          </div>
+        </div>
+
+        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 space-y-1">
+          <p className="font-medium">Ao excluir este número:</p>
+          <ul className="list-disc list-inside space-y-0.5 text-xs">
+            <li>Todas as conversas serão desvinculadas</li>
+            <li>O webhook da Meta deixará de funcionar</li>
+            <li>As configurações de bot serão perdidas</li>
+            <li>Os templates sincronizados serão removidos</li>
+          </ul>
+        </div>
+
+        <div className="mb-5 space-y-2">
+          <label className="text-sm text-gray-700">
+            Digite <span className="font-semibold text-gray-900">{number.displayName}</span> para confirmar:
+          </label>
+          <Input
+            autoFocus
+            placeholder={number.displayName}
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            className={match ? 'border-red-400 focus-visible:ring-red-400' : ''}
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <Button variant="outline" className="flex-1" onClick={onCancel} disabled={isPending}>
+            Cancelar
+          </Button>
+          <Button
+            variant="destructive"
+            className="flex-1"
+            disabled={!match || isPending}
+            onClick={onConfirm}
+          >
+            {isPending ? 'Excluindo...' : 'Excluir permanentemente'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function NumbersPage() {
   const router = useRouter()
   const qc = useQueryClient()
+  const { user } = useAuthStore()
+  const isOwner = user?.role === 'owner'
   const [showForm, setShowForm] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<WhatsappNumber | null>(null)
   const [form, setForm] = useState({
     phoneNumberId: '',
     wabaId: '',
@@ -51,8 +123,10 @@ export default function NumbersPage() {
     mutationFn: (id: string) => api.delete(`/whatsapp/numbers/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['whatsapp-numbers'] })
-      toast({ title: 'Número removido' })
+      setDeleteTarget(null)
+      toast({ title: 'Número removido permanentemente' })
     },
+    onError: () => toast({ title: 'Erro ao excluir número', variant: 'destructive' }),
   })
 
   function copyId(id: string) {
@@ -67,6 +141,14 @@ export default function NumbersPage() {
 
   return (
     <div className="p-6 max-w-3xl">
+      {deleteTarget && (
+        <DeleteNumberDialog
+          number={deleteTarget}
+          onConfirm={() => deleteMutation.mutate(deleteTarget.id)}
+          onCancel={() => setDeleteTarget(null)}
+          isPending={deleteMutation.isPending}
+        />
+      )}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Números WhatsApp</h1>
@@ -201,15 +283,16 @@ export default function NumbersPage() {
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                    onClick={() => deleteMutation.mutate(num.id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {isOwner && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeleteTarget(num)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               </div>
 

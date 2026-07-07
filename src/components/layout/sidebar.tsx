@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { MessageSquare, Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag } from 'lucide-react'
+import { MessageSquare, Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/conversations', icon: MessageSquare, label: 'Conversas' },
   { href: '/contacts', icon: Contact, label: 'Contatos' },
+  { href: '/broadcasts', icon: Megaphone, label: 'Broadcasts' },
 ]
 
 const settingsItems = [
@@ -18,6 +19,8 @@ const settingsItems = [
   { href: '/settings/users', icon: Users, label: 'Usuários' },
   { href: '/settings/company', icon: Settings, label: 'Empresa' },
   { href: '/settings/tags', icon: Tag, label: 'Tags' },
+  { href: '/settings/saved-messages', icon: BookMarked, label: 'Msgs Salvas' },
+  { href: '/settings/prompts', icon: BotMessageSquare, label: 'Prompts IA' },
 ]
 
 interface SidebarProps {

@@ -49,6 +49,9 @@ export interface Contact {
   phone: string
   name: string
   email?: string
+  companyName?: string
+  notes?: string
+  tags?: Tag[]
   metadata?: Record<string, any>
   createdAt: string
   updatedAt: string
@@ -76,6 +79,9 @@ export interface Conversation {
   assignedUserId?: string
   assignedUser?: User
   tags: Tag[]
+  campaignPrompt: string | null
+  campaignBroadcastId: string | null
+  campaignExpiresAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -93,6 +99,119 @@ export interface Message {
   sentAt?: string
   deliveredAt?: string
   readAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SavedMessage {
+  id: string
+  companyId: string
+  name: string
+  content: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type BroadcastType = 'text' | 'template'
+export type BroadcastStatus = 'draft' | 'queued' | 'sending' | 'completed' | 'paused' | 'failed'
+export type RecipientStatus = 'pending' | 'sent' | 'failed'
+
+export interface Broadcast {
+  id: string
+  companyId: string
+  whatsappNumberId: string
+  whatsappNumber?: WhatsappNumber
+  name: string
+  type: BroadcastType
+  message: string | null
+  templateName: string | null
+  templateLanguage: string | null
+  campaignPrompt: string | null
+  status: BroadcastStatus
+  totalCount: number
+  sentCount: number
+  failedCount: number
+  scheduledAt: string | null
+  startedAt: string | null
+  completedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type ResponseSentiment = 'positive' | 'negative' | 'neutral'
+
+export interface BroadcastRecipient {
+  id: string
+  broadcastId: string
+  contactId: string
+  contact: Contact
+  status: RecipientStatus
+  error: string | null
+  sentAt: string | null
+  respondedAt: string | null
+  responseSentiment: ResponseSentiment | null
+  createdAt: string
+}
+
+export interface BroadcastResponseEntry {
+  recipientId: string
+  contactId: string
+  contactName: string
+  contactPhone: string
+  sentAt: string | null
+  respondedAt: string
+  responseTimeMinutes: number | null
+  conversationId: string | null
+  conversationStatus: string | null
+  sentiment: ResponseSentiment | null
+  messages: { content: string; createdAt: string }[]
+}
+
+export interface BroadcastNoResponseEntry {
+  recipientId: string
+  contactId: string
+  contactName: string
+  contactPhone: string
+  sentAt: string | null
+  conversationId: string | null
+  conversationStatus: string | null
+}
+
+export interface BroadcastResponses {
+  stats: {
+    total: number
+    sent: number
+    failed: number
+    responded: number
+    responseRate: number
+    avgResponseMinutes: number | null
+    sentiment: { positive: number; negative: number; neutral: number }
+  }
+  responses: BroadcastResponseEntry[]
+  noResponse: BroadcastNoResponseEntry[]
+}
+
+export interface WhatsappTemplate {
+  id: string
+  companyId: string
+  whatsappNumberId: string
+  metaId: string
+  name: string
+  language: string
+  status: string
+  category: string | null
+  bodyText: string | null
+  variablesCount: number
+  syncedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CampaignPrompt {
+  id: string
+  companyId: string
+  name: string
+  content: string
   createdAt: string
   updatedAt: string
 }

@@ -14,11 +14,13 @@ const COLORS = [
 ]
 
 interface TagSelectorProps {
-  conversationId: string
   assignedTags: Tag[]
+  addEndpoint: string
+  removeEndpoint: (tagId: string) => string
+  invalidateKeys: string[][]
 }
 
-export function TagSelector({ conversationId, assignedTags }: TagSelectorProps) {
+export function TagSelector({ assignedTags, addEndpoint, removeEndpoint, invalidateKeys }: TagSelectorProps) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -48,23 +50,17 @@ export function TagSelector({ conversationId, assignedTags }: TagSelectorProps) 
     queryFn: () => api.get('/tags').then((r) => r.data),
   })
 
+  const invalidate = () => invalidateKeys.forEach((key) => qc.invalidateQueries({ queryKey: key }))
+
   const addMutation = useMutation({
-    mutationFn: (tagId: string) =>
-      api.post(`/conversations/${conversationId}/tags`, { tagId }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['conversation', conversationId] })
-      qc.invalidateQueries({ queryKey: ['conversations'] })
-    },
+    mutationFn: (tagId: string) => api.post(addEndpoint, { tagId }),
+    onSuccess: invalidate,
     onError: () => toast({ title: 'Erro ao adicionar tag', variant: 'destructive' }),
   })
 
   const removeMutation = useMutation({
-    mutationFn: (tagId: string) =>
-      api.delete(`/conversations/${conversationId}/tags/${tagId}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['conversation', conversationId] })
-      qc.invalidateQueries({ queryKey: ['conversations'] })
-    },
+    mutationFn: (tagId: string) => api.delete(removeEndpoint(tagId)),
+    onSuccess: invalidate,
     onError: () => toast({ title: 'Erro ao remover tag', variant: 'destructive' }),
   })
 

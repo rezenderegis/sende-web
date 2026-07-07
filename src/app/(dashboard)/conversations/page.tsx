@@ -353,6 +353,11 @@ export default function ConversationsPage() {
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 <span className="truncate text-sm text-muted-foreground">
                   {conv.whatsappNumber?.phoneNumber}
+                  {conv.whatsappNumber?.id && (
+                    <span className="ml-1 font-mono text-xs opacity-60">
+                      #{conv.whatsappNumber.id.slice(0, 4)}
+                    </span>
+                  )}
                 </span>
                 <Badge variant={statusVariant[conv.status]}>{statusLabel[conv.status]}</Badge>
                 {conv.tags?.map((tag) => (

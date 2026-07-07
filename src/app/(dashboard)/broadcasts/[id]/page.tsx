@@ -5,14 +5,14 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Pause, Send, CheckCircle2, XCircle, Clock,
-  MessageSquare, ExternalLink, Phone, SmilePlus, Frown, Minus,
+  MessageSquare, ExternalLink, Phone, SmilePlus, Frown, Minus, AlertTriangle,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
 import { cn, formatPhone } from '@/lib/utils'
-import type { Broadcast, BroadcastResponses, BroadcastResponseEntry, BroadcastNoResponseEntry } from '@/types'
+import type { Broadcast, BroadcastResponses, BroadcastResponseEntry, BroadcastNoResponseEntry, BroadcastRecipient } from '@/types'
 
 const statusConfig: Record<string, { label: string; variant: any }> = {
   draft:     { label: 'Rascunho',  variant: 'secondary' },
@@ -142,7 +142,7 @@ export default function BroadcastDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const qc = useQueryClient()
-  const [tab, setTab] = useState<'responses' | 'no-response'>('responses')
+  const [tab, setTab] = useState<'responses' | 'no-response' | 'failed'>('responses')
 
   const { data: broadcast, isLoading } = useQuery<Broadcast>({
     queryKey: ['broadcast', id],
@@ -153,6 +153,13 @@ export default function BroadcastDetailPage() {
   const { data: responsesData, isLoading: responsesLoading } = useQuery<BroadcastResponses>({
     queryKey: ['broadcast-responses', id],
     queryFn: () => api.get(`/broadcasts/${id}/responses`).then((r) => r.data),
+    refetchInterval: 10000,
+    enabled: !!broadcast,
+  })
+
+  const { data: recipients = [] } = useQuery<BroadcastRecipient[]>({
+    queryKey: ['broadcast-recipients', id],
+    queryFn: () => api.get(`/broadcasts/${id}/recipients`).then((r) => r.data),
     refetchInterval: 10000,
     enabled: !!broadcast,
   })
@@ -188,6 +195,7 @@ export default function BroadcastDetailPage() {
   const stats = responsesData?.stats
   const responses = responsesData?.responses ?? []
   const noResponse = responsesData?.noResponse ?? []
+  const failed = recipients.filter((r) => r.status === 'failed')
 
   return (
     <div className="p-6 max-w-3xl">
@@ -303,26 +311,42 @@ export default function BroadcastDetailPage() {
 
       {/* Tabs */}
       <div className="mb-3 flex gap-1 rounded-lg border bg-gray-50 p-1">
-        {([
-          { key: 'responses', label: `Responderam (${responses.length})` },
-          { key: 'no-response', label: `Sem resposta (${noResponse.length})` },
-        ] as const).map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={cn(
-              'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
-              tab === t.key ? 'bg-white shadow-sm text-gray-900' : 'text-muted-foreground hover:text-gray-700',
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
+        <button
+          onClick={() => setTab('responses')}
+          className={cn(
+            'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
+            tab === 'responses' ? 'bg-white shadow-sm text-gray-900' : 'text-muted-foreground hover:text-gray-700',
+          )}
+        >
+          Responderam ({responses.length})
+        </button>
+        <button
+          onClick={() => setTab('no-response')}
+          className={cn(
+            'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
+            tab === 'no-response' ? 'bg-white shadow-sm text-gray-900' : 'text-muted-foreground hover:text-gray-700',
+          )}
+        >
+          Sem resposta ({noResponse.length})
+        </button>
+        <button
+          onClick={() => setTab('failed')}
+          className={cn(
+            'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
+            tab === 'failed'
+              ? 'bg-white shadow-sm text-red-600'
+              : failed.length > 0
+              ? 'text-red-500 hover:text-red-700'
+              : 'text-muted-foreground hover:text-gray-700',
+          )}
+        >
+          Falhas ({failed.length})
+        </button>
       </div>
 
       <div className="rounded-xl border bg-white divide-y">
         {responsesLoading && (
-          <p className="px-4 py-6 text-center text-sm text-muted-foreground">Carregando respostas...</p>
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">Carregando...</p>
         )}
 
         {!responsesLoading && tab === 'responses' && (
@@ -348,6 +372,34 @@ export default function BroadcastDetailPage() {
             ) : (
               noResponse.map((entry) => (
                 <NoResponseRow key={entry.recipientId} entry={entry} onOpenConversation={openConversation} />
+              ))
+            )}
+          </>
+        )}
+
+        {tab === 'failed' && (
+          <>
+            {failed.length === 0 ? (
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                Nenhuma falha de entrega.
+              </p>
+            ) : (
+              failed.map((r) => (
+                <div key={r.id} className="flex items-start gap-3 px-4 py-3">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-gray-900">{r.contact.name}</span>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Phone className="h-2.5 w-2.5" />
+                        {formatPhone(r.contact.phone)}
+                      </span>
+                    </div>
+                    {r.error && (
+                      <p className="mt-0.5 text-xs text-red-500 font-mono">{r.error}</p>
+                    )}
+                  </div>
+                </div>
               ))
             )}
           </>

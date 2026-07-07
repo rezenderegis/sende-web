@@ -213,10 +213,15 @@ export default function BroadcastDetailPage() {
         </div>
         <div className="flex gap-2 shrink-0">
           {broadcast.status === 'draft' && (
-            <Button className="gap-2" onClick={() => sendMutation.mutate()} disabled={sendMutation.isPending}>
-              <Send className="h-4 w-4" />
-              {sendMutation.isPending ? 'Iniciando...' : 'Iniciar envio'}
-            </Button>
+            <>
+              <Button variant="outline" className="gap-2" onClick={() => router.push(`/broadcasts/new?draft=${id}`)}>
+                Continuar configuração
+              </Button>
+              <Button className="gap-2" onClick={() => sendMutation.mutate()} disabled={sendMutation.isPending}>
+                <Send className="h-4 w-4" />
+                {sendMutation.isPending ? 'Iniciando...' : 'Iniciar envio'}
+              </Button>
+            </>
           )}
           {broadcast.status === 'sending' && (
             <Button variant="outline" className="gap-2" onClick={() => pauseMutation.mutate()} disabled={pauseMutation.isPending}>

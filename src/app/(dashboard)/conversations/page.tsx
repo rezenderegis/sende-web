@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { timeAgo, formatPhone, cn } from '@/lib/utils'
-import type { Conversation, WhatsappNumber, Tag, User } from '@/types'
+import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User } from '@/types'
 
 const statusLabel: Record<string, string> = {
   open: 'Aberta',
@@ -79,6 +79,16 @@ export default function ConversationsPage() {
     queryFn: () => api.get('/whatsapp/numbers').then((r) => r.data),
   })
 
+  const { data: templates = [] } = useQuery<WhatsappTemplate[]>({
+    queryKey: ['whatsapp-templates', form.whatsappNumberId],
+    queryFn: () =>
+      api.get(`/whatsapp/numbers/${form.whatsappNumberId}/templates`).then((r) => r.data),
+    enabled: !!form.whatsappNumberId,
+  })
+
+  const approvedTemplates = templates.filter((t) => t.status === 'APPROVED')
+  const selectedTemplate = approvedTemplates.find((t) => t.name === form.templateName && t.language === form.templateLanguage)
+
   const sendMutation = useMutation({
     mutationFn: () =>
       api.post('/whatsapp/messages/send', {
@@ -91,7 +101,7 @@ export default function ConversationsPage() {
     onSuccess: () => {
       toast({ title: 'Mensagem enviada!', description: 'A conversa aparecerá em instantes.', variant: 'success' })
       setShowNew(false)
-      setForm({ whatsappNumberId: '', to: '', templateName: 'hello_world', templateLanguage: 'pt_BR' })
+      setForm({ whatsappNumberId: '', to: '', templateName: '', templateLanguage: '' })
       setTimeout(() => qc.invalidateQueries({ queryKey: ['conversations'] }), 2000)
     },
     onError: (err: any) => {
@@ -240,7 +250,7 @@ export default function ConversationsPage() {
               <Label className="text-xs">Número de envio</Label>
               <Select
                 value={form.whatsappNumberId}
-                onValueChange={(v) => setForm((f) => ({ ...f, whatsappNumberId: v }))}
+                onValueChange={(v) => setForm((f) => ({ ...f, whatsappNumberId: v, templateName: '', templateLanguage: '' }))}
               >
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Selecione o número" />
@@ -263,30 +273,42 @@ export default function ConversationsPage() {
                 onChange={(e) => setForm((f) => ({ ...f, to: e.target.value }))}
               />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Nome do template</Label>
-              <Input
-                className="bg-white"
-                placeholder="hello_world"
-                value={form.templateName}
-                onChange={(e) => setForm((f) => ({ ...f, templateName: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Idioma do template</Label>
-              <Select
-                value={form.templateLanguage}
-                onValueChange={(v) => setForm((f) => ({ ...f, templateLanguage: v }))}
-              >
-                <SelectTrigger className="bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pt_BR">Português (pt_BR)</SelectItem>
-                  <SelectItem value="en_US">Inglês (en_US)</SelectItem>
-                  <SelectItem value="es">Espanhol (es)</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-1 sm:col-span-2">
+              <Label className="text-xs">Template</Label>
+              {!form.whatsappNumberId ? (
+                <p className="text-xs text-muted-foreground py-1">Selecione um número primeiro</p>
+              ) : approvedTemplates.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-1">
+                  Nenhum template aprovado. Sincronize em Configurações → Números.
+                </p>
+              ) : (
+                <>
+                  <Select
+                    value={form.templateName ? `${form.templateName}|${form.templateLanguage}` : ''}
+                    onValueChange={(v) => {
+                      const [name, language] = v.split('|')
+                      setForm((f) => ({ ...f, templateName: name, templateLanguage: language }))
+                    }}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Selecione um template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {approvedTemplates.map((t) => (
+                        <SelectItem key={t.id} value={`${t.name}|${t.language}`}>
+                          <span className="font-medium">{t.name}</span>
+                          <span className="ml-2 text-xs text-muted-foreground">{t.language}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedTemplate?.bodyText && (
+                    <p className="mt-1 rounded border bg-white px-3 py-2 text-xs text-gray-600 whitespace-pre-wrap">
+                      {selectedTemplate.bodyText}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">

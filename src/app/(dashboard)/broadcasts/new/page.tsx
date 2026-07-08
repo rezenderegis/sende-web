@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, Send, BotMessageSquare, X, Search, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Send, BotMessageSquare, X, Search, ExternalLink, Upload, FileText, AlertCircle, CheckCircle2 } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -128,6 +128,16 @@ function NewBroadcastContent() {
   })
 
   const [recipients, setRecipients] = useState<{ tagId?: string; contactIds?: string[] }>({})
+  const [recipientMode, setRecipientMode] = useState<'contacts' | 'csv'>('contacts')
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [csvPreview, setCsvPreview] = useState<string[][]>([])
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([])
+  const [csvUploadResult, setCsvUploadResult] = useState<{
+    added: number
+    skipped: number
+    errors: { row: number; phone: string; reason: string }[]
+  } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   // Carrega rascunho se ?draft=ID estiver presente
   const { data: draftData } = useQuery<Broadcast>({
@@ -249,6 +259,30 @@ function NewBroadcastContent() {
     onError: () => toast({ title: 'Erro ao adicionar destinatários', variant: 'destructive' }),
   })
 
+  const addCsvMutation = useMutation({
+    mutationFn: () => {
+      const formData = new FormData()
+      formData.append('file', csvFile!)
+      return api
+        .post(`/broadcasts/${broadcast!.id}/recipients/csv?type=${form.type}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        .then((r) => r.data)
+    },
+    onSuccess: (result: { added: number; skipped: number; errors: { row: number; phone: string; reason: string }[] }) => {
+      setCsvUploadResult(result)
+      if (result.added > 0) {
+        toast({ title: `${result.added} destinatário(s) importado(s)`, variant: 'success' })
+        setRecipientsAdded(true)
+        setStep(2)
+      } else {
+        toast({ title: 'Nenhum destinatário importado', description: 'Verifique os erros abaixo.', variant: 'destructive' })
+      }
+    },
+    onError: (err: any) =>
+      toast({ title: 'Erro ao importar CSV', description: err.response?.data?.message, variant: 'destructive' }),
+  })
+
   const sendMutation = useMutation({
     mutationFn: () => api.post(`/broadcasts/${broadcast!.id}/send`),
     onSuccess: () => {
@@ -266,10 +300,35 @@ function NewBroadcastContent() {
     }
   }
 
+  function handleCsvFile(file: File) {
+    setCsvFile(file)
+    setCsvUploadResult(null)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const text = e.target?.result as string
+      const lines = text.split(/\r?\n/).filter((l) => l.trim())
+      if (lines.length === 0) return
+      const headers = lines[0].split(',').map((h) => h.trim().replace(/^"|"$/g, ''))
+      setCsvHeaders(headers)
+      const preview = lines.slice(1, 6).map((l) =>
+        l.split(',').map((c) => c.trim().replace(/^"|"$/g, '')),
+      )
+      setCsvPreview(preview)
+    }
+    reader.readAsText(file)
+  }
+
   function handleStep1Continue() {
+    if (recipientMode === 'csv') {
+      if (csvFile) {
+        addCsvMutation.mutate()
+      } else if (recipientsAdded) {
+        setStep(2)
+      }
+      return
+    }
     const hasSelection = recipients.tagId || (recipients.contactIds && recipients.contactIds.length > 0)
     if (recipientsAdded && !hasSelection) {
-      // Já adicionados antes, só avança
       setStep(2)
       return
     }
@@ -293,9 +352,11 @@ function NewBroadcastContent() {
     (form.type === 'text' ? form.message.trim() : form.templateName.trim())
 
   const step1Valid =
-    recipientsAdded ||
-    recipients.tagId ||
-    (recipients.contactIds && recipients.contactIds.length > 0)
+    recipientMode === 'csv'
+      ? csvFile !== null || recipientsAdded
+      : recipientsAdded ||
+        recipients.tagId ||
+        (recipients.contactIds && recipients.contactIds.length > 0)
 
   const isPendingStep0 = createMutation.isPending || updateMutation.isPending
 
@@ -531,10 +592,23 @@ function NewBroadcastContent() {
       {/* Step 1 — Destinatários */}
       {step === 1 && (
         <div className="rounded-xl border bg-white p-6 space-y-5">
-          <p className="text-sm text-muted-foreground">
-            Escolha quem vai receber o broadcast. Você pode selecionar por tag ou digitar IDs de
-            contatos.
-          </p>
+          {/* Mode toggle */}
+          <div className="flex rounded-lg border p-1 gap-1">
+            {(['contacts', 'csv'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setRecipientMode(mode)}
+                className={cn(
+                  'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
+                  recipientMode === mode
+                    ? 'bg-gray-900 text-white'
+                    : 'text-muted-foreground hover:text-gray-900',
+                )}
+              >
+                {mode === 'contacts' ? 'Contatos / Tags' : 'Importar CSV'}
+              </button>
+            ))}
+          </div>
 
           {recipientsAdded && (
             <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
@@ -542,52 +616,186 @@ function NewBroadcastContent() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label>Filtrar por tag</Label>
-            <Select
-              value={recipients.tagId ?? ''}
-              onValueChange={(v) => setRecipients({ tagId: v || undefined })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma tag (opcional)" />
-              </SelectTrigger>
-              <SelectContent>
-                {tags.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="h-2 w-2 rounded-full"
-                        style={{ backgroundColor: t.color }}
-                      />
-                      {t.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {recipientMode === 'contacts' && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Escolha quem vai receber o broadcast. Você pode selecionar por tag ou digitar IDs de
+                contatos.
+              </p>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-muted-foreground">ou</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
+              <div className="space-y-2">
+                <Label>Filtrar por tag</Label>
+                <Select
+                  value={recipients.tagId ?? ''}
+                  onValueChange={(v) => setRecipients({ tagId: v || undefined })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma tag (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tags.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: t.color }}
+                          />
+                          {t.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <Label>IDs de contatos (um por linha)</Label>
-            <Textarea
-              placeholder={'uuid-contato-1\nuuid-contato-2'}
-              className="min-h-28 resize-none font-mono text-xs"
-              value={(recipients.contactIds ?? []).join('\n')}
-              onChange={(e) => {
-                const ids = e.target.value
-                  .split('\n')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-                setRecipients({ contactIds: ids.length ? ids : undefined })
-              }}
-            />
-          </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-muted-foreground">ou</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
+              <div className="space-y-2">
+                <Label>IDs de contatos (um por linha)</Label>
+                <Textarea
+                  placeholder={'uuid-contato-1\nuuid-contato-2'}
+                  className="min-h-28 resize-none font-mono text-xs"
+                  value={(recipients.contactIds ?? []).join('\n')}
+                  onChange={(e) => {
+                    const ids = e.target.value
+                      .split('\n')
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                    setRecipients({ contactIds: ids.length ? ids : undefined })
+                  }}
+                />
+              </div>
+            </>
+          )}
+
+          {recipientMode === 'csv' && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 space-y-1">
+                <p className="font-medium">Formato esperado do CSV:</p>
+                {form.type === 'text' ? (
+                  <p className="font-mono">telefone, nome (opcional), mensagem</p>
+                ) : (
+                  <p className="font-mono">telefone, nome (opcional), var1, var2, ...</p>
+                )}
+                <p className="text-blue-600">Máximo 1.000 linhas. Contatos novos serão criados automaticamente.</p>
+              </div>
+
+              {/* Dropzone */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDragging(false)
+                  const file = e.dataTransfer.files[0]
+                  if (file) handleCsvFile(file)
+                }}
+                className={cn(
+                  'relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer',
+                  isDragging
+                    ? 'border-green-500 bg-green-50'
+                    : csvFile
+                    ? 'border-green-400 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50',
+                )}
+                onClick={() => document.getElementById('csv-file-input')?.click()}
+              >
+                <input
+                  id="csv-file-input"
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleCsvFile(file)
+                  }}
+                />
+                {csvFile ? (
+                  <>
+                    <FileText className="h-8 w-8 text-green-600" />
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-900">{csvFile.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {(csvFile.size / 1024).toFixed(1)} KB · {csvPreview.length > 0 ? `${csvPreview.length}+ linhas pré-visualizadas` : ''}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setCsvFile(null); setCsvPreview([]); setCsvHeaders([]); setCsvUploadResult(null) }}
+                      className="text-xs text-red-500 hover:text-red-700 underline"
+                    >
+                      Remover arquivo
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-gray-400" />
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700">Arraste o CSV aqui ou clique para selecionar</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Apenas arquivos .csv</p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Preview table */}
+              {csvPreview.length > 0 && (
+                <div className="overflow-x-auto rounded-lg border">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        {csvHeaders.map((h, i) => (
+                          <th key={i} className="px-3 py-2 text-left font-medium text-gray-600">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvPreview.map((row, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          {row.map((cell, j) => (
+                            <td key={j} className="px-3 py-2 text-gray-700 truncate max-w-[180px]">{cell}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="px-3 py-2 text-xs text-muted-foreground bg-gray-50 border-t">
+                    Mostrando até 5 linhas de pré-visualização
+                  </p>
+                </div>
+              )}
+
+              {/* Upload result */}
+              {csvUploadResult && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                    <span className="text-green-700 font-medium">{csvUploadResult.added} adicionado(s)</span>
+                    {csvUploadResult.skipped > 0 && (
+                      <span className="text-muted-foreground">· {csvUploadResult.skipped} duplicado(s) ignorado(s)</span>
+                    )}
+                    {csvUploadResult.errors.length > 0 && (
+                      <span className="text-red-600">· {csvUploadResult.errors.length} erro(s)</span>
+                    )}
+                  </div>
+                  {csvUploadResult.errors.length > 0 && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-1 max-h-40 overflow-y-auto">
+                      {csvUploadResult.errors.map((e, i) => (
+                        <div key={i} className="flex items-start gap-1.5 text-xs text-red-700">
+                          <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          <span>Linha {e.row}{e.phone ? ` (${e.phone})` : ''}: {e.reason}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3">
             <Button
@@ -600,10 +808,10 @@ function NewBroadcastContent() {
             </Button>
             <Button
               className="flex-1 gap-2"
-              disabled={!step1Valid || addRecipientsMutation.isPending}
+              disabled={!step1Valid || addRecipientsMutation.isPending || addCsvMutation.isPending}
               onClick={handleStep1Continue}
             >
-              {addRecipientsMutation.isPending ? 'Adicionando...' : 'Continuar'}
+              {addRecipientsMutation.isPending || addCsvMutation.isPending ? 'Processando...' : 'Continuar'}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>

@@ -24,6 +24,9 @@ export interface User {
   companyId: string
   company?: Company
   isActive: boolean
+  allowedNumberIds: string[] | null
+  canConfigureBot: boolean
+  canSendBroadcast: boolean
   createdAt: string
   updatedAt: string
 }

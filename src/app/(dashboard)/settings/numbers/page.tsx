@@ -263,7 +263,7 @@ export default function NumbersPage() {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-0.5">{num.phoneNumber}</p>
-                  <p className="text-xs text-muted-foreground font-mono mt-0.5">ID: {num.phoneNumberId}</p>
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">ID: {num.id}</p>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">

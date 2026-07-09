@@ -133,6 +133,7 @@ export interface SavedMessage {
 }
 
 export type BroadcastType = 'text' | 'template'
+export type BroadcastMode = 'standard' | 'csv'
 export type BroadcastStatus = 'draft' | 'queued' | 'sending' | 'completed' | 'paused' | 'failed'
 export type RecipientStatus = 'pending' | 'sent' | 'failed'
 
@@ -143,6 +144,7 @@ export interface Broadcast {
   whatsappNumber?: WhatsappNumber
   name: string
   type: BroadcastType
+  mode: BroadcastMode
   message: string | null
   templateName: string | null
   templateLanguage: string | null

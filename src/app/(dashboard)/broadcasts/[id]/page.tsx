@@ -214,19 +214,26 @@ export default function BroadcastDetailPage() {
             <h1 className="text-xl font-semibold text-gray-900">{broadcast.name}</h1>
             <Badge variant={cfg.variant}>{cfg.label}</Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {broadcast.type === 'template' ? `Template: ${broadcast.templateName}` : 'Texto livre'}
-            {' · '}{broadcast.whatsappNumber?.displayName ?? broadcast.whatsappNumberId.slice(0, 8)}
-            {broadcast.tag && (
-              <>
-                {' · '}
-                <span
-                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
-                  style={{ backgroundColor: broadcast.tag.color + '22', color: broadcast.tag.color }}
-                >
-                  {broadcast.tag.name}
-                </span>
-              </>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
+            <span>{broadcast.type === 'template' ? `Template: ${broadcast.templateName}` : 'Texto livre'}</span>
+            <span>·</span>
+            <span>{broadcast.whatsappNumber?.displayName ?? broadcast.whatsappNumberId.slice(0, 8)}</span>
+            <span>·</span>
+            {broadcast.mode === 'csv' ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                📋 Via planilha
+              </span>
+            ) : broadcast.tag ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{ backgroundColor: broadcast.tag.color + '22', color: broadcast.tag.color }}
+              >
+                🏷 {broadcast.tag.name}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                👤 Seleção manual
+              </span>
             )}
           </p>
         </div>

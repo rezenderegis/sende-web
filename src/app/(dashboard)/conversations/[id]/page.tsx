@@ -206,6 +206,12 @@ export default function ConversationPage() {
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Phone className="h-3 w-3" />
               {formatPhone(contact?.phone || '')}
+              {conversation?.whatsappNumber && (
+                <span className="text-gray-300 mx-1">·</span>
+              )}
+              {conversation?.whatsappNumber && (
+                <span>{conversation.whatsappNumber.displayName} ({conversation.whatsappNumber.phoneNumber})</span>
+              )}
             </p>
           </div>
           <Badge variant={conversation?.status === 'open' ? 'success' : 'secondary'} className="shrink-0">

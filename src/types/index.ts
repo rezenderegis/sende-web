@@ -147,6 +147,8 @@ export interface Broadcast {
   templateName: string | null
   templateLanguage: string | null
   campaignPrompt: string | null
+  tagId: string | null
+  tag?: Tag | null
   status: BroadcastStatus
   totalCount: number
   sentCount: number

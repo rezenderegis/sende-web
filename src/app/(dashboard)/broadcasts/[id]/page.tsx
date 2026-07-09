@@ -217,6 +217,17 @@ export default function BroadcastDetailPage() {
           <p className="text-sm text-muted-foreground">
             {broadcast.type === 'template' ? `Template: ${broadcast.templateName}` : 'Texto livre'}
             {' · '}{broadcast.whatsappNumber?.displayName ?? broadcast.whatsappNumberId.slice(0, 8)}
+            {broadcast.tag && (
+              <>
+                {' · '}
+                <span
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{ backgroundColor: broadcast.tag.color + '22', color: broadcast.tag.color }}
+                >
+                  {broadcast.tag.name}
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div className="flex gap-2 shrink-0">

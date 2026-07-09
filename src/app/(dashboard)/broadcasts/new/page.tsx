@@ -308,7 +308,7 @@ function NewBroadcastContent() {
       const text = e.target?.result as string
       const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim())
       if (lines.length === 0) return
-      const delim = lines[0].includes('\t') ? '\t' : ','
+      const delim = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ','
       const firstCell = lines[0].split(delim)[0].trim()
       const hasHeader = !/^\d{8,}$/.test(firstCell)
       const defaultHeaders = ['telefone', 'nome', 'mensagem', 'var1', 'var2', 'var3', 'var4', 'var5']

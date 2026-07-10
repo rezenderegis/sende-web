@@ -54,6 +54,7 @@ export interface Contact {
   email?: string
   companyName?: string
   notes?: string
+  birthDate?: string | null
   tags?: Tag[]
   metadata?: Record<string, any>
   createdAt: string
@@ -245,6 +246,36 @@ export interface PaginatedResponse<T> {
   total: number
   page: number
   limit: number
+}
+
+export interface Product {
+  id: string
+  companyId: string
+  name: string
+  repurchaseIntervalDays: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type PaymentStatus = 'paid' | 'pending'
+
+export interface Sale {
+  id: string
+  externalId: string | null
+  companyId: string
+  contactId: string
+  contact?: Contact
+  productId: string
+  product?: Product
+  saleDate: string
+  quantity: number
+  unitPrice: number
+  totalValue: number
+  paymentStatus: PaymentStatus
+  dueDate: string | null
+  notes: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface AuthResponse {

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Search, MessageSquare, FileSpreadsheet, Upload, X, Plus, Check, Filter, Square, CheckSquare, Tag as TagIcon, ChevronDown } from 'lucide-react'
+import { Search, MessageSquare, FileSpreadsheet, Upload, X, Plus, Check, Filter, Square, CheckSquare, Tag as TagIcon, ChevronDown, ShoppingBag, Cake, CheckCircle2, Clock, Pencil, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { TagSelector } from '@/components/tags/tag-selector'
 import { formatPhone, formatDate, cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import type { Broadcast, Contact, Tag } from '@/types'
+import type { Broadcast, Contact, Product, Sale, Tag } from '@/types'
 
 const COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
@@ -369,9 +369,338 @@ function TagMultiSelect({ selected, onChange }: { selected: Tag[]; onChange: (ta
   )
 }
 
+function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: () => void }) {
+  const qc = useQueryClient()
+  const router = useRouter()
+  const [tab, setTab] = useState<'info' | 'sales'>('info')
+  const [showSaleForm, setShowSaleForm] = useState(false)
+  const [saleForm, setSaleForm] = useState({ productId: '', saleDate: new Date().toISOString().slice(0, 10), quantity: '1', unitPrice: '', totalValue: '', paymentStatus: 'pending', dueDate: '', notes: '' })
+  const [editingBirthDate, setEditingBirthDate] = useState(false)
+  const [birthDate, setBirthDate] = useState(contact.birthDate || '')
+
+  const { data: sales = [], isLoading: salesLoading } = useQuery<Sale[]>({
+    queryKey: ['sales', 'contact', contact.id],
+    queryFn: () => api.get(`/sales/by-contact/${contact.id}`).then((r) => r.data),
+    enabled: tab === 'sales',
+  })
+
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ['products'],
+    queryFn: () => api.get('/products').then((r) => r.data),
+    enabled: tab === 'sales' && showSaleForm,
+  })
+
+  const saveBirthDateMutation = useMutation({
+    mutationFn: () => api.patch(`/contacts/${contact.id}`, { birthDate: birthDate || null }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contacts'] })
+      setEditingBirthDate(false)
+      toast({ title: 'Data de nascimento salva', variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao salvar', variant: 'destructive' }),
+  })
+
+  const createSaleMutation = useMutation({
+    mutationFn: () => api.post('/sales', {
+      contactId: contact.id,
+      productId: saleForm.productId,
+      saleDate: saleForm.saleDate,
+      quantity: parseInt(saleForm.quantity) || 1,
+      unitPrice: parseFloat(saleForm.unitPrice.replace(',', '.')),
+      totalValue: parseFloat(saleForm.totalValue.replace(',', '.')) || parseFloat(saleForm.unitPrice.replace(',', '.')) * (parseInt(saleForm.quantity) || 1),
+      paymentStatus: saleForm.paymentStatus,
+      dueDate: saleForm.dueDate || undefined,
+      notes: saleForm.notes || undefined,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales', 'contact', contact.id] })
+      setSaleForm({ productId: '', saleDate: new Date().toISOString().slice(0, 10), quantity: '1', unitPrice: '', totalValue: '', paymentStatus: 'pending', dueDate: '', notes: '' })
+      setShowSaleForm(false)
+      toast({ title: 'Venda registrada', variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: 'Erro ao registrar venda', description: err.response?.data?.message, variant: 'destructive' }),
+  })
+
+  const markPaidMutation = useMutation({
+    mutationFn: (id: string) => api.patch(`/sales/${id}/mark-paid`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales', 'contact', contact.id] })
+      toast({ title: 'Marcado como pago', variant: 'success' })
+    },
+  })
+
+  const deleteSaleMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/sales/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales', 'contact', contact.id] })
+      toast({ title: 'Venda excluída', variant: 'success' })
+    },
+  })
+
+  const totalPaid = sales.filter((s) => s.paymentStatus === 'paid').reduce((sum, s) => sum + Number(s.totalValue), 0)
+  const totalPending = sales.filter((s) => s.paymentStatus === 'pending').reduce((sum, s) => sum + Number(s.totalValue), 0)
+
+  function formatCurrency(v: number) {
+    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
+
+  function formatBirthDate(d: string) {
+    if (!d) return '—'
+    const [y, m, day] = d.split('-')
+    return `${day}/${m}/${y}`
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="w-full max-w-lg rounded-2xl border bg-white shadow-xl flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
+              {contact.name?.charAt(0).toUpperCase() || '?'}
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">{contact.name}</h2>
+              <p className="text-sm text-muted-foreground">{formatPhone(contact.phone)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => router.push('/conversations')}>
+              <MessageSquare className="h-3.5 w-3.5" />
+              Conversa
+            </Button>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b">
+          <button
+            onClick={() => setTab('info')}
+            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 ${tab === 'info' ? 'border-green-600 text-green-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
+          >
+            Informações
+          </button>
+          <button
+            onClick={() => setTab('sales')}
+            className={`flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors border-b-2 ${tab === 'sales' ? 'border-green-600 text-green-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
+          >
+            <ShoppingBag className="h-3.5 w-3.5" />
+            Vendas
+            {sales.length > 0 && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">{sales.length}</span>}
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {tab === 'info' && (
+            <div className="space-y-4">
+              {contact.email && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">E-mail</p>
+                  <p className="text-sm text-gray-900">{contact.email}</p>
+                </div>
+              )}
+              {contact.companyName && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Empresa</p>
+                  <p className="text-sm text-gray-900">{contact.companyName}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                  <Cake className="h-3.5 w-3.5" />
+                  Data de nascimento
+                </p>
+                {editingBirthDate ? (
+                  <div className="flex items-center gap-2">
+                    <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="w-auto text-sm" />
+                    <Button size="sm" onClick={() => saveBirthDateMutation.mutate()} disabled={saveBirthDateMutation.isPending}>
+                      {saveBirthDateMutation.isPending ? '...' : 'Salvar'}
+                    </Button>
+                    <button onClick={() => { setEditingBirthDate(false); setBirthDate(contact.birthDate || '') }} className="text-muted-foreground hover:text-gray-700">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-gray-900">{formatBirthDate(contact.birthDate || '')}</p>
+                    <button onClick={() => setEditingBirthDate(true)} className="text-muted-foreground hover:text-gray-700 transition-colors">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {contact.notes && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Notas</p>
+                  <p className="text-sm text-gray-900 whitespace-pre-wrap">{contact.notes}</p>
+                </div>
+              )}
+              {(contact.tags ?? []).length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tags</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {contact.tags!.map((tag) => (
+                      <span key={tag.id} className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: tag.color }}>
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Criado em</p>
+                <p className="text-sm text-gray-900">{formatDate(contact.createdAt)}</p>
+              </div>
+            </div>
+          )}
+
+          {tab === 'sales' && (
+            <div className="space-y-4">
+              {/* Totais */}
+              {sales.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="rounded-xl border bg-green-50 p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Pago</p>
+                    <p className="text-base font-semibold text-green-700">{formatCurrency(totalPaid)}</p>
+                  </div>
+                  <div className="rounded-xl border bg-amber-50 p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Pendente</p>
+                    <p className="text-base font-semibold text-amber-700">{formatCurrency(totalPending)}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Formulário nova venda */}
+              {showSaleForm ? (
+                <div className="rounded-xl border p-4 space-y-3 bg-gray-50">
+                  <p className="text-sm font-medium text-gray-900">Nova venda</p>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-700">Produto <span className="text-red-500">*</span></label>
+                    <select
+                      value={saleForm.productId}
+                      onChange={(e) => setSaleForm((f) => ({ ...f, productId: e.target.value }))}
+                      className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="">Selecionar produto...</option>
+                      {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">Data da venda</label>
+                      <Input type="date" value={saleForm.saleDate} onChange={(e) => setSaleForm((f) => ({ ...f, saleDate: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">Quantidade</label>
+                      <Input type="number" min="1" value={saleForm.quantity} onChange={(e) => setSaleForm((f) => ({ ...f, quantity: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">Valor unitário</label>
+                      <Input placeholder="0,00" value={saleForm.unitPrice} onChange={(e) => setSaleForm((f) => ({ ...f, unitPrice: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">Valor total</label>
+                      <Input placeholder="0,00" value={saleForm.totalValue} onChange={(e) => setSaleForm((f) => ({ ...f, totalValue: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">Status</label>
+                      <select
+                        value={saleForm.paymentStatus}
+                        onChange={(e) => setSaleForm((f) => ({ ...f, paymentStatus: e.target.value }))}
+                        className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                      >
+                        <option value="pending">Pendente</option>
+                        <option value="paid">Pago</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-700">Vencimento</label>
+                      <Input type="date" value={saleForm.dueDate} onChange={(e) => setSaleForm((f) => ({ ...f, dueDate: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-700">Observação</label>
+                    <Input placeholder="Opcional" value={saleForm.notes} onChange={(e) => setSaleForm((f) => ({ ...f, notes: e.target.value }))} />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowSaleForm(false)}>Cancelar</Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-1"
+                      disabled={!saleForm.productId || !saleForm.unitPrice || createSaleMutation.isPending}
+                      onClick={() => createSaleMutation.mutate()}
+                    >
+                      {createSaleMutation.isPending ? 'Salvando...' : 'Registrar venda'}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button size="sm" variant="outline" className="gap-1.5 w-full" onClick={() => setShowSaleForm(true)}>
+                  <Plus className="h-3.5 w-3.5" />
+                  Registrar venda
+                </Button>
+              )}
+
+              {/* Lista de vendas */}
+              {salesLoading && <p className="text-center text-sm text-muted-foreground py-4">Carregando...</p>}
+              {!salesLoading && sales.length === 0 && !showSaleForm && (
+                <p className="text-center text-sm text-muted-foreground py-6">Nenhuma venda registrada</p>
+              )}
+              {sales.map((sale) => (
+                <div key={sale.id} className="rounded-xl border p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-gray-900">{sale.product?.name || '—'}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {sale.saleDate?.slice(0, 10).split('-').reverse().join('/')} · {sale.quantity}x {formatCurrency(Number(sale.unitPrice))}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {sale.paymentStatus === 'paid' ? <><CheckCircle2 className="h-3 w-3" />Pago</> : <><Clock className="h-3 w-3" />Pendente</>}
+                      </span>
+                      <p className="text-sm font-semibold text-gray-900">{formatCurrency(Number(sale.totalValue))}</p>
+                    </div>
+                  </div>
+                  {sale.dueDate && (
+                    <p className="text-xs text-muted-foreground mt-1.5">Vence: {sale.dueDate.slice(0, 10).split('-').reverse().join('/')}</p>
+                  )}
+                  {sale.notes && <p className="text-xs text-muted-foreground mt-1">{sale.notes}</p>}
+                  <div className="flex gap-2 mt-3">
+                    {sale.paymentStatus === 'pending' && (
+                      <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => markPaidMutation.mutate(sale.id)} disabled={markPaidMutation.isPending}>
+                        <CheckCircle2 className="h-3 w-3" />
+                        Marcar como pago
+                      </Button>
+                    )}
+                    <button
+                      onClick={() => { if (confirm('Excluir esta venda?')) deleteSaleMutation.mutate(sale.id) }}
+                      className="ml-auto text-red-400 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function NewContactModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient()
-  const [form, setForm] = useState({ name: '', phone: '', email: '', companyName: '', notes: '' })
+  const [form, setForm] = useState({ name: '', phone: '', email: '', companyName: '', notes: '', birthDate: '' })
   const [tags, setTags] = useState<Tag[]>([])
 
   const createMutation = useMutation({
@@ -382,6 +711,7 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
         email: form.email.trim() || undefined,
         companyName: form.companyName.trim() || undefined,
         notes: form.notes.trim() || undefined,
+        birthDate: form.birthDate || undefined,
       }).then((r) => r.data)
 
       if (tags.length > 0) {
@@ -461,6 +791,14 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
             />
           </div>
           <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Data de nascimento</label>
+            <Input
+              type="date"
+              value={form.birthDate}
+              onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
+            />
+          </div>
+          <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Tags</label>
             <TagMultiSelect selected={tags} onChange={setTags} />
           </div>
@@ -488,6 +826,7 @@ export default function ContactsPage() {
   const [search, setSearch] = useState('')
   const [showImport, setShowImport] = useState(false)
   const [showNew, setShowNew] = useState(false)
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null)
   const [broadcastFilter, setBroadcastFilter] = useState<string>('')
   const [responseFilter, setResponseFilter] = useState<string>('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -586,6 +925,7 @@ export default function ContactsPage() {
     <div className="p-4 md:p-8">
       {showImport && <ImportModal onClose={() => setShowImport(false)} />}
       {showNew && <NewContactModal onClose={() => setShowNew(false)} />}
+      {selectedContact && <ContactDetailModal contact={selectedContact} onClose={() => setSelectedContact(null)} />}
 
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
@@ -690,10 +1030,11 @@ export default function ContactsPage() {
           {contacts.map((contact) => (
             <div
               key={contact.id}
-              className={`flex items-center gap-3 md:gap-4 border-b px-4 md:px-6 py-3 md:py-4 last:border-0 transition-colors ${selected.has(contact.id) ? 'bg-green-50' : 'hover:bg-gray-50/50'}`}
+              className={`flex items-center gap-3 md:gap-4 border-b px-4 md:px-6 py-3 md:py-4 last:border-0 transition-colors cursor-pointer ${selected.has(contact.id) ? 'bg-green-50' : 'hover:bg-gray-50/50'}`}
+              onClick={() => setSelectedContact(contact)}
             >
               <button
-                onClick={() => toggleOne(contact.id)}
+                onClick={(e) => { e.stopPropagation(); toggleOne(contact.id) }}
                 className="shrink-0 text-gray-300 hover:text-gray-600 transition-colors"
               >
                 {selected.has(contact.id)
@@ -721,7 +1062,7 @@ export default function ContactsPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <TagSelector
                   assignedTags={contact.tags ?? []}
                   addEndpoint={`/contacts/${contact.id}/tags`}

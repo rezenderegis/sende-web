@@ -539,6 +539,24 @@ function RulesTab() {
     },
   })
 
+  const [runningRuleId, setRunningRuleId] = useState<string | null>(null)
+  const runRuleMutation = useMutation({
+    mutationFn: (id: string) => api.post(`/automations/${id}/run-now`),
+    onSuccess: (res, id) => {
+      setRunningRuleId(null)
+      qc.invalidateQueries({ queryKey: ['automations-history'] })
+      const triggered = res.data?.triggered ?? 0
+      toast({
+        title: triggered > 0 ? `${triggered} mensagem(ns) enviada(s)` : 'Nenhum contato para disparar hoje',
+        variant: triggered > 0 ? 'success' : 'default',
+      })
+    },
+    onError: (err: any) => {
+      setRunningRuleId(null)
+      toast({ title: 'Erro ao executar', description: err.response?.data?.message, variant: 'destructive' })
+    },
+  })
+
   return (
     <div>
       {showCreate && (
@@ -611,6 +629,15 @@ function RulesTab() {
                   >
                     <Users className="h-3 w-3" />
                     Ver público
+                  </button>
+                  <button
+                    onClick={() => { setRunningRuleId(rule.id); runRuleMutation.mutate(rule.id) }}
+                    disabled={runningRuleId === rule.id}
+                    className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 transition-colors"
+                    title="Executar agora"
+                  >
+                    <Play className="h-3 w-3" />
+                    {runningRuleId === rule.id ? 'Executando...' : 'Executar agora'}
                   </button>
                   <button
                     onClick={() => toggleMutation.mutate({ id: rule.id, isActive: !rule.isActive })}
@@ -943,18 +970,6 @@ function HistoryTab() {
 // --- Main Page ---
 export default function AutomationsPage() {
   const [tab, setTab] = useState<'rules' | 'agenda' | 'history'>('rules')
-  const qc = useQueryClient()
-
-  const runNowMutation = useMutation({
-    mutationFn: () => api.post('/automations/run-now'),
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['automations-history'] })
-      qc.invalidateQueries({ queryKey: ['automations-upcoming'] })
-      const triggered = res.data?.triggered ?? 0
-      toast({ title: `Execução concluída`, description: `${triggered} disparo(s) realizados`, variant: 'success' })
-    },
-    onError: (err: any) => toast({ title: 'Erro ao executar', description: err.response?.data?.message, variant: 'destructive' }),
-  })
 
   const tabs = [
     { key: 'rules' as const, label: 'Regras', icon: List },
@@ -965,27 +980,15 @@ export default function AutomationsPage() {
   return (
     <div className="flex-1 overflow-y-auto p-8">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Automações</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Disparos automáticos por aniversário, pagamento em atraso e recompra
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Roda automaticamente todo dia às 08:00
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-1.5"
-            onClick={() => runNowMutation.mutate()}
-            disabled={runNowMutation.isPending}
-          >
-            <Play className="h-3.5 w-3.5" />
-            {runNowMutation.isPending ? 'Executando...' : 'Executar agora'}
-          </Button>
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold text-gray-900">Automações</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Disparos automáticos por aniversário, pagamento em atraso e recompra
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Roda automaticamente todo dia às 08:00
+          </p>
         </div>
 
         {/* Tabs */}

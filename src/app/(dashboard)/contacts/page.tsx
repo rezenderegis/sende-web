@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Search, MessageSquare, FileSpreadsheet, Upload, X, Plus, Check } from 'lucide-react'
+import { Search, MessageSquare, FileSpreadsheet, Upload, X, Plus, Check, Filter, Square, CheckSquare, Tag as TagIcon, ChevronDown } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { TagSelector } from '@/components/tags/tag-selector'
 import { formatPhone, formatDate, cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
-import type { Contact, Tag } from '@/types'
+import type { Broadcast, Contact, Tag } from '@/types'
 
 const COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
@@ -484,13 +484,48 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
 
 export default function ContactsPage() {
   const router = useRouter()
+  const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [showImport, setShowImport] = useState(false)
   const [showNew, setShowNew] = useState(false)
+  const [broadcastFilter, setBroadcastFilter] = useState<string>('')
+  const [responseFilter, setResponseFilter] = useState<string>('')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [tagPickerOpen, setTagPickerOpen] = useState(false)
+  const [tagSearch, setTagSearch] = useState('')
+  const tagPickerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (tagPickerRef.current && !tagPickerRef.current.contains(e.target as Node)) {
+        setTagPickerOpen(false)
+        setTagSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const { data: allTags = [] } = useQuery<Tag[]>({
+    queryKey: ['tags'],
+    queryFn: () => api.get('/tags').then((r) => r.data),
+  })
+
+  const { data: broadcasts = [] } = useQuery<Broadcast[]>({
+    queryKey: ['broadcasts'],
+    queryFn: () => api.get('/broadcasts').then((r) => r.data),
+  })
 
   const { data = [], isLoading } = useQuery<Contact[]>({
-    queryKey: ['contacts'],
-    queryFn: () => api.get('/contacts').then((r) => r.data),
+    queryKey: ['contacts', broadcastFilter, responseFilter],
+    queryFn: () => {
+      const params: Record<string, string> = {}
+      if (broadcastFilter) {
+        params.broadcastId = broadcastFilter
+        if (responseFilter) params.broadcastResponseFilter = responseFilter
+      }
+      return api.get('/contacts', { params }).then((r) => r.data)
+    },
   })
 
   const contacts = data.filter((c) =>
@@ -499,36 +534,131 @@ export default function ContactsPage() {
     c.phone?.includes(search),
   )
 
+  const activeBroadcast = broadcasts.find((b) => b.id === broadcastFilter)
+
+  const allVisibleIds = contacts.map((c) => c.id)
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selected.has(id))
+  const someSelected = selected.size > 0
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (allSelected) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(allVisibleIds))
+    }
+  }
+
+  const bulkTagMutation = useMutation({
+    mutationFn: async (tagId: string) => {
+      const ids = Array.from(selected)
+      await Promise.all(ids.map((contactId) => api.post(`/contacts/${contactId}/tags`, { tagId })))
+      return ids.length
+    },
+    onSuccess: (count) => {
+      qc.invalidateQueries({ queryKey: ['contacts'] })
+      setSelected(new Set())
+      setTagPickerOpen(false)
+      setTagSearch('')
+      toast({ title: `Tag adicionada a ${count} contato(s)`, variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao adicionar tag', variant: 'destructive' }),
+  })
+
+  const filteredTags = allTags.filter((t) =>
+    t.name.toLowerCase().includes(tagSearch.toLowerCase()),
+  )
+
+  const responseFilterLabel: Record<string, string> = {
+    responded: 'Responderam',
+    no_response: 'Sem resposta',
+    failed: 'Falha',
+  }
+
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {showImport && <ImportModal onClose={() => setShowImport(false)} />}
       {showNew && <NewContactModal onClose={() => setShowNew(false)} />}
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Contatos</h1>
-          <p className="text-sm text-muted-foreground">{data.length} contatos</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Contatos</h1>
+          <p className="text-sm text-muted-foreground">
+            {data.length} contato{data.length !== 1 ? 's' : ''}
+            {activeBroadcast && (
+              <span className="ml-1 text-indigo-600">
+                · {activeBroadcast.name}
+                {responseFilter && ` · ${responseFilterLabel[responseFilter]}`}
+              </span>
+            )}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
+        <div className="flex gap-2 shrink-0">
+          <Button variant="outline" size="icon" className="sm:w-auto sm:px-3 sm:gap-2" onClick={() => setShowImport(true)}>
             <FileSpreadsheet className="h-4 w-4" />
-            Importar planilha
+            <span className="hidden sm:inline">Importar planilha</span>
           </Button>
           <Button className="gap-2" onClick={() => setShowNew(true)}>
             <Plus className="h-4 w-4" />
-            Novo contato
+            <span className="hidden sm:inline">Novo contato</span>
           </Button>
         </div>
       </div>
 
-      <div className="mb-4 relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nome ou número..."
-          className="pl-9 max-w-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou número..."
+            className="pl-9 w-64"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+          <select
+            value={broadcastFilter}
+            onChange={(e) => { setBroadcastFilter(e.target.value); setResponseFilter('') }}
+            className="rounded-md border border-input bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="">Todos os contatos</option>
+            {broadcasts.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+
+          {broadcastFilter && (
+            <select
+              value={responseFilter}
+              onChange={(e) => setResponseFilter(e.target.value)}
+              className="rounded-md border border-input bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Todas as situações</option>
+              <option value="responded">Responderam</option>
+              <option value="no_response">Sem resposta</option>
+              <option value="failed">Falha na entrega</option>
+            </select>
+          )}
+
+          {broadcastFilter && (
+            <button
+              onClick={() => { setBroadcastFilter(''); setResponseFilter('') }}
+              className="text-gray-400 hover:text-gray-700 transition-colors"
+              title="Limpar filtros"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -541,8 +671,36 @@ export default function ContactsPage() {
               Nenhum contato encontrado
             </div>
           )}
+
+          {/* Header de seleção */}
+          {contacts.length > 0 && (
+            <div className="flex items-center gap-3 border-b bg-gray-50 px-4 md:px-6 py-2">
+              <button onClick={toggleAll} className="shrink-0 text-gray-400 hover:text-gray-700 transition-colors">
+                {allSelected
+                  ? <CheckSquare className="h-4 w-4 text-green-600" />
+                  : <Square className="h-4 w-4" />
+                }
+              </button>
+              <span className="text-xs text-muted-foreground">
+                {someSelected ? `${selected.size} selecionado(s)` : 'Selecionar todos'}
+              </span>
+            </div>
+          )}
+
           {contacts.map((contact) => (
-            <div key={contact.id} className="flex items-center gap-4 border-b px-6 py-4 last:border-0">
+            <div
+              key={contact.id}
+              className={`flex items-center gap-3 md:gap-4 border-b px-4 md:px-6 py-3 md:py-4 last:border-0 transition-colors ${selected.has(contact.id) ? 'bg-green-50' : 'hover:bg-gray-50/50'}`}
+            >
+              <button
+                onClick={() => toggleOne(contact.id)}
+                className="shrink-0 text-gray-300 hover:text-gray-600 transition-colors"
+              >
+                {selected.has(contact.id)
+                  ? <CheckSquare className="h-4 w-4 text-green-600" />
+                  : <Square className="h-4 w-4" />
+                }
+              </button>
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
                 {contact.name?.charAt(0).toUpperCase() || '?'}
               </div>
@@ -587,6 +745,65 @@ export default function ContactsPage() {
           ))}
         </CardContent>
       </Card>
+
+      {/* Barra de ações em massa */}
+      {someSelected && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-2xl border bg-white px-5 py-3 shadow-xl">
+          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+            {selected.size} selecionado{selected.size !== 1 ? 's' : ''}
+          </span>
+
+          <div ref={tagPickerRef} className="relative">
+            <Button
+              size="sm"
+              className="gap-2"
+              onClick={() => setTagPickerOpen((v) => !v)}
+              disabled={bulkTagMutation.isPending}
+            >
+              <TagIcon className="h-3.5 w-3.5" />
+              {bulkTagMutation.isPending ? 'Adicionando...' : 'Adicionar à tag'}
+              <ChevronDown className="h-3.5 w-3.5" />
+            </Button>
+
+            {tagPickerOpen && (
+              <div className="absolute bottom-full mb-2 left-0 w-56 rounded-xl border bg-white shadow-lg z-50">
+                <div className="p-2 border-b">
+                  <input
+                    autoFocus
+                    value={tagSearch}
+                    onChange={(e) => setTagSearch(e.target.value)}
+                    placeholder="Buscar tag..."
+                    className="w-full rounded-md border-0 bg-gray-100 px-2 py-1.5 text-sm outline-none focus:bg-gray-200 transition-colors"
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto py-1">
+                  {filteredTags.length === 0 && (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">Nenhuma tag encontrada</p>
+                  )}
+                  {filteredTags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => bulkTagMutation.mutate(tag.id)}
+                      className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                      {tag.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setSelected(new Set())}
+            className="text-gray-400 hover:text-gray-700 transition-colors"
+            title="Cancelar seleção"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

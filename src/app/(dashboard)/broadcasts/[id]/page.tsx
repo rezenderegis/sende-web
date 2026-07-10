@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Pause, Send, CheckCircle2, XCircle, Clock,
-  MessageSquare, ExternalLink, Phone, SmilePlus, Frown, Minus, AlertTriangle,
+  MessageSquare, ExternalLink, Phone, SmilePlus, Frown, Minus, AlertTriangle, Tag,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -182,6 +182,14 @@ export default function BroadcastDetailPage() {
     onError: () => toast({ title: 'Erro ao pausar', variant: 'destructive' }),
   })
 
+  const saveAsTagMutation = useMutation({
+    mutationFn: () => api.post(`/broadcasts/${id}/save-as-tag`),
+    onSuccess: (res) => {
+      toast({ title: `Tag "${res.data.name}" criada com todos os destinatários`, variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao salvar como tag', variant: 'destructive' }),
+  })
+
   function openConversation(conversationId: string) {
     router.push(`/conversations/${conversationId}`)
   }
@@ -198,7 +206,7 @@ export default function BroadcastDetailPage() {
   const failed = recipients.filter((r) => r.status === 'failed')
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="p-4 md:p-6 max-w-3xl">
       <button
         onClick={() => router.push('/broadcasts')}
         className="mb-5 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-gray-900 transition-colors"
@@ -208,7 +216,7 @@ export default function BroadcastDetailPage() {
       </button>
 
       {/* Header */}
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-xl font-semibold text-gray-900">{broadcast.name}</h1>
@@ -237,7 +245,17 @@ export default function BroadcastDetailPage() {
             )}
           </p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 flex-wrap sm:shrink-0">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => saveAsTagMutation.mutate()}
+            disabled={saveAsTagMutation.isPending || broadcast.totalCount === 0}
+            title="Salva todos os destinatários como uma tag reutilizável"
+          >
+            <Tag className="h-4 w-4" />
+            {saveAsTagMutation.isPending ? 'Salvando...' : 'Salvar como tag'}
+          </Button>
           {broadcast.status === 'draft' && (
             <>
               <Button variant="outline" className="gap-2" onClick={() => router.push(`/broadcasts/new?draft=${id}`)}>

@@ -42,7 +42,7 @@ const TRIGGER_LABELS: Record<string, { label: string; description: string; icon:
 const TEMPLATE_VARS: Record<string, string[]> = {
   birthday: ['{nome}', '{primeiro_nome}'],
   payment_overdue: ['{nome}', '{primeiro_nome}', '{produto}', '{data_vencimento}', '{dias_atraso}'],
-  repurchase: ['{nome}', '{primeiro_nome}', '{produto}'],
+  repurchase: ['{nome}', '{primeiro_nome}', '{produto}', '{data_compra}'],
 }
 
 const DEFAULT_TEMPLATES: Record<string, string> = {

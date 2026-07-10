@@ -3,14 +3,153 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Upload, Plus, X, CheckCircle2, Clock, Filter } from 'lucide-react'
+import { ShoppingBag, Upload, Plus, X, CheckCircle2, Clock, Filter, User, Phone, Mail, Building2, Package, Calendar, Hash, RefreshCw, FileText, Pencil } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from '@/hooks/use-toast'
 import { ProductPicker } from '@/components/sales/product-picker'
+import { formatPhone } from '@/lib/utils'
 import type { Contact, Product, Sale } from '@/types'
+
+function SaleDetailModal({ sale, onClose, onMarkPaid, onDelete }: {
+  sale: Sale
+  onClose: () => void
+  onMarkPaid: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const c = sale.contact
+  const p = sale.product
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-2xl border bg-white shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <h2 className="text-base font-semibold text-gray-900">Detalhe da venda</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Cliente */}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cliente</p>
+            <div className="rounded-xl border bg-gray-50 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
+                  {c?.name?.charAt(0).toUpperCase() || '?'}
+                </div>
+                <div>
+                  <p className="font-medium text-sm text-gray-900">{c?.name || '—'}</p>
+                  {c?.phone && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3" />{formatPhone(c.phone)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {c?.email && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Mail className="h-3 w-3" />{c.email}
+                </p>
+              )}
+              {c?.companyName && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Building2 className="h-3 w-3" />{c.companyName}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Produto e valores */}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Produto</p>
+            <div className="rounded-xl border p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-green-600 shrink-0" />
+                  <p className="font-medium text-sm text-gray-900">{p?.name || '—'}</p>
+                </div>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                  {sale.paymentStatus === 'paid' ? <><CheckCircle2 className="h-3 w-3" />Pago</> : <><Clock className="h-3 w-3" />Pendente</>}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-0.5"><Calendar className="h-3 w-3" />Data da venda</p>
+                  <p className="font-medium text-gray-900">{formatDate(sale.saleDate)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-0.5"><Hash className="h-3 w-3" />Quantidade</p>
+                  <p className="font-medium text-gray-900">{sale.quantity}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Valor unitário</p>
+                  <p className="font-medium text-gray-900">{formatCurrency(Number(sale.unitPrice))}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Valor total</p>
+                  <p className="text-lg font-bold text-gray-900">{formatCurrency(Number(sale.totalValue))}</p>
+                </div>
+              </div>
+
+              {sale.dueDate && (
+                <div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-0.5"><Calendar className="h-3 w-3" />Vencimento</p>
+                  <p className="text-sm font-medium text-amber-700">{formatDate(sale.dueDate)}</p>
+                </div>
+              )}
+
+              {p?.repurchaseIntervalDays && (
+                <div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-0.5"><RefreshCw className="h-3 w-3" />Recorrência</p>
+                  <p className="text-sm text-gray-700">A cada {p.repurchaseIntervalDays} dias</p>
+                </div>
+              )}
+
+              {sale.notes && (
+                <div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-0.5"><FileText className="h-3 w-3" />Observação</p>
+                  <p className="text-sm text-gray-700">{sale.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Ações */}
+        <div className="flex gap-2 border-t px-6 py-4">
+          {sale.paymentStatus === 'pending' && (
+            <button
+              onClick={() => { onMarkPaid(sale.id); onClose() }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Marcar como pago
+            </button>
+          )}
+          <button
+            onClick={() => { if (confirm('Excluir esta venda?')) { onDelete(sale.id); onClose() } }}
+            className="flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <X className="h-4 w-4" />
+            Excluir
+          </button>
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center rounded-lg border px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function formatCurrency(v: number) {
   return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -31,6 +170,7 @@ export default function SalesPage() {
   const [endDate, setEndDate] = useState('')
   const [search, setSearch] = useState('')
   const [showNewSale, setShowNewSale] = useState(false)
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [saleForm, setSaleForm] = useState({
     contactPhone: '', productId: '', saleDate: new Date().toISOString().slice(0, 10),
     quantity: '1', unitPrice: '', totalValue: '', paymentStatus: 'pending', dueDate: '', notes: '',
@@ -115,6 +255,15 @@ export default function SalesPage() {
 
   return (
     <div className="p-4 md:p-8">
+      {selectedSale && (
+        <SaleDetailModal
+          sale={selectedSale}
+          onClose={() => setSelectedSale(null)}
+          onMarkPaid={(id) => markPaidMutation.mutate(id)}
+          onDelete={(id) => deleteSaleMutation.mutate(id)}
+        />
+      )}
+
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -275,25 +424,35 @@ export default function SalesPage() {
             </div>
           )}
           {filtered.map((sale) => (
-            <div key={sale.id} className="flex items-center gap-4 border-b px-6 py-4 last:border-0 hover:bg-gray-50/50 transition-colors">
+            <div
+              key={sale.id}
+              onClick={() => setSelectedSale(sale)}
+              className="flex items-center gap-4 border-b px-6 py-4 last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer"
+            >
+              {/* Avatar do contato */}
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
+                {sale.contact?.name?.charAt(0).toUpperCase() || '?'}
+              </div>
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-medium text-sm text-gray-900">{sale.product?.name || '—'}</p>
+                  <p className="font-medium text-sm text-gray-900">{sale.contact?.name || '—'}</p>
                   <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                     {sale.paymentStatus === 'paid' ? <><CheckCircle2 className="h-3 w-3" />Pago</> : <><Clock className="h-3 w-3" />Pendente</>}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {sale.contact?.name || '—'}
-                  {sale.contact?.phone && <span className="ml-2 text-xs">· {sale.contact.phone}</span>}
+                  {sale.product?.name || '—'}
+                  <span className="mx-1.5 text-gray-300">·</span>
+                  {formatDate(sale.saleDate)}
+                  {sale.contact?.phone && <span className="ml-1.5 text-xs">· {formatPhone(sale.contact.phone)}</span>}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {formatDate(sale.saleDate)} · {sale.quantity}x {formatCurrency(Number(sale.unitPrice))}
-                  {sale.dueDate && ` · vence ${formatDate(sale.dueDate)}`}
-                </p>
-                {sale.notes && <p className="text-xs text-muted-foreground mt-0.5 italic">{sale.notes}</p>}
+                {sale.dueDate && sale.paymentStatus === 'pending' && (
+                  <p className="text-xs text-amber-600 mt-0.5">Vence {formatDate(sale.dueDate)}</p>
+                )}
               </div>
-              <div className="flex items-center gap-3 shrink-0">
+
+              <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <p className="text-base font-semibold text-gray-900">{formatCurrency(Number(sale.totalValue))}</p>
                 <div className="flex items-center gap-1">
                   {sale.paymentStatus === 'pending' && (

@@ -2,11 +2,21 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/use-toast'
 import type { Product } from '@/types'
+
+type Unit = 'dias' | 'semanas' | 'meses'
+
+function toDays(value: string, unit: Unit): number | undefined {
+  const n = parseInt(value)
+  if (!n || n <= 0) return undefined
+  if (unit === 'semanas') return n * 7
+  if (unit === 'meses') return n * 30
+  return n
+}
 
 interface ProductPickerProps {
   value: string
@@ -18,7 +28,8 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newInterval, setNewInterval] = useState('')
+  const [newValue, setNewValue] = useState('')
+  const [newUnit, setNewUnit] = useState<Unit>('meses')
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ['products'],
@@ -29,13 +40,14 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
     mutationFn: () =>
       api.post('/products', {
         name: newName.trim(),
-        repurchaseIntervalDays: newInterval ? parseInt(newInterval) : undefined,
+        repurchaseIntervalDays: toDays(newValue, newUnit),
       }).then((r) => r.data as Product),
     onSuccess: (product) => {
       qc.invalidateQueries({ queryKey: ['products'] })
       onChange(product.id)
       setNewName('')
-      setNewInterval('')
+      setNewValue('')
+      setNewUnit('meses')
       setShowCreate(false)
       toast({ title: `Produto "${product.name}" criado`, variant: 'success' })
     },
@@ -49,7 +61,7 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
 
   if (showCreate) {
     return (
-      <div className="space-y-2 rounded-lg border bg-gray-50 p-3">
+      <div className="space-y-2.5 rounded-lg border bg-gray-50 p-3">
         <p className="text-xs font-medium text-gray-700">Novo produto</p>
         <Input
           autoFocus
@@ -58,16 +70,32 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && newName.trim()) createMutation.mutate() }}
         />
-        <Input
-          type="number"
-          placeholder="Intervalo de recompra (dias) — opcional"
-          value={newInterval}
-          onChange={(e) => setNewInterval(e.target.value)}
-        />
+        <div>
+          <p className="mb-1 text-xs text-muted-foreground">Recorrência de recompra (opcional)</p>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min="1"
+              placeholder="Ex: 3"
+              value={newValue}
+              onChange={(e) => setNewValue(e.target.value)}
+              className="flex-1"
+            />
+            <select
+              value={newUnit}
+              onChange={(e) => setNewUnit(e.target.value as Unit)}
+              className="rounded-lg border px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="dias">dias</option>
+              <option value="semanas">semanas</option>
+              <option value="meses">meses</option>
+            </select>
+          </div>
+        </div>
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => { setShowCreate(false); setNewName(''); setNewInterval('') }}
+            onClick={() => { setShowCreate(false); setNewName(''); setNewValue(''); setNewUnit('meses') }}
             className="flex-1 rounded-lg border py-1.5 text-xs text-gray-600 hover:bg-white transition-colors"
           >
             Cancelar

@@ -681,14 +681,53 @@ function NewBroadcastContent() {
 
           {recipientMode === 'csv' && (
             <div className="space-y-4">
-              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 space-y-1">
+              <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 space-y-1.5">
                 <p className="font-medium">Formato esperado do CSV:</p>
                 {form.type === 'text' ? (
-                  <p className="font-mono">telefone, nome (opcional), mensagem</p>
-                ) : (
-                  <p className="font-mono">telefone, nome (opcional), var1, var2, ...</p>
-                )}
-                <p className="text-blue-600">Máximo 1.000 linhas. Contatos novos serão criados automaticamente.</p>
+                  <p className="font-mono">telefone; nome (opcional); mensagem</p>
+                ) : (() => {
+                  const selectedTpl = templates.find((t) => t.name === form.templateName)
+                  const varCount = selectedTpl?.variablesCount ?? 0
+                  const varCols = varCount > 0 ? Array.from({ length: varCount }, (_, i) => `var${i + 1}`).join('; ') : ''
+                  const cols = ['telefone', 'nome (opcional)', ...( varCount > 0 ? varCols.split('; ') : [])].join('; ')
+                  return (
+                    <div className="space-y-1">
+                      <p className="font-mono">{cols}</p>
+                      {varCount > 0 && (
+                        <p className="text-blue-700">
+                          Template <strong>{form.templateName}</strong> usa {varCount} variável{varCount !== 1 ? 'is' : ''}: {Array.from({ length: varCount }, (_, i) => `{{${i + 1}}} → var${i + 1}`).join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })()}
+                <div className="flex items-center justify-between pt-0.5">
+                  <p className="text-blue-600">Máximo 1.000 linhas. Contatos novos serão criados automaticamente.</p>
+                  <button
+                    type="button"
+                    className="ml-3 shrink-0 underline font-medium hover:text-blue-900"
+                    onClick={() => {
+                      const selectedTpl = templates.find((t) => t.name === form.templateName)
+                      const varCount = form.type === 'template' ? (selectedTpl?.variablesCount ?? 3) : 0
+                      const headers = form.type === 'text'
+                        ? ['telefone', 'nome', 'mensagem']
+                        : ['telefone', 'nome', ...Array.from({ length: varCount || 3 }, (_, i) => `var${i + 1}`)]
+                      const example = form.type === 'text'
+                        ? ['5561999990000', 'João Silva', 'Olá João, tudo bem?']
+                        : ['5561999990000', 'João Silva', ...Array.from({ length: varCount || 3 }, (_, i) => `valor${i + 1}`)]
+                      const csv = [headers.join(';'), example.join(';')].join('\n')
+                      const blob = new Blob([csv], { type: 'text/csv' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = 'modelo_broadcast.csv'
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    }}
+                  >
+                    Baixar modelo
+                  </button>
+                </div>
               </div>
 
               {/* Dropzone */}

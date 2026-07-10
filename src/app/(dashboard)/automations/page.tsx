@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Plus, Zap, X, ChevronDown, ChevronUp, CheckCircle2, XCircle, Cake, CreditCard, RefreshCw,
   Pencil, Trash2, Power, Calendar, History, List, Check, Clock, MailOpen, Reply, RotateCcw,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Play, Users, PhoneCall,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -14,8 +14,9 @@ import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import type {
   AutomationRule, AutomationExecution, AutomationTriggerType, WhatsappNumber, WhatsappTemplate,
-  UpcomingDispatch, AutomationStats,
+  UpcomingDispatch, AutomationStats, AutomationAudience,
 } from '@/types'
+import { formatPhone } from '@/lib/utils'
 
 const TRIGGER_LABELS: Record<string, { label: string; description: string; icon: React.ElementType; color: string }> = {
   birthday: {
@@ -399,12 +400,105 @@ function RuleStatsRow({ ruleId }: { ruleId: string }) {
   )
 }
 
+// --- Audience Modal ---
+function AudienceModal({ rule, onClose }: { rule: AutomationRule; onClose: () => void }) {
+  const { data, isLoading } = useQuery<AutomationAudience>({
+    queryKey: ['automation-audience', rule.id],
+    queryFn: () => api.get(`/automations/${rule.id}/audience`).then((r) => r.data),
+  })
+
+  const meta = TRIGGER_LABELS[rule.type]
+  const Icon = meta?.icon ?? Zap
+
+  const STATUS_CONFIG = {
+    will_send: { label: 'Vai receber', className: 'bg-green-100 text-green-700' },
+    already_sent: { label: 'Já recebeu hoje', className: 'bg-gray-100 text-gray-500' },
+    opted_out: { label: 'Opt-out', className: 'bg-red-100 text-red-600' },
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="w-full max-w-lg rounded-2xl border bg-white shadow-xl flex flex-col max-h-[80vh]">
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className={cn('flex h-8 w-8 items-center justify-center rounded-xl', meta?.color)}>
+              <Icon className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">{rule.name}</h2>
+              <p className="text-xs text-muted-foreground">Público de hoje</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading && <p className="text-center text-sm text-muted-foreground py-8">Carregando...</p>}
+
+          {!isLoading && data && (
+            <>
+              {/* Resumo */}
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                <div className="rounded-xl border bg-green-50 p-3 text-center">
+                  <p className="text-lg font-bold text-green-700">{data.willSend}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Vão receber</p>
+                </div>
+                <div className="rounded-xl border bg-gray-50 p-3 text-center">
+                  <p className="text-lg font-bold text-gray-600">{data.contacts.filter(c => c.status === 'already_sent').length}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Já receberam</p>
+                </div>
+                <div className="rounded-xl border bg-red-50 p-3 text-center">
+                  <p className="text-lg font-bold text-red-600">{data.contacts.filter(c => c.status === 'opted_out').length}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Opt-out</p>
+                </div>
+              </div>
+
+              {data.total === 0 && (
+                <p className="text-center text-sm text-muted-foreground py-6">
+                  Nenhum contato se enquadra nesta regra hoje
+                </p>
+              )}
+
+              <div className="space-y-2">
+                {data.contacts.map((c) => {
+                  const statusCfg = STATUS_CONFIG[c.status]
+                  return (
+                    <div key={c.contactId} className="flex items-center gap-3 rounded-xl border px-4 py-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600 shrink-0">
+                        {c.contactName?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{c.contactName}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <PhoneCall className="h-3 w-3" />
+                          {formatPhone(c.contactPhone)}
+                          {c.extra && <span className="ml-1">· {c.extra}</span>}
+                        </p>
+                      </div>
+                      <span className={cn('shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium', statusCfg.className)}>
+                        {statusCfg.label}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // --- Tab: Regras ---
 function RulesTab() {
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [audienceRule, setAudienceRule] = useState<AutomationRule | null>(null)
 
   const { data: rules = [], isLoading } = useQuery<AutomationRule[]>({
     queryKey: ['automations'],
@@ -511,6 +605,14 @@ function RulesTab() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
+                    onClick={() => setAudienceRule(rule)}
+                    className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+                    title="Ver público de hoje"
+                  >
+                    <Users className="h-3 w-3" />
+                    Ver público
+                  </button>
+                  <button
                     onClick={() => toggleMutation.mutate({ id: rule.id, isActive: !rule.isActive })}
                     className={cn('flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors', rule.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}
                     title={rule.isActive ? 'Desativar' : 'Ativar'}
@@ -576,6 +678,8 @@ function RulesTab() {
           </Button>
         </div>
       )}
+
+      {audienceRule && <AudienceModal rule={audienceRule} onClose={() => setAudienceRule(null)} />}
     </div>
   )
 }
@@ -839,6 +943,18 @@ function HistoryTab() {
 // --- Main Page ---
 export default function AutomationsPage() {
   const [tab, setTab] = useState<'rules' | 'agenda' | 'history'>('rules')
+  const qc = useQueryClient()
+
+  const runNowMutation = useMutation({
+    mutationFn: () => api.post('/automations/run-now'),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['automations-history'] })
+      qc.invalidateQueries({ queryKey: ['automations-upcoming'] })
+      const triggered = res.data?.triggered ?? 0
+      toast({ title: `Execução concluída`, description: `${triggered} disparo(s) realizados`, variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: 'Erro ao executar', description: err.response?.data?.message, variant: 'destructive' }),
+  })
 
   const tabs = [
     { key: 'rules' as const, label: 'Regras', icon: List },
@@ -849,11 +965,27 @@ export default function AutomationsPage() {
   return (
     <div className="flex-1 overflow-y-auto p-8">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-gray-900">Automações</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Disparos automáticos por aniversário, pagamento em atraso e recompra
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">Automações</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Disparos automáticos por aniversário, pagamento em atraso e recompra
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Roda automaticamente todo dia às 08:00
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5"
+            onClick={() => runNowMutation.mutate()}
+            disabled={runNowMutation.isPending}
+          >
+            <Play className="h-3.5 w-3.5" />
+            {runNowMutation.isPending ? 'Executando...' : 'Executar agora'}
+          </Button>
         </div>
 
         {/* Tabs */}

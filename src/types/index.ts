@@ -305,6 +305,20 @@ export interface AutomationStats {
   responded: number
 }
 
+export interface AudienceContact {
+  contactId: string
+  contactName: string
+  contactPhone: string
+  status: 'will_send' | 'already_sent' | 'opted_out'
+  extra?: string
+}
+
+export interface AutomationAudience {
+  contacts: AudienceContact[]
+  total: number
+  willSend: number
+}
+
 export interface ContactProductSetting {
   id: string
   companyId: string

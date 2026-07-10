@@ -376,8 +376,21 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
   const [tab, setTab] = useState<'info' | 'sales'>('info')
   const [showSaleForm, setShowSaleForm] = useState(false)
   const [saleForm, setSaleForm] = useState({ productId: '', saleDate: new Date().toISOString().slice(0, 10), quantity: '1', unitPrice: '', totalValue: '', paymentStatus: 'pending', dueDate: '', notes: '' })
-  const [editingBirthDate, setEditingBirthDate] = useState(false)
-  const [birthDate, setBirthDate] = useState(contact.birthDate || '')
+  const [editForm, setEditForm] = useState({
+    name: contact.name || '',
+    phone: contact.phone || '',
+    email: contact.email || '',
+    companyName: contact.companyName || '',
+    notes: contact.notes || '',
+    birthDate: contact.birthDate || '',
+    externalId: contact.externalId || '',
+  })
+  const [dirty, setDirty] = useState(false)
+
+  function setField(field: string, value: string) {
+    setEditForm((f) => ({ ...f, [field]: value }))
+    setDirty(true)
+  }
 
   const { data: sales = [], isLoading: salesLoading } = useQuery<Sale[]>({
     queryKey: ['sales', 'contact', contact.id],
@@ -385,15 +398,26 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
     enabled: tab === 'sales',
   })
 
-
-  const saveBirthDateMutation = useMutation({
-    mutationFn: () => api.patch(`/contacts/${contact.id}`, { birthDate: birthDate || null }),
+  const updateMutation = useMutation({
+    mutationFn: () => api.patch(`/contacts/${contact.id}`, {
+      name: editForm.name.trim() || undefined,
+      phone: editForm.phone.replace(/\D/g, '') || undefined,
+      email: editForm.email.trim() || null,
+      companyName: editForm.companyName.trim() || null,
+      notes: editForm.notes.trim() || null,
+      birthDate: editForm.birthDate || null,
+      externalId: editForm.externalId.trim() || null,
+    }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contacts'] })
-      setEditingBirthDate(false)
-      toast({ title: 'Data de nascimento salva', variant: 'success' })
+      setDirty(false)
+      toast({ title: 'Contato atualizado', variant: 'success' })
     },
-    onError: () => toast({ title: 'Erro ao salvar', variant: 'destructive' }),
+    onError: (err: any) => toast({
+      title: 'Erro ao atualizar',
+      description: err.response?.data?.message,
+      variant: 'destructive',
+    }),
   })
 
   const createSaleMutation = useMutation({
@@ -440,12 +464,6 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   }
 
-  function formatBirthDate(d: string) {
-    if (!d) return '—'
-    const [y, m, day] = d.split('-')
-    return `${day}/${m}/${y}`
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-lg rounded-2xl border bg-white shadow-xl flex flex-col max-h-[90vh]">
@@ -456,8 +474,8 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
               {contact.name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div>
-              <h2 className="text-base font-semibold text-gray-900">{contact.name}</h2>
-              <p className="text-sm text-muted-foreground">{formatPhone(contact.phone)}</p>
+              <h2 className="text-base font-semibold text-gray-900">{editForm.name || contact.name}</h2>
+              <p className="text-sm text-muted-foreground">{formatPhone(editForm.phone || contact.phone)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -492,52 +510,66 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {tab === 'info' && (
-            <div className="space-y-4">
-              {contact.email && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">E-mail</p>
-                  <p className="text-sm text-gray-900">{contact.email}</p>
-                </div>
-              )}
-              {contact.companyName && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Empresa</p>
-                  <p className="text-sm text-gray-900">{contact.companyName}</p>
-                </div>
-              )}
+            <div className="space-y-3">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
+                <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} placeholder="Nome do contato" />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1.5">
+                  Telefone
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-normal text-amber-700">
+                    Alterar pode quebrar vínculo WhatsApp
+                  </span>
+                </label>
+                <Input
+                  value={editForm.phone}
+                  onChange={(e) => setField('phone', e.target.value)}
+                  placeholder="5561999999999"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  O telefone é usado para identificar mensagens do WhatsApp. Só altere se o número do cliente mudou.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">E-mail</label>
+                <Input type="email" value={editForm.email} onChange={(e) => setField('email', e.target.value)} placeholder="email@exemplo.com" />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">Empresa</label>
+                <Input value={editForm.companyName} onChange={(e) => setField('companyName', e.target.value)} placeholder="Nome da empresa" />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1">
                   <Cake className="h-3.5 w-3.5" />
                   Data de nascimento
-                </p>
-                {editingBirthDate ? (
-                  <div className="flex items-center gap-2">
-                    <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="w-auto text-sm" />
-                    <Button size="sm" onClick={() => saveBirthDateMutation.mutate()} disabled={saveBirthDateMutation.isPending}>
-                      {saveBirthDateMutation.isPending ? '...' : 'Salvar'}
-                    </Button>
-                    <button onClick={() => { setEditingBirthDate(false); setBirthDate(contact.birthDate || '') }} className="text-muted-foreground hover:text-gray-700">
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-900">{formatBirthDate(contact.birthDate || '')}</p>
-                    <button onClick={() => setEditingBirthDate(true)} className="text-muted-foreground hover:text-gray-700 transition-colors">
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                )}
+                </label>
+                <Input type="date" value={editForm.birthDate} onChange={(e) => setField('birthDate', e.target.value)} />
               </div>
-              {contact.notes && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Notas</p>
-                  <p className="text-sm text-gray-900 whitespace-pre-wrap">{contact.notes}</p>
-                </div>
-              )}
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">Notas</label>
+                <textarea
+                  rows={3}
+                  value={editForm.notes}
+                  onChange={(e) => setField('notes', e.target.value)}
+                  placeholder="Observações sobre o contato"
+                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">ID externo</label>
+                <Input value={editForm.externalId} onChange={(e) => setField('externalId', e.target.value)} placeholder="Código no seu sistema (CRM, ERP...)" />
+              </div>
+
               {(contact.tags ?? []).length > 0 && (
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Tags</p>
+                  <p className="mb-1 text-xs font-medium text-gray-700">Tags</p>
                   <div className="flex flex-wrap gap-1.5">
                     {contact.tags!.map((tag) => (
                       <span key={tag.id} className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: tag.color }}>
@@ -547,10 +579,37 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                   </div>
                 </div>
               )}
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Criado em</p>
-                <p className="text-sm text-gray-900">{formatDate(contact.createdAt)}</p>
+
+              <div className="pt-2 flex gap-2">
+                <Button
+                  className="flex-1"
+                  disabled={!dirty || updateMutation.isPending}
+                  onClick={() => updateMutation.mutate()}
+                >
+                  {updateMutation.isPending ? 'Salvando...' : 'Salvar alterações'}
+                </Button>
+                {dirty && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEditForm({
+                        name: contact.name || '',
+                        phone: contact.phone || '',
+                        email: contact.email || '',
+                        companyName: contact.companyName || '',
+                        notes: contact.notes || '',
+                        birthDate: contact.birthDate || '',
+                        externalId: contact.externalId || '',
+                      })
+                      setDirty(false)
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                )}
               </div>
+
+              <p className="text-xs text-muted-foreground">Criado em {formatDate(contact.createdAt)}</p>
             </div>
           )}
 

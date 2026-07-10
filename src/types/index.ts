@@ -55,6 +55,7 @@ export interface Contact {
   companyName?: string
   notes?: string
   birthDate?: string | null
+  externalId?: string | null
   tags?: Tag[]
   metadata?: Record<string, any>
   createdAt: string

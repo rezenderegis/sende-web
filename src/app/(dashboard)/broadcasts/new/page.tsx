@@ -340,7 +340,7 @@ function NewBroadcastContent() {
   }
 
   function handleStep1Continue() {
-    if (recipientMode === 'csv') {
+    if (recipientMode === 'csv' || templateRequiresCsv) {
       if (csvFile) {
         addCsvMutation.mutate()
       } else if (recipientsAdded) {
@@ -378,13 +378,11 @@ function NewBroadcastContent() {
     (form.type === 'text' ? form.message.trim() : form.templateName.trim())
 
   const step1Valid =
-    templateRequiresCsv
+    recipientMode === 'csv' || templateRequiresCsv
       ? csvFile !== null || recipientsAdded
-      : recipientMode === 'csv'
-        ? csvFile !== null || recipientsAdded
-        : recipientsAdded ||
-          recipients.tagId ||
-          (recipients.contactIds && recipients.contactIds.length > 0)
+      : recipientsAdded ||
+        recipients.tagId ||
+        (recipients.contactIds && recipients.contactIds.length > 0)
 
   const isPendingStep0 = createMutation.isPending || updateMutation.isPending
 

@@ -202,7 +202,7 @@ function RuleForm({
 
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-700">
-          {form.type === 'payment_overdue' ? 'Dias após o vencimento' : 'Dias antes do evento (negativo = antecipação)'}
+          {form.type === 'payment_overdue' ? 'Dias após o vencimento (0 = no dia do vencimento)' : 'Offset em dias (0 = no dia, negativo = antes, positivo = depois)'}
         </label>
         <Input
           type="number"

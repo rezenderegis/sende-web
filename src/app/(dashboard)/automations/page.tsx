@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
-import type { AutomationRule, AutomationExecution, AutomationTriggerType, WhatsappNumber } from '@/types'
+import type { AutomationRule, AutomationExecution, AutomationTriggerType, WhatsappNumber, WhatsappTemplate } from '@/types'
 
 const TRIGGER_LABELS: Record<string, { label: string; description: string; icon: React.ElementType; color: string }> = {
   birthday: {
@@ -64,10 +64,14 @@ function RuleForm({
 }) {
   const [form, setForm] = useState({
     name: initial?.name ?? '',
-    type: initial?.type ?? 'birthday',
+    type: (initial?.type ?? 'birthday') as AutomationTriggerType,
     whatsappNumberId: initial?.whatsappNumberId ?? '',
     triggerOffsetDays: String(initial?.triggerOffsetDays ?? 0),
+    messageType: (initial?.messageType ?? 'text') as 'text' | 'template',
     messageTemplate: initial?.messageTemplate ?? DEFAULT_TEMPLATES['birthday'],
+    templateName: initial?.templateName ?? '',
+    templateLanguage: initial?.templateLanguage ?? 'pt_BR',
+    templateVariables: initial?.templateVariables ?? [] as string[],
   })
 
   const { data: numbers = [] } = useQuery<WhatsappNumber[]>({
@@ -75,21 +79,60 @@ function RuleForm({
     queryFn: () => api.get('/whatsapp/numbers').then((r) => r.data),
   })
 
-  function setType(type: string) {
+  const { data: templates = [] } = useQuery<WhatsappTemplate[]>({
+    queryKey: ['whatsapp-templates', form.whatsappNumberId],
+    queryFn: () => api.get(`/whatsapp/numbers/${form.whatsappNumberId}/templates`).then((r) => r.data),
+    enabled: !!form.whatsappNumberId && form.messageType === 'template',
+  })
+
+  const selectedTemplate = templates.find((t) => t.name === form.templateName)
+
+  function setType(type: AutomationTriggerType) {
     setForm((f) => ({
       ...f,
-      type: type as AutomationTriggerType,
+      type,
       messageTemplate: f.messageTemplate === DEFAULT_TEMPLATES[f.type] ? DEFAULT_TEMPLATES[type] : f.messageTemplate,
     }))
   }
 
+  function setMessageType(messageType: 'text' | 'template') {
+    setForm((f) => ({ ...f, messageType }))
+  }
+
+  function selectTemplate(name: string) {
+    const tpl = templates.find((t) => t.name === name)
+    const slots = tpl?.variablesCount ?? 0
+    setForm((f) => ({
+      ...f,
+      templateName: name,
+      templateLanguage: tpl?.language ?? 'pt_BR',
+      templateVariables: Array.from({ length: slots }, (_, i) => f.templateVariables[i] ?? ''),
+    }))
+  }
+
+  function setTemplateVar(index: number, value: string) {
+    setForm((f) => {
+      const vars = [...f.templateVariables]
+      vars[index] = value
+      return { ...f, templateVariables: vars }
+    })
+  }
+
   function insertVar(v: string) {
-    setForm((f) => ({ ...f, messageTemplate: f.messageTemplate + v }))
+    setForm((f) => ({ ...f, messageTemplate: (f.messageTemplate ?? '') + v }))
   }
 
   function handleSubmit() {
-    if (!form.name.trim() || !form.whatsappNumberId || !form.messageTemplate.trim()) {
+    if (!form.name.trim() || !form.whatsappNumberId) {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' })
+      return
+    }
+    if (form.messageType === 'text' && !form.messageTemplate?.trim()) {
+      toast({ title: 'Digite a mensagem', variant: 'destructive' })
+      return
+    }
+    if (form.messageType === 'template' && !form.templateName) {
+      toast({ title: 'Selecione um template', variant: 'destructive' })
       return
     }
     onSave({
@@ -97,11 +140,15 @@ function RuleForm({
       type: form.type,
       whatsappNumberId: form.whatsappNumberId,
       triggerOffsetDays: parseInt(form.triggerOffsetDays) || 0,
-      messageTemplate: form.messageTemplate.trim(),
+      messageType: form.messageType,
+      messageTemplate: form.messageType === 'text' ? form.messageTemplate?.trim() : null,
+      templateName: form.messageType === 'template' ? form.templateName : null,
+      templateLanguage: form.messageType === 'template' ? form.templateLanguage : null,
+      templateVariables: form.messageType === 'template' && form.templateVariables.length ? form.templateVariables : null,
     })
   }
 
-  const vars = TEMPLATE_VARS[form.type] || []
+  const dynamicVars = TEMPLATE_VARS[form.type] || []
 
   return (
     <div className="space-y-4">
@@ -117,7 +164,7 @@ function RuleForm({
             <button
               key={key}
               type="button"
-              onClick={() => setType(key)}
+              onClick={() => setType(key as AutomationTriggerType)}
               className={cn(
                 'flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-medium transition-colors',
                 form.type === key ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50',
@@ -147,7 +194,7 @@ function RuleForm({
 
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-700">
-          {form.type === 'payment_overdue' ? 'Dias após o vencimento' : 'Dias antes do evento (use negativo para antes)'}
+          {form.type === 'payment_overdue' ? 'Dias após o vencimento' : 'Dias antes do evento (negativo = antecipação)'}
         </label>
         <Input
           type="number"
@@ -159,30 +206,128 @@ function RuleForm({
         </p>
       </div>
 
+      {/* Tipo de mensagem */}
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-700">Mensagem *</label>
-        {vars.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {vars.map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => insertVar(v)}
-                className="rounded-full border bg-gray-50 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-100 transition-colors font-mono"
-              >
-                {v}
-              </button>
-            ))}
-          </div>
+        <label className="mb-1 block text-xs font-medium text-gray-700">Tipo de mensagem *</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMessageType('template')}
+            className={cn(
+              'flex-1 rounded-lg border py-2 text-xs font-medium transition-colors',
+              form.messageType === 'template' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+            )}
+          >
+            Template Meta
+          </button>
+          <button
+            type="button"
+            onClick={() => setMessageType('text')}
+            className={cn(
+              'flex-1 rounded-lg border py-2 text-xs font-medium transition-colors',
+              form.messageType === 'text' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+            )}
+          >
+            Texto livre
+          </button>
+        </div>
+        {form.messageType === 'template' && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Recomendado — funciona mesmo sem conversa ativa nas últimas 24h
+          </p>
         )}
-        <textarea
-          rows={4}
-          value={form.messageTemplate}
-          onChange={(e) => setForm((f) => ({ ...f, messageTemplate: e.target.value }))}
-          className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
-          placeholder="Digite a mensagem..."
-        />
+        {form.messageType === 'text' && (
+          <p className="mt-1 text-xs text-amber-600">
+            Só funciona se o contato interagiu nas últimas 24h
+          </p>
+        )}
       </div>
+
+      {/* Template Meta */}
+      {form.messageType === 'template' && (
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Template aprovado *</label>
+            {!form.whatsappNumberId ? (
+              <p className="text-xs text-muted-foreground">Selecione um número primeiro</p>
+            ) : (
+              <select
+                value={form.templateName}
+                onChange={(e) => selectTemplate(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Selecionar template...</option>
+                {templates
+                  .filter((t) => t.status === 'APPROVED')
+                  .map((t) => (
+                    <option key={t.id} value={t.name}>
+                      {t.name} {t.variablesCount > 0 ? `(${t.variablesCount} variável(is))` : ''}
+                    </option>
+                  ))}
+              </select>
+            )}
+          </div>
+
+          {selectedTemplate && selectedTemplate.bodyText && (
+            <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-600 border">
+              <p className="font-medium text-gray-500 mb-1">Prévia do template:</p>
+              <p className="whitespace-pre-wrap">{selectedTemplate.bodyText}</p>
+            </div>
+          )}
+
+          {selectedTemplate && selectedTemplate.variablesCount > 0 && (
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-gray-700">
+                Variáveis do template
+              </label>
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                <p className="w-full text-xs text-muted-foreground">Clique para inserir no campo ativo:</p>
+                {dynamicVars.map((v) => (
+                  <span key={v} className="rounded-full border bg-gray-50 px-2 py-0.5 text-xs text-gray-500 font-mono">{v}</span>
+                ))}
+              </div>
+              {Array.from({ length: selectedTemplate.variablesCount }).map((_, i) => (
+                <div key={i}>
+                  <label className="mb-0.5 block text-xs text-muted-foreground">{`{{${i + 1}}}`}</label>
+                  <Input
+                    placeholder={`Ex: ${dynamicVars[i] ?? '{nome}'}`}
+                    value={form.templateVariables[i] ?? ''}
+                    onChange={(e) => setTemplateVar(i, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Texto livre */}
+      {form.messageType === 'text' && (
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-700">Mensagem *</label>
+          {dynamicVars.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {dynamicVars.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => insertVar(v)}
+                  className="rounded-full border bg-gray-50 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-100 transition-colors font-mono"
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          )}
+          <textarea
+            rows={4}
+            value={form.messageTemplate ?? ''}
+            onChange={(e) => setForm((f) => ({ ...f, messageTemplate: e.target.value }))}
+            className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
+            placeholder="Digite a mensagem..."
+          />
+        </div>
+      )}
 
       <div className="flex gap-2 pt-1">
         <Button variant="outline" className="flex-1" onClick={onCancel}>Cancelar</Button>
@@ -373,8 +518,23 @@ export default function AutomationsPage() {
                 {isExpanded && (
                   <div className="border-t px-4 pb-4">
                     <div className="mt-3 rounded-lg bg-gray-50 p-3">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Mensagem</p>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{rule.messageTemplate}</p>
+                      <p className="text-xs font-medium text-gray-500 mb-1">
+                        {rule.messageType === 'template' ? 'Template Meta' : 'Mensagem de texto'}
+                      </p>
+                      {rule.messageType === 'template' ? (
+                        <div>
+                          <p className="text-sm text-gray-700 font-mono">{rule.templateName}</p>
+                          {rule.templateVariables && rule.templateVariables.length > 0 && (
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                              {rule.templateVariables.map((v, i) => (
+                                <span key={i} className="rounded bg-white border px-1.5 py-0.5 text-xs text-gray-600 font-mono">{`{{${i+1}}}`} = {v}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{rule.messageTemplate}</p>
+                      )}
                     </div>
                     <div className="mt-3">
                       <p className="text-xs font-medium text-gray-500 mb-1">Histórico de disparos</p>

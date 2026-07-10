@@ -260,7 +260,11 @@ export interface AutomationRule {
   whatsappNumberId: string
   whatsappNumber?: WhatsappNumber
   triggerOffsetDays: number
-  messageTemplate: string
+  messageType: 'text' | 'template'
+  messageTemplate: string | null
+  templateName: string | null
+  templateLanguage: string | null
+  templateVariables: string[] | null
   isActive: boolean
   createdAt: string
   updatedAt: string

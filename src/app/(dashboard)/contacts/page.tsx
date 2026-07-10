@@ -12,7 +12,7 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { formatPhone, formatDate, cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { ProductPicker } from '@/components/sales/product-picker'
-import type { Broadcast, Contact, Product, Sale, Tag } from '@/types'
+import type { Broadcast, Contact, ContactProductSetting, Product, Sale, Tag } from '@/types'
 
 const COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
@@ -398,6 +398,50 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
     enabled: tab === 'sales',
   })
 
+  const { data: customRecurrences = [] } = useQuery<ContactProductSetting[]>({
+    queryKey: ['contact-product-settings', contact.id],
+    queryFn: () => api.get(`/contact-product-settings/contact/${contact.id}`).then((r) => r.data),
+    enabled: tab === 'sales',
+  })
+
+  const [editingRecurrence, setEditingRecurrence] = useState<string | null>(null)
+  const [recurrenceInput, setRecurrenceInput] = useState({ value: '', unit: 'meses' as 'dias' | 'semanas' | 'meses' })
+
+  function toDays(value: string, unit: 'dias' | 'semanas' | 'meses'): number {
+    const n = parseInt(value) || 0
+    if (unit === 'semanas') return n * 7
+    if (unit === 'meses') return n * 30
+    return n
+  }
+
+  function fromDays(days: number): { value: string; unit: 'dias' | 'semanas' | 'meses' } {
+    if (days % 30 === 0) return { value: String(days / 30), unit: 'meses' }
+    if (days % 7 === 0) return { value: String(days / 7), unit: 'semanas' }
+    return { value: String(days), unit: 'dias' }
+  }
+
+  const upsertRecurrenceMutation = useMutation({
+    mutationFn: ({ productId, days }: { productId: string; days: number }) =>
+      api.put(`/contact-product-settings/contact/${contact.id}/product/${productId}`, {
+        repurchaseIntervalDays: days,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contact-product-settings', contact.id] })
+      setEditingRecurrence(null)
+      toast({ title: 'Recorrência salva', variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: 'Erro ao salvar', description: err.response?.data?.message, variant: 'destructive' }),
+  })
+
+  const deleteRecurrenceMutation = useMutation({
+    mutationFn: (productId: string) =>
+      api.delete(`/contact-product-settings/contact/${contact.id}/product/${productId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contact-product-settings', contact.id] })
+      toast({ title: 'Recorrência removida — voltou ao padrão do produto', variant: 'success' })
+    },
+  })
+
   const updateMutation = useMutation({
     mutationFn: () => api.patch(`/contacts/${contact.id}`, {
       name: editForm.name.trim() || undefined,
@@ -746,6 +790,95 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                   </div>
                 </div>
               ))}
+
+              {/* Recorrências personalizadas */}
+              {(() => {
+                const productsWithInterval = sales
+                  .filter((s, i, arr) => arr.findIndex((x) => x.productId === s.productId) === i && s.product?.repurchaseIntervalDays)
+                  .map((s) => s.product!)
+                if (productsWithInterval.length === 0) return null
+                return (
+                  <div className="mt-2 rounded-xl border p-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Recorrências personalizadas</p>
+                    {productsWithInterval.map((product) => {
+                      const override = customRecurrences.find((r) => r.productId === product.id)
+                      const defaultInterval = fromDays(product.repurchaseIntervalDays!)
+                      const isEditing = editingRecurrence === product.id
+                      return (
+                        <div key={product.id} className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-800 truncate">{product.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Padrão: a cada {defaultInterval.value} {defaultInterval.unit}
+                                {override && (
+                                  <> · <span className="text-green-700 font-medium">
+                                    Personalizado: a cada {fromDays(override.repurchaseIntervalDays).value} {fromDays(override.repurchaseIntervalDays).unit}
+                                  </span></>
+                                )}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {override && !isEditing && (
+                                <button
+                                  onClick={() => { if (confirm('Remover personalização?')) deleteRecurrenceMutation.mutate(product.id) }}
+                                  className="text-red-400 hover:text-red-600 transition-colors"
+                                  title="Remover personalização"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (isEditing) {
+                                    setEditingRecurrence(null)
+                                  } else {
+                                    const current = override ? fromDays(override.repurchaseIntervalDays) : defaultInterval
+                                    setRecurrenceInput({ value: current.value, unit: current.unit })
+                                    setEditingRecurrence(product.id)
+                                  }
+                                }}
+                                className="text-xs text-green-700 hover:text-green-800 font-medium px-2 py-1 rounded hover:bg-green-50 transition-colors"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                          {isEditing && (
+                            <div className="flex items-center gap-2 pl-0">
+                              <input
+                                type="number"
+                                min="1"
+                                value={recurrenceInput.value}
+                                onChange={(e) => setRecurrenceInput((r) => ({ ...r, value: e.target.value }))}
+                                className="w-16 rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                              />
+                              <select
+                                value={recurrenceInput.unit}
+                                onChange={(e) => setRecurrenceInput((r) => ({ ...r, unit: e.target.value as 'dias' | 'semanas' | 'meses' }))}
+                                className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                              >
+                                <option value="dias">dias</option>
+                                <option value="semanas">semanas</option>
+                                <option value="meses">meses</option>
+                              </select>
+                              <button
+                                disabled={!recurrenceInput.value || upsertRecurrenceMutation.isPending}
+                                onClick={() => upsertRecurrenceMutation.mutate({ productId: product.id, days: toDays(recurrenceInput.value, recurrenceInput.unit) })}
+                                className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                              >
+                                <Check className="h-3 w-3" />
+                                Salvar
+                              </button>
+                              <button onClick={() => setEditingRecurrence(null)} className="text-xs text-gray-500 hover:text-gray-700 px-2">Cancelar</button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>

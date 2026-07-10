@@ -249,6 +249,46 @@ export interface PaginatedResponse<T> {
   limit: number
 }
 
+export type AutomationTriggerType = 'birthday' | 'payment_overdue' | 'repurchase'
+export type AutomationExecutionStatus = 'sent' | 'failed'
+
+export interface AutomationRule {
+  id: string
+  companyId: string
+  name: string
+  type: AutomationTriggerType
+  whatsappNumberId: string
+  whatsappNumber?: WhatsappNumber
+  triggerOffsetDays: number
+  messageTemplate: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AutomationExecution {
+  id: string
+  companyId: string
+  ruleId: string
+  contactId: string
+  contact?: Contact
+  dedupeKey: string
+  status: AutomationExecutionStatus
+  error: string | null
+  createdAt: string
+}
+
+export interface ContactProductSetting {
+  id: string
+  companyId: string
+  contactId: string
+  productId: string
+  product?: Product
+  repurchaseIntervalDays: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Product {
   id: string
   companyId: string

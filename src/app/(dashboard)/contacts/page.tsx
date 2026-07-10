@@ -837,7 +837,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                 if (productsWithInterval.length === 0) return null
                 return (
                   <div className="mt-2 rounded-xl border p-4 space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Recorrências personalizadas</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Recorrência de recompra</p>
                     {productsWithInterval.map((product) => {
                       const override = customRecurrences.find((r) => r.productId === product.id)
                       const defaultInterval = fromDays(product.repurchaseIntervalDays!)
@@ -848,11 +848,13 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-800 truncate">{product.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                Padrão: a cada {defaultInterval.value} {defaultInterval.unit}
-                                {override && (
-                                  <> · <span className="text-green-700 font-medium">
-                                    Personalizado: a cada {fromDays(override.repurchaseIntervalDays).value} {fromDays(override.repurchaseIntervalDays).unit}
-                                  </span></>
+                                {override ? (
+                                  <>
+                                    <span className="text-green-700 font-medium">Personalizado: a cada {fromDays(override.repurchaseIntervalDays).value} {fromDays(override.repurchaseIntervalDays).unit}</span>
+                                    <span className="text-gray-400"> · padrão: {defaultInterval.value} {defaultInterval.unit}</span>
+                                  </>
+                                ) : (
+                                  <>Usando padrão do produto: a cada {defaultInterval.value} {defaultInterval.unit} · <span className="text-blue-600">clique no lápis para personalizar</span></>
                                 )}
                               </p>
                             </div>

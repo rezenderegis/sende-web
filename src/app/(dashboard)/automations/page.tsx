@@ -41,8 +41,17 @@ const TRIGGER_LABELS: Record<string, { label: string; description: string; icon:
 
 const TEMPLATE_VARS: Record<string, string[]> = {
   birthday: ['{nome}', '{primeiro_nome}'],
-  payment_overdue: ['{nome}', '{primeiro_nome}', '{produto}', '{data_vencimento}', '{dias_atraso}'],
+  payment_overdue: ['{nome}', '{primeiro_nome}', '{produto}', '{data_compra}', '{data_vencimento}', '{dias_atraso}'],
   repurchase: ['{nome}', '{primeiro_nome}', '{produto}', '{data_compra}'],
+}
+
+const VAR_DESCRIPTIONS: Record<string, string> = {
+  '{nome}': 'Nome completo do contato',
+  '{primeiro_nome}': 'Primeiro nome do contato',
+  '{produto}': 'Nome do produto da venda',
+  '{data_compra}': 'Data da última compra (DD/MM/AAAA)',
+  '{data_vencimento}': 'Data de vencimento da cobrança (DD/MM/AAAA)',
+  '{dias_atraso}': 'Dias em atraso desde o vencimento',
 }
 
 const DEFAULT_TEMPLATES: Record<string, string> = {
@@ -126,8 +135,14 @@ function RuleForm({
     })
   }
 
+  const [activeVarIndex, setActiveVarIndex] = useState<number | null>(null)
+
   function insertVar(v: string) {
-    setForm((f) => ({ ...f, messageTemplate: (f.messageTemplate ?? '') + v }))
+    if (form.messageType === 'template' && activeVarIndex !== null) {
+      setTemplateVar(activeVarIndex, (form.templateVariables[activeVarIndex] ?? '') + v)
+    } else {
+      setForm((f) => ({ ...f, messageTemplate: (f.messageTemplate ?? '') + v }))
+    }
   }
 
   function handleSubmit() {
@@ -288,19 +303,52 @@ function RuleForm({
               <label className="block text-xs font-medium text-gray-700">
                 Variáveis do template
               </label>
-              <div className="mb-2 flex flex-wrap gap-1.5">
-                <p className="w-full text-xs text-muted-foreground">Clique para inserir no campo ativo:</p>
-                {dynamicVars.map((v) => (
-                  <span key={v} className="rounded-full border bg-gray-50 px-2 py-0.5 text-xs text-gray-500 font-mono">{v}</span>
-                ))}
-              </div>
+
+              {/* Referência de variáveis disponíveis */}
+              {dynamicVars.length > 0 && (
+                <div className="rounded-lg border bg-gray-50 p-3 space-y-2">
+                  <p className="text-xs font-medium text-gray-600">
+                    Variáveis disponíveis — clique para inserir no campo selecionado:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dynamicVars.map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        title={VAR_DESCRIPTIONS[v] ?? v}
+                        onClick={() => insertVar(v)}
+                        className="rounded-full border bg-white px-2 py-0.5 text-xs text-gray-600 hover:bg-green-50 hover:border-green-400 hover:text-green-700 transition-colors font-mono"
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-t pt-2 space-y-0.5">
+                    {dynamicVars.map((v) => (
+                      <p key={v} className="text-xs text-muted-foreground">
+                        <span className="font-mono text-gray-600">{v}</span>
+                        {' → '}
+                        {VAR_DESCRIPTIONS[v] ?? ''}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {Array.from({ length: selectedTemplate.variablesCount }).map((_, i) => (
                 <div key={i}>
-                  <label className="mb-0.5 block text-xs text-muted-foreground">{`{{${i + 1}}}`}</label>
+                  <label className="mb-0.5 block text-xs text-muted-foreground">
+                    {`{{${i + 1}}}`}
+                    {activeVarIndex === i && (
+                      <span className="ml-1.5 text-green-600">← campo ativo</span>
+                    )}
+                  </label>
                   <Input
                     placeholder={`Ex: ${dynamicVars[i] ?? '{nome}'}`}
                     value={form.templateVariables[i] ?? ''}
                     onChange={(e) => setTemplateVar(i, e.target.value)}
+                    onFocus={() => setActiveVarIndex(i)}
+                    className={activeVarIndex === i ? 'border-green-400 ring-1 ring-green-300' : ''}
                   />
                 </div>
               ))}

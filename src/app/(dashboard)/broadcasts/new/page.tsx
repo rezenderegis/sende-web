@@ -138,6 +138,7 @@ function NewBroadcastContent() {
     errors: { row: number; phone: string; reason: string }[]
   } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [csvVarWarning, setCsvVarWarning] = useState<string | null>(null)
 
   // Carrega rascunho se ?draft=ID estiver presente
   const { data: draftData } = useQuery<Broadcast>({
@@ -303,6 +304,7 @@ function NewBroadcastContent() {
   function handleCsvFile(file: File) {
     setCsvFile(file)
     setCsvUploadResult(null)
+    setCsvVarWarning(null)
     const reader = new FileReader()
     reader.onload = (e) => {
       const text = e.target?.result as string
@@ -321,6 +323,18 @@ function NewBroadcastContent() {
         l.split(delim).map((c) => c.trim().replace(/^"|"$/g, '')),
       )
       setCsvPreview(preview)
+
+      if (form.type === 'template' && form.templateName) {
+        const selectedTpl = templates.find((t) => t.name === form.templateName)
+        if (selectedTpl && selectedTpl.variablesCount > 0) {
+          const csvVarCols = headers.filter((h) => /^var\d+$/i.test(h)).length
+          if (csvVarCols !== selectedTpl.variablesCount) {
+            setCsvVarWarning(
+              `O template "${form.templateName}" tem ${selectedTpl.variablesCount} variável(is) mas o CSV tem ${csvVarCols} coluna(s) var. Corrija o CSV antes de importar.`
+            )
+          }
+        }
+      }
     }
     reader.readAsText(file)
   }
@@ -729,6 +743,13 @@ function NewBroadcastContent() {
                   </button>
                 </div>
               </div>
+
+              {/* Aviso de variáveis incorretas */}
+              {csvVarWarning && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700 font-medium">
+                  ⚠️ {csvVarWarning}
+                </div>
+              )}
 
               {/* Dropzone */}
               <div

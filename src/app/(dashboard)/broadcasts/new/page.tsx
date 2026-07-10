@@ -779,6 +779,7 @@ function NewBroadcastContent() {
                   onChange={(e) => {
                     const file = e.target.files?.[0]
                     if (file) handleCsvFile(file)
+                    e.target.value = ''
                   }}
                 />
                 {csvFile ? (

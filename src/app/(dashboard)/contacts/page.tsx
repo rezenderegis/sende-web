@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { TagSelector } from '@/components/tags/tag-selector'
 import { formatPhone, formatDate, cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
+import { ProductPicker } from '@/components/sales/product-picker'
 import type { Broadcast, Contact, Product, Sale, Tag } from '@/types'
 
 const COLORS = [
@@ -384,11 +385,6 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
     enabled: tab === 'sales',
   })
 
-  const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ['products'],
-    queryFn: () => api.get('/products').then((r) => r.data),
-    enabled: tab === 'sales' && showSaleForm,
-  })
 
   const saveBirthDateMutation = useMutation({
     mutationFn: () => api.patch(`/contacts/${contact.id}`, { birthDate: birthDate || null }),
@@ -580,14 +576,10 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                   <p className="text-sm font-medium text-gray-900">Nova venda</p>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-700">Produto <span className="text-red-500">*</span></label>
-                    <select
+                    <ProductPicker
                       value={saleForm.productId}
-                      onChange={(e) => setSaleForm((f) => ({ ...f, productId: e.target.value }))}
-                      className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                      <option value="">Selecionar produto...</option>
-                      {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                      onChange={(id) => setSaleForm((f) => ({ ...f, productId: id }))}
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>

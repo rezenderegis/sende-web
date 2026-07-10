@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { MessageSquare, Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag } from 'lucide-react'
+import { MessageSquare, Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ const settingsItems = [
   { href: '/settings/users', icon: Users, label: 'Usuários' },
   { href: '/settings/company', icon: Settings, label: 'Empresa' },
   { href: '/settings/tags', icon: Tag, label: 'Tags' },
+  { href: '/settings/products', icon: Package, label: 'Produtos' },
   { href: '/settings/saved-messages', icon: BookMarked, label: 'Msgs Salvas' },
   { href: '/settings/prompts', icon: BotMessageSquare, label: 'Prompts IA' },
 ]

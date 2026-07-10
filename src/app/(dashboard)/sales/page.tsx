@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from '@/hooks/use-toast'
+import { ProductPicker } from '@/components/sales/product-picker'
 import type { Contact, Product, Sale } from '@/types'
 
 function formatCurrency(v: number) {
@@ -174,10 +175,7 @@ export default function SalesPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700">Produto <span className="text-red-500">*</span></label>
-              <select value={saleForm.productId} onChange={(e) => setSaleForm((f) => ({ ...f, productId: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500">
-                <option value="">Selecionar...</option>
-                {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              <ProductPicker value={saleForm.productId} onChange={(id) => setSaleForm((f) => ({ ...f, productId: id }))} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700">Data da venda</label>

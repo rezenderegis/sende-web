@@ -14,6 +14,14 @@ import { formatTime, formatPhone } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import type { Conversation, ConversationEvent, Message, User, SavedMessage } from '@/types'
 
+function renderContent(content: string, contactName?: string): string {
+  if (!content.includes('{{')) return content
+  let out = content
+  if (contactName) out = out.replace(/\{\{1\}\}/g, contactName.split(' ')[0])
+  out = out.replace(/\{\{\d+\}\}/g, '_____')
+  return out
+}
+
 function campaignTimeLeft(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now()
   if (diff <= 0) return 'expirado'
@@ -390,7 +398,7 @@ export default function ConversationPage() {
                   : 'bg-white text-gray-900 rounded-bl-none'
               }`}
             >
-              <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+              <p className="whitespace-pre-wrap break-words">{renderContent(msg.content, contact?.name)}</p>
               <div className={`flex items-center justify-end gap-1 mt-1 ${
                 msg.direction === 'outbound' ? 'text-green-100' : 'text-gray-400'
               }`}>

@@ -140,7 +140,7 @@ export default function NumbersPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="p-4 md:p-6 max-w-3xl">
       {deleteTarget && (
         <DeleteNumberDialog
           number={deleteTarget}
@@ -149,14 +149,14 @@ export default function NumbersPage() {
           isPending={deleteMutation.isPending}
         />
       )}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Números WhatsApp</h1>
           <p className="text-sm text-muted-foreground">Gerencie seus números da Meta Business API</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+        <Button onClick={() => setShowForm(!showForm)} className="gap-2 shrink-0">
           <Plus className="h-4 w-4" />
-          Adicionar número
+          <span className="hidden sm:inline">Adicionar número</span>
         </Button>
       </div>
 
@@ -266,7 +266,7 @@ export default function NumbersPage() {
                   <p className="text-xs text-muted-foreground font-mono mt-0.5">ID: {num.id}</p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <Button
                     size="sm"
                     variant="outline"
@@ -274,7 +274,7 @@ export default function NumbersPage() {
                     onClick={() => router.push(`/settings/numbers/${num.id}`)}
                   >
                     <Settings2 className="h-3.5 w-3.5" />
-                    Configurar bot
+                    <span className="hidden sm:inline">Configurar bot</span>
                   </Button>
                   <Button
                     size="icon"

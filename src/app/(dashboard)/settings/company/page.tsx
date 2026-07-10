@@ -22,7 +22,7 @@ export default function CompanyPage() {
   })
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Empresa</h1>
         <p className="text-sm text-muted-foreground">Informações da sua conta</p>

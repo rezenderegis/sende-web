@@ -48,32 +48,32 @@ export default function FailuresPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="border-b bg-white px-6 py-4 flex items-center gap-4">
+      <div className="border-b bg-white px-4 py-3 flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => router.push('/broadcasts')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-red-500" />
-          <h1 className="text-lg font-semibold text-gray-900">Falhas de Entrega</h1>
+          <h1 className="text-base font-semibold text-gray-900">Falhas de Entrega</h1>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <Filter className="h-4 w-4 text-gray-400" />
+        <div className="ml-auto flex items-center gap-2 min-w-0">
+          <Filter className="h-4 w-4 text-gray-400 shrink-0" />
           <select
             value={broadcastId}
             onChange={(e) => setBroadcastId(e.target.value)}
-            className="text-sm border rounded-md px-3 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="text-sm border rounded-md px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary min-w-0 max-w-[200px] truncate"
           >
-            <option value="">Todos os broadcasts</option>
+            <option value="">Todos</option>
             {broadcastsWithFailures.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.name} ({b.failedCount} falha{b.failedCount !== 1 ? 's' : ''})
+                {b.name} ({b.failedCount})
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 md:p-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
             Carregando...

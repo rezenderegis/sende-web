@@ -46,13 +46,13 @@ export default function DashboardPage() {
   const pendingConversations = conversations?.data?.filter((c) => c.status === 'pending').length ?? 0
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <div className="p-4 md:p-8">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Visão geral da sua plataforma</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 md:gap-4 lg:grid-cols-4">
         <StatCard
           title="Conversas abertas"
           value={openConversations}
@@ -81,7 +81,7 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="p-0">
             {conversations?.data?.slice(0, 5).map((conv) => (
-              <div key={conv.id} className="flex items-center gap-4 border-b px-6 py-4 last:border-0">
+              <div key={conv.id} className="flex items-center gap-3 border-b px-4 py-3 last:border-0">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600">
                   {conv.contact?.name?.charAt(0).toUpperCase() || '?'}
                 </div>

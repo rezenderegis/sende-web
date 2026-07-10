@@ -28,22 +28,22 @@ export default function BroadcastsPage() {
   })
 
   return (
-    <div className="p-6 max-w-3xl">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="p-4 md:p-6 max-w-3xl">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Broadcasts</h1>
           <p className="text-sm text-muted-foreground">Envie mensagens em massa para seus contatos.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {broadcasts.some((b) => b.failedCount > 0) && (
-            <Button variant="outline" className="gap-2 border-red-200 text-red-600 hover:bg-red-50" onClick={() => router.push('/broadcasts/failures')}>
+            <Button variant="outline" size="icon" className="border-red-200 text-red-600 hover:bg-red-50 sm:w-auto sm:px-3 sm:gap-2" onClick={() => router.push('/broadcasts/failures')}>
               <AlertTriangle className="h-4 w-4" />
-              Ver falhas
+              <span className="hidden sm:inline">Ver falhas</span>
             </Button>
           )}
           <Button className="gap-2" onClick={() => router.push('/broadcasts/new')}>
             <Plus className="h-4 w-4" />
-            Novo broadcast
+            <span className="hidden sm:inline">Novo broadcast</span>
           </Button>
         </div>
       </div>

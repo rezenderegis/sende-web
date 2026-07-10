@@ -185,7 +185,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 md:p-8 max-w-3xl">
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-2xl border bg-white shadow-2xl p-6">
@@ -214,14 +214,14 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Usuários</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Usuários</h1>
           <p className="text-sm text-muted-foreground">Gerencie quem tem acesso à plataforma</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+        <Button onClick={() => setShowForm(!showForm)} className="gap-2 shrink-0">
           <Plus className="h-4 w-4" />
-          Adicionar usuário
+          <span className="hidden sm:inline">Adicionar usuário</span>
         </Button>
       </div>
 

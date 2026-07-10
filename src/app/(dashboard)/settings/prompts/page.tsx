@@ -108,8 +108,8 @@ export default function PromptsPage() {
   })
 
   return (
-    <div className="p-6 max-w-3xl">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="p-4 md:p-6 max-w-3xl">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Prompts de IA</h1>
           <p className="text-sm text-muted-foreground">
@@ -117,9 +117,9 @@ export default function PromptsPage() {
           </p>
         </div>
         {!showNew && (
-          <Button onClick={() => setShowNew(true)} className="gap-2">
+          <Button onClick={() => setShowNew(true)} className="gap-2 shrink-0">
             <Plus className="h-4 w-4" />
-            Novo prompt
+            <span className="hidden sm:inline">Novo prompt</span>
           </Button>
         )}
       </div>

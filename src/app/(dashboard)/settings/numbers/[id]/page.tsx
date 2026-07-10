@@ -108,10 +108,10 @@ export default function NumberConfigPage() {
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden gap-6 p-6">
+      <div className="flex flex-1 overflow-auto flex-col lg:flex-row lg:overflow-hidden gap-6 p-4 md:p-6">
 
         {/* Prompt — ocupa todo o espaço vertical disponível */}
-        <div className="flex flex-1 flex-col gap-3 min-w-0">
+        <div className="flex flex-1 flex-col gap-3 min-w-0 min-h-[320px] lg:min-h-0">
           <div>
             <Label className="text-sm font-semibold">Instruções do bot</Label>
             <p className="text-xs text-muted-foreground mt-1">
@@ -137,7 +137,7 @@ export default function NumberConfigPage() {
         </div>
 
         {/* Sidebar — configurações secundárias */}
-        <div className="shrink-0 w-72 flex flex-col gap-4 overflow-y-auto">
+        <div className="w-full lg:w-72 lg:shrink-0 flex flex-col gap-4 lg:overflow-y-auto">
           <div className="rounded-xl border bg-white p-5 space-y-4">
             <div>
               <h2 className="font-semibold text-gray-900">Contexto de memória</h2>

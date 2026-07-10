@@ -386,6 +386,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
     externalId: contact.externalId || '',
   })
   const [dirty, setDirty] = useState(false)
+  const [automationOptOut, setAutomationOptOut] = useState(contact.automationOptOut ?? false)
 
   function setField(field: string, value: string) {
     setEditForm((f) => ({ ...f, [field]: value }))
@@ -462,6 +463,16 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
       description: err.response?.data?.message,
       variant: 'destructive',
     }),
+  })
+
+  const optOutMutation = useMutation({
+    mutationFn: (optOut: boolean) => api.patch(`/contacts/${contact.id}/automation-optout`, { optOut }),
+    onSuccess: (_, optOut) => {
+      setAutomationOptOut(optOut)
+      qc.invalidateQueries({ queryKey: ['contacts'] })
+      toast({ title: optOut ? 'Automações desativadas para este contato' : 'Automações reativadas', variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: 'Erro ao atualizar', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   const createSaleMutation = useMutation({
@@ -623,6 +634,33 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                   </div>
                 </div>
               )}
+
+              {/* Automações opt-out */}
+              <div>
+                <p className="mb-1 text-xs font-medium text-gray-700">Automações</p>
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={automationOptOut}
+                    onClick={() => optOutMutation.mutate(!automationOptOut)}
+                    disabled={optOutMutation.isPending}
+                    className={cn(
+                      'relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none',
+                      automationOptOut ? 'bg-red-500' : 'bg-gray-200',
+                      'disabled:opacity-50',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                        automationOptOut ? 'translate-x-4' : 'translate-x-0',
+                      )}
+                    />
+                  </button>
+                  <span className="text-sm text-gray-700">Não receber automações</span>
+                </label>
+              </div>
 
               <div className="pt-2 flex gap-2">
                 <Button

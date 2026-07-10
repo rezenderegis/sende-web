@@ -2,13 +2,20 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Zap, X, ChevronDown, ChevronUp, CheckCircle2, XCircle, Cake, CreditCard, RefreshCw, Pencil, Trash2, Power } from 'lucide-react'
+import {
+  Plus, Zap, X, ChevronDown, ChevronUp, CheckCircle2, XCircle, Cake, CreditCard, RefreshCw,
+  Pencil, Trash2, Power, Calendar, History, List, Check, Clock, MailOpen, Reply, RotateCcw,
+  ChevronLeft, ChevronRight,
+} from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
-import type { AutomationRule, AutomationExecution, AutomationTriggerType, WhatsappNumber, WhatsappTemplate } from '@/types'
+import type {
+  AutomationRule, AutomationExecution, AutomationTriggerType, WhatsappNumber, WhatsappTemplate,
+  UpcomingDispatch, AutomationStats,
+} from '@/types'
 
 const TRIGGER_LABELS: Record<string, { label: string; description: string; icon: React.ElementType; color: string }> = {
   birthday: {
@@ -364,7 +371,36 @@ function ExecutionsPanel({ rule }: { rule: AutomationRule }) {
   )
 }
 
-export default function AutomationsPage() {
+function RuleStatsRow({ ruleId }: { ruleId: string }) {
+  const { data: stats } = useQuery<AutomationStats>({
+    queryKey: ['automation-stats', ruleId],
+    queryFn: () => api.get(`/automations/${ruleId}/stats`).then((r) => r.data),
+  })
+
+  if (!stats) return null
+
+  return (
+    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+      <span className="flex items-center gap-1">
+        <Check className="h-3 w-3 text-green-500" />
+        {stats.sent} enviados
+      </span>
+      <span>·</span>
+      <span className="flex items-center gap-1">
+        <MailOpen className="h-3 w-3 text-blue-500" />
+        {stats.read} lidos
+      </span>
+      <span>·</span>
+      <span className="flex items-center gap-1">
+        <Reply className="h-3 w-3 text-purple-500" />
+        {stats.responded} respostas
+      </span>
+    </div>
+  )
+}
+
+// --- Tab: Regras ---
+function RulesTab() {
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -410,142 +446,438 @@ export default function AutomationsPage() {
   })
 
   return (
-    <div className="flex-1 overflow-y-auto p-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">Automações</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Disparos automáticos por aniversário, pagamento em atraso e recompra
-            </p>
-          </div>
-          {!showCreate && (
-            <Button className="gap-1.5" onClick={() => setShowCreate(true)}>
-              <Plus className="h-4 w-4" />
-              Nova automação
-            </Button>
-          )}
+    <div>
+      {showCreate && (
+        <div className="mb-6 rounded-2xl border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900">Nova automação</h2>
+          <RuleForm
+            onSave={(data) => createMutation.mutate(data)}
+            onCancel={() => setShowCreate(false)}
+            isPending={createMutation.isPending}
+          />
         </div>
+      )}
 
-        {showCreate && (
-          <div className="mb-6 rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-sm font-semibold text-gray-900">Nova automação</h2>
-            <RuleForm
-              onSave={(data) => createMutation.mutate(data)}
-              onCancel={() => setShowCreate(false)}
-              isPending={createMutation.isPending}
-            />
-          </div>
-        )}
+      {isLoading && <p className="text-center text-sm text-muted-foreground py-12">Carregando...</p>}
 
-        {isLoading && <p className="text-center text-sm text-muted-foreground py-12">Carregando...</p>}
+      {!isLoading && rules.length === 0 && !showCreate && (
+        <div className="rounded-2xl border border-dashed p-12 text-center">
+          <Zap className="mx-auto h-8 w-8 text-gray-300 mb-3" />
+          <p className="text-sm font-medium text-gray-500">Nenhuma automação criada</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Crie regras para disparar mensagens automaticamente por aniversário, cobrança ou recompra
+          </p>
+        </div>
+      )}
 
-        {!isLoading && rules.length === 0 && !showCreate && (
-          <div className="rounded-2xl border border-dashed p-12 text-center">
-            <Zap className="mx-auto h-8 w-8 text-gray-300 mb-3" />
-            <p className="text-sm font-medium text-gray-500">Nenhuma automação criada</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Crie regras para disparar mensagens automaticamente por aniversário, cobrança ou recompra
-            </p>
-          </div>
-        )}
+      <div className="space-y-3">
+        {rules.map((rule) => {
+          const meta = TRIGGER_LABELS[rule.type]
+          const Icon = meta?.icon ?? Zap
+          const isExpanded = expandedId === rule.id
+          const isEditing = editingId === rule.id
 
-        <div className="space-y-3">
-          {rules.map((rule) => {
-            const meta = TRIGGER_LABELS[rule.type]
-            const Icon = meta?.icon ?? Zap
-            const isExpanded = expandedId === rule.id
-            const isEditing = editingId === rule.id
-
-            if (isEditing) {
-              return (
-                <div key={rule.id} className="rounded-2xl border bg-white p-6 shadow-sm">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-gray-900">Editar automação</h2>
-                    <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-700">
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <RuleForm
-                    initial={rule}
-                    onSave={(data) => updateMutation.mutate({ id: rule.id, data })}
-                    onCancel={() => setEditingId(null)}
-                    isPending={updateMutation.isPending}
-                  />
-                </div>
-              )
-            }
-
+          if (isEditing) {
             return (
-              <div key={rule.id} className="rounded-2xl border bg-white shadow-sm">
-                <div className="flex items-center gap-3 p-4">
-                  <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', meta?.color)}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-gray-900 truncate">{rule.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {meta?.label} · {offsetLabel(rule.type, rule.triggerOffsetDays)} · {rule.whatsappNumber?.displayName}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => toggleMutation.mutate({ id: rule.id, isActive: !rule.isActive })}
-                      className={cn('flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors', rule.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}
-                      title={rule.isActive ? 'Desativar' : 'Ativar'}
-                    >
-                      <Power className="h-3 w-3" />
-                      {rule.isActive ? 'Ativa' : 'Inativa'}
-                    </button>
-                    <button onClick={() => setEditingId(rule.id)} className="text-gray-400 hover:text-gray-700 transition-colors">
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => { if (confirm('Excluir esta automação?')) deleteMutation.mutate(rule.id) }}
-                      className="text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : rule.id)}
-                      className="text-gray-400 hover:text-gray-700 transition-colors"
-                    >
-                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </button>
-                  </div>
+              <div key={rule.id} className="rounded-2xl border bg-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-gray-900">Editar automação</h2>
+                  <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-700">
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-
-                {isExpanded && (
-                  <div className="border-t px-4 pb-4">
-                    <div className="mt-3 rounded-lg bg-gray-50 p-3">
-                      <p className="text-xs font-medium text-gray-500 mb-1">
-                        {rule.messageType === 'template' ? 'Template Meta' : 'Mensagem de texto'}
-                      </p>
-                      {rule.messageType === 'template' ? (
-                        <div>
-                          <p className="text-sm text-gray-700 font-mono">{rule.templateName}</p>
-                          {rule.templateVariables && rule.templateVariables.length > 0 && (
-                            <div className="mt-1.5 flex flex-wrap gap-1">
-                              {rule.templateVariables.map((v, i) => (
-                                <span key={i} className="rounded bg-white border px-1.5 py-0.5 text-xs text-gray-600 font-mono">{`{{${i+1}}}`} = {v}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{rule.messageTemplate}</p>
-                      )}
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Histórico de disparos</p>
-                      <ExecutionsPanel rule={rule} />
-                    </div>
-                  </div>
-                )}
+                <RuleForm
+                  initial={rule}
+                  onSave={(data) => updateMutation.mutate({ id: rule.id, data })}
+                  onCancel={() => setEditingId(null)}
+                  isPending={updateMutation.isPending}
+                />
               </div>
             )
-          })}
+          }
+
+          return (
+            <div key={rule.id} className="rounded-2xl border bg-white shadow-sm">
+              <div className="flex items-center gap-3 p-4">
+                <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', meta?.color)}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-gray-900 truncate">{rule.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {meta?.label} · {offsetLabel(rule.type, rule.triggerOffsetDays)} · {rule.whatsappNumber?.displayName}
+                  </p>
+                  <RuleStatsRow ruleId={rule.id} />
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => toggleMutation.mutate({ id: rule.id, isActive: !rule.isActive })}
+                    className={cn('flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors', rule.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}
+                    title={rule.isActive ? 'Desativar' : 'Ativar'}
+                  >
+                    <Power className="h-3 w-3" />
+                    {rule.isActive ? 'Ativa' : 'Inativa'}
+                  </button>
+                  <button onClick={() => setEditingId(rule.id)} className="text-gray-400 hover:text-gray-700 transition-colors">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => { if (confirm('Excluir esta automação?')) deleteMutation.mutate(rule.id) }}
+                    className="text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : rule.id)}
+                    className="text-gray-400 hover:text-gray-700 transition-colors"
+                  >
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {isExpanded && (
+                <div className="border-t px-4 pb-4">
+                  <div className="mt-3 rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      {rule.messageType === 'template' ? 'Template Meta' : 'Mensagem de texto'}
+                    </p>
+                    {rule.messageType === 'template' ? (
+                      <div>
+                        <p className="text-sm text-gray-700 font-mono">{rule.templateName}</p>
+                        {rule.templateVariables && rule.templateVariables.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {rule.templateVariables.map((v, i) => (
+                              <span key={i} className="rounded bg-white border px-1.5 py-0.5 text-xs text-gray-600 font-mono">{`{{${i+1}}}`} = {v}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{rule.messageTemplate}</p>
+                    )}
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Histórico de disparos</p>
+                    <ExecutionsPanel rule={rule} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {!showCreate && (
+        <div className="mt-4 flex justify-end">
+          <Button className="gap-1.5" onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4" />
+            Nova automação
+          </Button>
         </div>
+      )}
+    </div>
+  )
+}
+
+// --- Tab: Agenda ---
+function AgendaTab() {
+  const { data: upcoming = [], isLoading } = useQuery<UpcomingDispatch[]>({
+    queryKey: ['automations-upcoming'],
+    queryFn: () => api.get('/automations/upcoming?days=7').then((r) => r.data),
+  })
+
+  const grouped: Record<string, UpcomingDispatch[]> = {}
+  for (const item of upcoming) {
+    if (!grouped[item.date]) grouped[item.date] = []
+    grouped[item.date].push(item)
+  }
+  const sortedDates = Object.keys(grouped).sort()
+  const today = new Date().toISOString().slice(0, 10)
+
+  function formatDateLabel(dateStr: string): string {
+    if (dateStr === today) return 'Hoje'
+    const d = new Date(dateStr + 'T00:00:00')
+    return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+
+  if (isLoading) return <p className="text-center text-sm text-muted-foreground py-12">Carregando...</p>
+
+  if (upcoming.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed p-12 text-center">
+        <Calendar className="mx-auto h-8 w-8 text-gray-300 mb-3" />
+        <p className="text-sm font-medium text-gray-500">Nenhum disparo agendado nos próximos 7 dias</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {sortedDates.map((date) => {
+        const items = grouped[date]
+        return (
+          <div key={date}>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">{formatDateLabel(date)}</p>
+            <div className="space-y-2">
+              {items.map((item, idx) => {
+                const meta = TRIGGER_LABELS[item.rule.type]
+                const Icon = meta?.icon ?? Zap
+                return (
+                  <div
+                    key={`${date}-${item.rule.id}-${item.contact.id}-${idx}`}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl border bg-white px-4 py-3',
+                      item.wouldSkip && 'opacity-50',
+                    )}
+                  >
+                    <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', meta?.color ?? 'text-gray-500 bg-gray-100')}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn('text-sm font-medium text-gray-900', item.wouldSkip && 'line-through')}>{item.contact.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{item.rule.name} · {item.contact.phone}</p>
+                    </div>
+                    {item.wouldSkip && (
+                      <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                        já enviado / opt-out
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// --- Tab: Histórico ---
+function HistoryTab() {
+  const qc = useQueryClient()
+  const [page, setPage] = useState(1)
+  const [ruleId, setRuleId] = useState('')
+  const [status, setStatus] = useState('')
+  const limit = 50
+
+  const { data: rules = [] } = useQuery<AutomationRule[]>({
+    queryKey: ['automations'],
+    queryFn: () => api.get('/automations').then((r) => r.data),
+  })
+
+  const { data, isLoading } = useQuery<{
+    data: AutomationExecution[]
+    total: number
+    page: number
+    limit: number
+  }>({
+    queryKey: ['automations-history', page, ruleId, status],
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+      if (ruleId) params.set('ruleId', ruleId)
+      if (status) params.set('status', status)
+      return api.get(`/automations/history?${params}`).then((r) => r.data)
+    },
+  })
+
+  const retryMutation = useMutation({
+    mutationFn: (id: string) => api.post(`/automations/executions/${id}/retry`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['automations-history'] })
+      toast({ title: 'Reenvio agendado', variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: 'Erro ao retentar', description: err.response?.data?.message, variant: 'destructive' }),
+  })
+
+  const executions = data?.data ?? []
+  const total = data?.total ?? 0
+  const totalPages = Math.ceil(total / limit)
+
+  function resetPage() { setPage(1) }
+
+  function statusBadge(exec: AutomationExecution) {
+    if (exec.status === 'failed') {
+      return <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700"><XCircle className="h-3 w-3" />Falhou</span>
+    }
+    return <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700"><CheckCircle2 className="h-3 w-3" />Enviado</span>
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <select
+          value={ruleId}
+          onChange={(e) => { setRuleId(e.target.value); resetPage() }}
+          className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">Todas as automações</option>
+          {rules.map((r) => (
+            <option key={r.id} value={r.id}>{r.name}</option>
+          ))}
+        </select>
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); resetPage() }}
+          className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+        >
+          <option value="">Todos os status</option>
+          <option value="sent">Enviado</option>
+          <option value="failed">Falhou</option>
+        </select>
+      </div>
+
+      {isLoading && <p className="text-center text-sm text-muted-foreground py-12">Carregando...</p>}
+
+      {!isLoading && executions.length === 0 && (
+        <div className="rounded-2xl border border-dashed p-12 text-center">
+          <History className="mx-auto h-8 w-8 text-gray-300 mb-3" />
+          <p className="text-sm font-medium text-gray-500">Nenhum histórico encontrado</p>
+        </div>
+      )}
+
+      {executions.length > 0 && (
+        <div className="rounded-xl border bg-white overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-gray-50 text-xs text-gray-500">
+                <th className="px-4 py-2.5 text-left font-medium">Data</th>
+                <th className="px-4 py-2.5 text-left font-medium">Contato</th>
+                <th className="px-4 py-2.5 text-left font-medium">Automação</th>
+                <th className="px-4 py-2.5 text-left font-medium">Status</th>
+                <th className="px-4 py-2.5 text-center font-medium">Entregue</th>
+                <th className="px-4 py-2.5 text-center font-medium">Lido</th>
+                <th className="px-4 py-2.5 text-center font-medium">Respondeu</th>
+                <th className="px-4 py-2.5 text-left font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {executions.map((exec) => (
+                <tr key={exec.id} className="border-b last:border-0 hover:bg-gray-50/50">
+                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(exec.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' } as Intl.DateTimeFormatOptions)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-900 truncate max-w-[140px]">{(exec as any).contactName || exec.contact?.name || '—'}</p>
+                    <p className="text-xs text-muted-foreground">{(exec as any).contactPhone || exec.contact?.phone || ''}</p>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-700 truncate max-w-[120px]">
+                    {(exec as any).ruleName || exec.rule?.name || '—'}
+                  </td>
+                  <td className="px-4 py-3">{statusBadge(exec)}</td>
+                  <td className="px-4 py-3 text-center">
+                    {exec.messageStatus === 'delivered' || exec.messageStatus === 'read'
+                      ? <span title="Entregue"><Check className="h-4 w-4 text-green-500 mx-auto" /></span>
+                      : <span className="text-gray-300 text-xs">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {exec.messageStatus === 'read'
+                      ? <span title="Lido"><MailOpen className="h-4 w-4 text-blue-500 mx-auto" /></span>
+                      : <span className="text-gray-300 text-xs">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {exec.responded
+                      ? <span title="Respondeu"><Reply className="h-4 w-4 text-purple-500 mx-auto" /></span>
+                      : <span className="text-gray-300 text-xs">—</span>}
+                  </td>
+                  <td className="px-4 py-3">
+                    {exec.status === 'failed' && (
+                      <button
+                        onClick={() => retryMutation.mutate(exec.id)}
+                        disabled={retryMutation.isPending}
+                        className="flex items-center gap-1 rounded-lg border px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        title="Retentar"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Retentar
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <p className="text-muted-foreground">
+            {total} registro{total !== 1 ? 's' : ''} · página {page} de {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="gap-1"
+            >
+              Próxima
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// --- Main Page ---
+export default function AutomationsPage() {
+  const [tab, setTab] = useState<'rules' | 'agenda' | 'history'>('rules')
+
+  const tabs = [
+    { key: 'rules' as const, label: 'Regras', icon: List },
+    { key: 'agenda' as const, label: 'Agenda', icon: Calendar },
+    { key: 'history' as const, label: 'Histórico', icon: History },
+  ]
+
+  return (
+    <div className="flex-1 overflow-y-auto p-8">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold text-gray-900">Automações</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Disparos automáticos por aniversário, pagamento em atraso e recompra
+          </p>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-6 flex border-b">
+          {tabs.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+                tab === key
+                  ? 'border-green-600 text-green-700'
+                  : 'border-transparent text-muted-foreground hover:text-gray-700',
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'rules' && <RulesTab />}
+        {tab === 'agenda' && <AgendaTab />}
+        {tab === 'history' && <HistoryTab />}
       </div>
     </div>
   )

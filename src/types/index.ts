@@ -58,6 +58,7 @@ export interface Contact {
   externalId?: string | null
   tags?: Tag[]
   metadata?: Record<string, any>
+  automationOptOut?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -274,12 +275,34 @@ export interface AutomationExecution {
   id: string
   companyId: string
   ruleId: string
+  rule?: { id: string; name: string; type: AutomationTriggerType }
   contactId: string
   contact?: Contact
   dedupeKey: string
+  conversationId: string | null
+  resolvedMessage: string | null
+  resolvedTemplateVariables: string[] | null
   status: AutomationExecutionStatus
   error: string | null
+  // joined from messages:
+  messageStatus?: string | null
+  responded?: boolean
   createdAt: string
+}
+
+export interface UpcomingDispatch {
+  date: string
+  rule: { id: string; name: string; type: AutomationTriggerType }
+  contact: { id: string; name: string; phone: string }
+  wouldSkip: boolean
+}
+
+export interface AutomationStats {
+  sent: number
+  failed: number
+  delivered: number
+  read: number
+  responded: number
 }
 
 export interface ContactProductSetting {

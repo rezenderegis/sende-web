@@ -20,7 +20,7 @@ function toDays(value: string, unit: Unit): number | undefined {
 
 interface ProductPickerProps {
   value: string
-  onChange: (productId: string) => void
+  onChange: (productId: string, product?: Product) => void
   disabled?: boolean
 }
 
@@ -44,7 +44,7 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
       }).then((r) => r.data as Product),
     onSuccess: (product) => {
       qc.invalidateQueries({ queryKey: ['products'] })
-      onChange(product.id)
+      onChange(product.id, product)
       setNewName('')
       setNewValue('')
       setNewUnit('meses')
@@ -117,7 +117,10 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
     <div className="flex gap-2">
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          const p = products.find((p) => p.id === e.target.value)
+          onChange(e.target.value, p)
+        }}
         disabled={disabled}
         className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
       >

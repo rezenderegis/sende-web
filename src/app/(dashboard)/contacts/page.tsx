@@ -578,7 +578,12 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                     <label className="mb-1 block text-xs font-medium text-gray-700">Produto <span className="text-red-500">*</span></label>
                     <ProductPicker
                       value={saleForm.productId}
-                      onChange={(id) => setSaleForm((f) => ({ ...f, productId: id }))}
+                      onChange={(id, product) => setSaleForm((f) => ({
+                        ...f,
+                        productId: id,
+                        unitPrice: product?.defaultPrice != null ? String(product.defaultPrice) : f.unitPrice,
+                        totalValue: product?.defaultPrice != null ? String(Number(product.defaultPrice) * (parseInt(f.quantity) || 1)) : f.totalValue,
+                      }))}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">

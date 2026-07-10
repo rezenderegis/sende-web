@@ -252,6 +252,7 @@ export interface Product {
   id: string
   companyId: string
   name: string
+  defaultPrice: number | null
   repurchaseIntervalDays: number | null
   createdAt: string
   updatedAt: string

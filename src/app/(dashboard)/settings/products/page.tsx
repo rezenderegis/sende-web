@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Pencil, Check, X, Package, RefreshCw } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, Package, RefreshCw, DollarSign } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -71,10 +71,12 @@ export default function ProductsSettingsPage() {
   const qc = useQueryClient()
   const [showNew, setShowNew] = useState(false)
   const [newName, setNewName] = useState('')
+  const [newPrice, setNewPrice] = useState('')
   const [newValue, setNewValue] = useState('')
   const [newUnit, setNewUnit] = useState<Unit>('meses')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
+  const [editPrice, setEditPrice] = useState('')
   const [editValue, setEditValue] = useState('')
   const [editUnit, setEditUnit] = useState<Unit>('meses')
 
@@ -87,11 +89,13 @@ export default function ProductsSettingsPage() {
     mutationFn: () =>
       api.post('/products', {
         name: newName.trim(),
+        defaultPrice: newPrice ? parseFloat(newPrice.replace(',', '.')) : undefined,
         repurchaseIntervalDays: toDays(newValue, newUnit),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['products'] })
       setNewName('')
+      setNewPrice('')
       setNewValue('')
       setNewUnit('meses')
       setShowNew(false)
@@ -109,6 +113,7 @@ export default function ProductsSettingsPage() {
     mutationFn: (id: string) =>
       api.patch(`/products/${id}`, {
         name: editName.trim(),
+        defaultPrice: editPrice ? parseFloat(editPrice.replace(',', '.')) : null,
         repurchaseIntervalDays: toDays(editValue, editUnit) ?? null,
       }),
     onSuccess: () => {
@@ -137,6 +142,7 @@ export default function ProductsSettingsPage() {
   function startEdit(product: Product) {
     setEditingId(product.id)
     setEditName(product.name)
+    setEditPrice(product.defaultPrice != null ? String(product.defaultPrice) : '')
     if (product.repurchaseIntervalDays) {
       const { value, unit } = fromDays(product.repurchaseIntervalDays)
       setEditValue(value)
@@ -184,6 +190,28 @@ export default function ProductsSettingsPage() {
             </div>
 
             <div>
+              <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1.5">
+                <DollarSign className="h-3.5 w-3.5 text-green-600" />
+                Preço padrão
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">R$</span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0,00 — opcional"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Preenchido automaticamente ao selecionar este produto em uma venda.
+              </p>
+            </div>
+
+            <div>
               <label className="mb-1.5 block text-xs font-medium text-gray-700 flex items-center gap-1.5">
                 <RefreshCw className="h-3.5 w-3.5 text-green-600" />
                 Recorrência de recompra
@@ -206,7 +234,7 @@ export default function ProductsSettingsPage() {
                 variant="outline"
                 size="sm"
                 className="flex-1"
-                onClick={() => { setShowNew(false); setNewName(''); setNewValue(''); setNewUnit('meses') }}
+                onClick={() => { setShowNew(false); setNewName(''); setNewPrice(''); setNewValue(''); setNewUnit('meses') }}
               >
                 Cancelar
               </Button>
@@ -248,6 +276,24 @@ export default function ProductsSettingsPage() {
                   />
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1">
+                      <DollarSign className="h-3 w-3 text-green-600" />
+                      Preço padrão
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">R$</span>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0,00"
+                        value={editPrice}
+                        onChange={(e) => setEditPrice(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1">
                       <RefreshCw className="h-3 w-3 text-green-600" />
                       Recorrência de recompra
                     </label>
@@ -278,7 +324,14 @@ export default function ProductsSettingsPage() {
               ) : (
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-gray-900">{product.name}</p>
+                    <div className="flex items-center gap-3">
+                      <p className="font-medium text-sm text-gray-900">{product.name}</p>
+                      {product.defaultPrice != null && (
+                        <span className="text-sm font-semibold text-green-700">
+                          {Number(product.defaultPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </span>
+                      )}
+                    </div>
                     {product.repurchaseIntervalDays ? (
                       <p className="mt-0.5 flex items-center gap-1 text-xs text-green-700">
                         <RefreshCw className="h-3 w-3" />

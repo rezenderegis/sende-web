@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, Upload, Plus, X, CheckCircle2, Clock, Filter, User, Phone, Mail, Building2, Package, Calendar, Hash, RefreshCw, FileText, Pencil } from 'lucide-react'
+import { ShoppingBag, Upload, Plus, X, CheckCircle2, Clock, Filter, User, Phone, Mail, Building2, Package, Calendar, Hash, RefreshCw, FileText, Pencil, Search, AlertCircle } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -160,6 +160,8 @@ function formatDate(d: string) {
   return d.slice(0, 10).split('-').reverse().join('/')
 }
 
+type ContactSearch = { status: 'idle' } | { status: 'loading' } | { status: 'found'; contact: Contact } | { status: 'not_found' }
+
 export default function SalesPage() {
   const router = useRouter()
   const qc = useQueryClient()
@@ -175,6 +177,31 @@ export default function SalesPage() {
     contactPhone: '', productId: '', saleDate: new Date().toISOString().slice(0, 10),
     quantity: '1', unitPrice: '', totalValue: '', paymentStatus: 'pending', dueDate: '', notes: '',
   })
+  const [contactSearch, setContactSearch] = useState<ContactSearch>({ status: 'idle' })
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const phone = saleForm.contactPhone.replace(/\D/g, '')
+    if (phone.length < 8) {
+      setContactSearch({ status: 'idle' })
+      return
+    }
+    setContactSearch({ status: 'loading' })
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await api.get('/contacts/by-phone', { params: { phone } })
+        if (res.data) {
+          setContactSearch({ status: 'found', contact: res.data })
+        } else {
+          setContactSearch({ status: 'not_found' })
+        }
+      } catch {
+        setContactSearch({ status: 'not_found' })
+      }
+    }, 500)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [saleForm.contactPhone])
 
   const { data: sales = [], isLoading } = useQuery<Sale[]>({
     queryKey: ['sales', statusFilter, productFilter, startDate, endDate],
@@ -195,13 +222,8 @@ export default function SalesPage() {
 
   const createSaleMutation = useMutation({
     mutationFn: async () => {
-      const contact: Contact = await api.get('/contacts', { params: {} }).then(async (r) => {
-        const all = r.data as Contact[]
-        const phone = saleForm.contactPhone.replace(/\D/g, '')
-        const found = all.find((c) => c.phone.endsWith(phone) || phone.endsWith(c.phone.slice(-8)))
-        if (!found) throw new Error('Contato não encontrado para este número')
-        return found
-      })
+      if (contactSearch.status !== 'found') throw new Error('Contato não encontrado para este número')
+      const contact = contactSearch.contact
       return api.post('/sales', {
         contactId: contact.id,
         productId: saleForm.productId,
@@ -217,6 +239,7 @@ export default function SalesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sales'] })
       setSaleForm({ contactPhone: '', productId: '', saleDate: new Date().toISOString().slice(0, 10), quantity: '1', unitPrice: '', totalValue: '', paymentStatus: 'pending', dueDate: '', notes: '' })
+      setContactSearch({ status: 'idle' })
       setShowNewSale(false)
       toast({ title: 'Venda registrada', variant: 'success' })
     },
@@ -313,14 +336,49 @@ export default function SalesPage() {
         <div className="mb-6 rounded-xl border bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-900">Nova venda</h2>
-            <button onClick={() => setShowNewSale(false)} className="text-muted-foreground hover:text-gray-700">
+            <button onClick={() => { setShowNewSale(false); setContactSearch({ status: 'idle' }) }} className="text-muted-foreground hover:text-gray-700">
               <X className="h-4 w-4" />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700">Telefone do contato <span className="text-red-500">*</span></label>
-              <Input placeholder="(61) 99999-9999" value={saleForm.contactPhone} onChange={(e) => setSaleForm((f) => ({ ...f, contactPhone: e.target.value }))} />
+              <div className="relative">
+                <Input
+                  placeholder="(61) 99999-9999"
+                  value={saleForm.contactPhone}
+                  onChange={(e) => setSaleForm((f) => ({ ...f, contactPhone: e.target.value }))}
+                  className={contactSearch.status === 'found' ? 'border-green-400 pr-8' : contactSearch.status === 'not_found' ? 'border-red-400 pr-8' : ''}
+                />
+                {contactSearch.status === 'loading' && (
+                  <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-gray-400 animate-pulse" />
+                )}
+                {contactSearch.status === 'found' && (
+                  <CheckCircle2 className="absolute right-2.5 top-2.5 h-4 w-4 text-green-500" />
+                )}
+                {contactSearch.status === 'not_found' && (
+                  <AlertCircle className="absolute right-2.5 top-2.5 h-4 w-4 text-red-400" />
+                )}
+              </div>
+              {contactSearch.status === 'found' && (
+                <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-semibold text-green-700">
+                    {contactSearch.contact.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-green-800">{contactSearch.contact.name}</p>
+                    {contactSearch.contact.companyName && (
+                      <p className="text-xs text-green-600">{contactSearch.contact.companyName}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {contactSearch.status === 'not_found' && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+                  <AlertCircle className="h-3 w-3" />
+                  Nenhum contato cadastrado com este número
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700">Produto <span className="text-red-500">*</span></label>
@@ -367,11 +425,11 @@ export default function SalesPage() {
             </div>
           </div>
           <div className="mt-4 flex gap-2 justify-end">
-            <Button variant="outline" size="sm" onClick={() => setShowNewSale(false)}>Cancelar</Button>
+            <Button variant="outline" size="sm" onClick={() => { setShowNewSale(false); setContactSearch({ status: 'idle' }) }}>Cancelar</Button>
             <Button
               size="sm"
               className="gap-1"
-              disabled={!saleForm.contactPhone || !saleForm.productId || !saleForm.unitPrice || createSaleMutation.isPending}
+              disabled={contactSearch.status !== 'found' || !saleForm.productId || !saleForm.unitPrice || createSaleMutation.isPending}
               onClick={() => createSaleMutation.mutate()}
             >
               {createSaleMutation.isPending ? 'Registrando...' : 'Registrar venda'}

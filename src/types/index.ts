@@ -140,6 +140,11 @@ export type BroadcastMode = 'standard' | 'csv'
 export type BroadcastStatus = 'draft' | 'queued' | 'sending' | 'completed' | 'paused' | 'failed'
 export type RecipientStatus = 'pending' | 'sent' | 'failed'
 
+export interface IntentRule {
+  intent: string
+  tagId: string
+}
+
 export interface Broadcast {
   id: string
   companyId: string
@@ -152,6 +157,7 @@ export interface Broadcast {
   templateName: string | null
   templateLanguage: string | null
   campaignPrompt: string | null
+  intentRules: IntentRule[] | null
   tagId: string | null
   tag?: Tag | null
   status: BroadcastStatus

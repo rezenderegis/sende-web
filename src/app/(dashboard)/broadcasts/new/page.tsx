@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, Send, BotMessageSquare, X, Search, ExternalLink, Upload, FileText, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Send, BotMessageSquare, X, Search, ExternalLink, Upload, FileText, AlertCircle, CheckCircle2, Plus, Tag as TagIcon } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
-import type { WhatsappNumber, Tag, Broadcast, WhatsappTemplate, CampaignPrompt } from '@/types'
+import type { WhatsappNumber, Tag, Broadcast, WhatsappTemplate, CampaignPrompt, IntentRule } from '@/types'
 
 const steps = ['Configuração', 'Destinatários', 'Revisar e enviar']
 
@@ -126,6 +126,7 @@ function NewBroadcastContent() {
     templateLanguage: 'pt_BR',
     campaignPrompt: '',
   })
+  const [intentRules, setIntentRules] = useState<IntentRule[]>([])
 
   const [recipients, setRecipients] = useState<{ tagId?: string; contactIds?: string[] }>({})
   const [recipientMode, setRecipientMode] = useState<'contacts' | 'csv'>('contacts')
@@ -159,6 +160,7 @@ function NewBroadcastContent() {
         templateLanguage: draftData.templateLanguage ?? 'pt_BR',
         campaignPrompt: draftData.campaignPrompt ?? '',
       })
+      setIntentRules(draftData.intentRules ?? [])
       // Se já tem destinatários, começa no passo 1
       if (draftData.totalCount > 0) {
         setRecipientsAdded(true)
@@ -200,6 +202,7 @@ function NewBroadcastContent() {
             ? { message: form.message }
             : { templateName: form.templateName, templateLanguage: form.templateLanguage }),
           ...(form.campaignPrompt.trim() ? { campaignPrompt: form.campaignPrompt.trim() } : {}),
+          intentRules: intentRules.filter((r) => r.intent.trim() && r.tagId),
         })
         .then((r) => r.data),
     onSuccess: (data: Broadcast) => {
@@ -225,6 +228,7 @@ function NewBroadcastContent() {
           templateName: form.type === 'template' ? form.templateName : undefined,
           templateLanguage: form.type === 'template' ? form.templateLanguage : undefined,
           campaignPrompt: form.campaignPrompt.trim() || undefined,
+          intentRules: intentRules.filter((r) => r.intent.trim() && r.tagId),
         })
         .then((r) => r.data),
     onSuccess: (data: Broadcast) => {
@@ -604,6 +608,69 @@ function NewBroadcastContent() {
             </p>
           </div>
 
+          {/* Intent Rules */}
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <Label>
+                Intenções de resposta{' '}
+                <span className="text-muted-foreground font-normal">(opcional)</span>
+              </Label>
+              <button
+                type="button"
+                onClick={() => setIntentRules((r) => [...r, { intent: '', tagId: '' }])}
+                className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 font-medium transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Adicionar intenção
+              </button>
+            </div>
+
+            {intentRules.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Quando o contato responder com uma intenção detectada pela IA, a tag correspondente será aplicada automaticamente.
+              </p>
+            )}
+
+            {intentRules.map((rule, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Ex: cliente quer agendar uma reunião"
+                  value={rule.intent}
+                  onChange={(e) =>
+                    setIntentRules((rules) =>
+                      rules.map((r, idx) => (idx === i ? { ...r, intent: e.target.value } : r)),
+                    )
+                  }
+                  className="flex-1 h-9 rounded-md border border-gray-200 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                />
+                <select
+                  value={rule.tagId}
+                  onChange={(e) =>
+                    setIntentRules((rules) =>
+                      rules.map((r, idx) => (idx === i ? { ...r, tagId: e.target.value } : r)),
+                    )
+                  }
+                  className="h-9 rounded-md border border-gray-200 px-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-green-500"
+                >
+                  <option value="">Tag...</option>
+                  {tags.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setIntentRules((rules) => rules.filter((_, idx) => idx !== i))}
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+
           <Button
             className="w-full gap-2"
             disabled={!step0Valid || isPendingStep0}
@@ -945,6 +1012,30 @@ function NewBroadcastContent() {
               <p className="text-xs text-orange-600">
                 O bot usará este prompt por 72h após o envio.
               </p>
+            </div>
+          )}
+
+          {intentRules.filter((r) => r.intent.trim() && r.tagId).length > 0 && (
+            <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <TagIcon className="h-3.5 w-3.5 text-violet-700" />
+                <p className="text-xs font-medium text-violet-800">Intenções de resposta configuradas</p>
+              </div>
+              {intentRules.filter((r) => r.intent.trim() && r.tagId).map((r, i) => {
+                const tag = tags.find((t) => t.id === r.tagId)
+                return (
+                  <div key={i} className="flex items-center gap-2 text-xs text-violet-700">
+                    <span className="flex-1 truncate">"{r.intent}"</span>
+                    <span>→</span>
+                    <span
+                      className="shrink-0 rounded-full px-2 py-0.5 text-white text-xs font-medium"
+                      style={{ backgroundColor: tag?.color ?? '#8b5cf6' }}
+                    >
+                      {tag?.name ?? r.tagId}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           )}
 

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, BotMessageSquare, Check, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, BotMessageSquare, Check, X, Play, Send, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
 import type { CampaignPrompt } from '@/types'
+
+type ChatMsg = { role: 'user' | 'assistant'; content: string }
 
 function PromptForm({
   initial,
@@ -64,11 +66,128 @@ function PromptForm({
   )
 }
 
+function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
+  const [history, setHistory] = useState<ChatMsg[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showPrompt, setShowPrompt] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [history, loading])
+
+  async function send() {
+    const text = input.trim()
+    if (!text || loading) return
+    const newHistory: ChatMsg[] = [...history, { role: 'user', content: text }]
+    setHistory(newHistory)
+    setInput('')
+    setLoading(true)
+    try {
+      const res = await api.post('/ai/test-chat', {
+        promptContent: prompt.content,
+        contactName: 'Visitante',
+        history: newHistory,
+      })
+      setHistory((h) => [...h, { role: 'assistant', content: res.data.reply }])
+    } catch {
+      setHistory((h) => [...h, { role: 'assistant', content: '⚠️ Erro ao obter resposta. Verifique a chave de API.' }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4 space-y-3">
+      {/* Toggle prompt preview */}
+      <button
+        onClick={() => setShowPrompt((v) => !v)}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-gray-700 transition-colors"
+      >
+        {showPrompt ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        {showPrompt ? 'Ocultar prompt' : 'Ver prompt usado'}
+      </button>
+
+      {showPrompt && (
+        <pre className="rounded-lg bg-gray-50 border px-3 py-2 text-xs text-gray-600 font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
+          {prompt.content}
+        </pre>
+      )}
+
+      {/* Chat area */}
+      <div className="rounded-xl border bg-gray-50 flex flex-col h-72">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {history.length === 0 && (
+            <p className="text-center text-xs text-muted-foreground mt-8">
+              Envie uma mensagem para testar o comportamento do bot com este prompt
+            </p>
+          )}
+          {history.map((msg, i) => (
+            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`rounded-2xl px-3 py-2 text-sm max-w-[80%] whitespace-pre-wrap ${
+                  msg.role === 'user'
+                    ? 'bg-green-600 text-white rounded-br-sm'
+                    : 'bg-white border text-gray-800 rounded-bl-sm'
+                }`}
+              >
+                {msg.content}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="bg-white border rounded-2xl rounded-bl-sm px-3 py-2">
+                <span className="flex gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:0ms]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:150ms]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:300ms]" />
+                </span>
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Input */}
+        <div className="flex gap-2 border-t bg-white rounded-b-xl p-2">
+          <input
+            className="flex-1 rounded-lg border px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="Digite uma mensagem..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+            disabled={loading}
+          />
+          <button
+            onClick={send}
+            disabled={!input.trim() || loading}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-40 transition-colors"
+          >
+            <Send className="h-3.5 w-3.5" />
+          </button>
+          {history.length > 0 && (
+            <button
+              onClick={() => setHistory([])}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-muted-foreground hover:text-gray-700 transition-colors"
+              title="Limpar conversa"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PromptsPage() {
   const qc = useQueryClient()
   const [showNew, setShowNew] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [testingId, setTestingId] = useState<string | null>(null)
 
   const { data: prompts = [], isLoading } = useQuery<CampaignPrompt[]>({
     queryKey: ['campaign-prompts'],
@@ -190,6 +309,15 @@ export default function PromptsPage() {
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <Button
+                        size="sm"
+                        variant="outline"
+                        className={`gap-1.5 h-7 text-xs ${testingId === prompt.id ? 'border-green-400 text-green-700 bg-green-50' : ''}`}
+                        onClick={() => setTestingId(testingId === prompt.id ? null : prompt.id)}
+                      >
+                        <Play className="h-3 w-3" />
+                        {testingId === prompt.id ? 'Fechar teste' : 'Testar'}
+                      </Button>
+                      <Button
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-muted-foreground hover:text-gray-900"
@@ -210,6 +338,7 @@ export default function PromptsPage() {
                   <p className="text-sm text-gray-600 font-mono whitespace-pre-wrap line-clamp-4">
                     {prompt.content}
                   </p>
+                  {testingId === prompt.id && <PromptTestChat prompt={prompt} />}
                 </>
               )}
             </div>

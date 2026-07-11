@@ -955,7 +955,14 @@ function HistoryTab() {
                   <td className="px-4 py-3 text-xs text-gray-700 truncate max-w-[120px]">
                     {(exec as any).ruleName || exec.rule?.name || '—'}
                   </td>
-                  <td className="px-4 py-3">{statusBadge(exec)}</td>
+                  <td className="px-4 py-3">
+                    {statusBadge(exec)}
+                    {exec.error && (
+                      <p className="mt-1 text-xs text-red-500 max-w-[200px]" title={exec.error}>
+                        {exec.error.length > 80 ? exec.error.slice(0, 80) + '…' : exec.error}
+                      </p>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-center">
                     {exec.messageStatus === 'delivered' || exec.messageStatus === 'read'
                       ? <span title="Entregue"><Check className="h-4 w-4 text-green-500 mx-auto" /></span>

@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, BotMessageSquare, Check, X, Play, Send, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, BotMessageSquare, Check, X, Play, Send, RotateCcw, ChevronDown, ChevronUp, History, CornerUpLeft } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
-import type { CampaignPrompt, WhatsappNumber, WhatsappTemplate } from '@/types'
+import type { CampaignPrompt, PromptVersion, WhatsappNumber, WhatsappTemplate } from '@/types'
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string }
 
@@ -280,12 +280,121 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
   )
 }
 
+function PromptHistory({ prompt, onClose }: { prompt: CampaignPrompt; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [confirmRestoreId, setConfirmRestoreId] = useState<string | null>(null)
+
+  const { data: versions = [], isLoading } = useQuery<PromptVersion[]>({
+    queryKey: ['prompt-versions', prompt.id],
+    queryFn: () => api.get(`/campaign-prompts/${prompt.id}/versions`).then((r) => r.data),
+  })
+
+  const restoreMutation = useMutation({
+    mutationFn: (versionId: string) =>
+      api.post(`/campaign-prompts/${prompt.id}/restore/${versionId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['campaign-prompts'] })
+      qc.invalidateQueries({ queryKey: ['prompt-versions', prompt.id] })
+      setConfirmRestoreId(null)
+      toast({ title: 'Versão restaurada', variant: 'success' })
+      onClose()
+    },
+    onError: () => toast({ title: 'Erro ao restaurar versão', variant: 'destructive' }),
+  })
+
+  function formatDate(dateStr: string) {
+    const d = new Date(dateStr)
+    return d.toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+          <History className="h-4 w-4" />
+          Histórico de versões
+        </div>
+        <button onClick={onClose} className="text-xs text-muted-foreground hover:text-gray-700">
+          Fechar
+        </button>
+      </div>
+
+      {isLoading && <p className="text-xs text-muted-foreground">Carregando...</p>}
+
+      {!isLoading && versions.length === 0 && (
+        <p className="text-xs text-muted-foreground">
+          Nenhuma versão anterior. O histórico é salvo automaticamente a cada edição.
+        </p>
+      )}
+
+      <div className="space-y-2">
+        {versions.map((v) => (
+          <div key={v.id} className="rounded-lg border bg-gray-50 overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-3 py-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs text-muted-foreground shrink-0">{formatDate(v.savedAt)}</span>
+                {v.name !== prompt.name && (
+                  <span className="text-xs text-gray-500 truncate">· nome: <em>{v.name}</em></span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => setExpandedId(expandedId === v.id ? null : v.id)}
+                  className="text-xs text-muted-foreground hover:text-gray-700 px-1.5 py-0.5 rounded hover:bg-gray-200 transition-colors"
+                >
+                  {expandedId === v.id ? 'Ocultar' : 'Ver'}
+                </button>
+                {confirmRestoreId === v.id ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => restoreMutation.mutate(v.id)}
+                      disabled={restoreMutation.isPending}
+                      className="flex items-center gap-1 rounded bg-green-600 px-2 py-0.5 text-xs text-white hover:bg-green-700 disabled:opacity-50"
+                    >
+                      <Check className="h-3 w-3" />
+                      Confirmar
+                    </button>
+                    <button
+                      onClick={() => setConfirmRestoreId(null)}
+                      className="rounded border px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-100"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmRestoreId(v.id)}
+                    className="flex items-center gap-1 rounded border px-2 py-0.5 text-xs text-gray-600 hover:bg-white hover:border-green-400 hover:text-green-700 transition-colors"
+                  >
+                    <CornerUpLeft className="h-3 w-3" />
+                    Restaurar
+                  </button>
+                )}
+              </div>
+            </div>
+            {expandedId === v.id && (
+              <pre className="border-t px-3 py-2 text-xs text-gray-600 font-mono whitespace-pre-wrap bg-white max-h-48 overflow-y-auto">
+                {v.content}
+              </pre>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function PromptsPage() {
   const qc = useQueryClient()
   const [showNew, setShowNew] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [testingId, setTestingId] = useState<string | null>(null)
+  const [historyId, setHistoryId] = useState<string | null>(null)
 
   const { data: prompts = [], isLoading } = useQuery<CampaignPrompt[]>({
     queryKey: ['campaign-prompts'],
@@ -410,10 +519,19 @@ export default function PromptsPage() {
                         size="sm"
                         variant="outline"
                         className={`gap-1.5 h-7 text-xs ${testingId === prompt.id ? 'border-green-400 text-green-700 bg-green-50' : ''}`}
-                        onClick={() => setTestingId(testingId === prompt.id ? null : prompt.id)}
+                        onClick={() => { setTestingId(testingId === prompt.id ? null : prompt.id); setHistoryId(null) }}
                       >
                         <Play className="h-3 w-3" />
                         {testingId === prompt.id ? 'Fechar teste' : 'Testar'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`gap-1.5 h-7 text-xs ${historyId === prompt.id ? 'border-violet-400 text-violet-700 bg-violet-50' : ''}`}
+                        onClick={() => { setHistoryId(historyId === prompt.id ? null : prompt.id); setTestingId(null) }}
+                      >
+                        <History className="h-3 w-3" />
+                        {historyId === prompt.id ? 'Fechar' : 'Histórico'}
                       </Button>
                       <Button
                         size="icon"
@@ -437,6 +555,9 @@ export default function PromptsPage() {
                     {prompt.content}
                   </p>
                   {testingId === prompt.id && <PromptTestChat prompt={prompt} />}
+                  {historyId === prompt.id && (
+                    <PromptHistory prompt={prompt} onClose={() => setHistoryId(null)} />
+                  )}
                 </>
               )}
             </div>

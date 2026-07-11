@@ -249,6 +249,14 @@ export interface CampaignPrompt {
   updatedAt: string
 }
 
+export interface PromptVersion {
+  id: string
+  promptId: string
+  name: string
+  content: string
+  savedAt: string
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   total: number

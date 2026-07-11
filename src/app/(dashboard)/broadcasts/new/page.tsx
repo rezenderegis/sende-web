@@ -348,7 +348,7 @@ function NewBroadcastContent() {
   }
 
   function handleStep1Continue() {
-    if (recipientMode === 'csv' || templateRequiresCsv) {
+    if (recipientMode === 'csv') {
       if (csvFile) {
         addCsvMutation.mutate()
       } else if (recipientsAdded) {
@@ -386,7 +386,7 @@ function NewBroadcastContent() {
     (form.type === 'text' ? form.message.trim() : form.templateName.trim())
 
   const step1Valid =
-    recipientMode === 'csv' || templateRequiresCsv
+    recipientMode === 'csv'
       ? csvFile !== null || recipientsAdded
       : recipientsAdded ||
         recipients.tagId ||
@@ -701,26 +701,26 @@ function NewBroadcastContent() {
       {step === 1 && (
         <div className="rounded-xl border bg-white p-6 space-y-5">
           {/* Mode toggle */}
-          {templateRequiresCsv ? (
+          <div className="flex rounded-lg border p-1 gap-1">
+            {(['contacts', 'csv'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setRecipientMode(mode)}
+                className={cn(
+                  'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
+                  recipientMode === mode
+                    ? 'bg-gray-900 text-white'
+                    : 'text-muted-foreground hover:text-gray-900',
+                )}
+              >
+                {mode === 'contacts' ? 'Contatos / Tags' : 'Importar CSV'}
+              </button>
+            ))}
+          </div>
+
+          {templateRequiresCsv && recipientMode === 'contacts' && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
-              <span className="font-medium">CSV obrigatório</span> — o template <span className="font-mono font-medium">{form.templateName}</span> tem {selectedTemplate?.variablesCount} variável(is). Para personalizar cada mensagem, envie via planilha com as colunas de variáveis preenchidas.
-            </div>
-          ) : (
-            <div className="flex rounded-lg border p-1 gap-1">
-              {(['contacts', 'csv'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setRecipientMode(mode)}
-                  className={cn(
-                    'flex-1 rounded-md py-1.5 text-sm font-medium transition-colors',
-                    recipientMode === mode
-                      ? 'bg-gray-900 text-white'
-                      : 'text-muted-foreground hover:text-gray-900',
-                  )}
-                >
-                  {mode === 'contacts' ? 'Contatos / Tags' : 'Importar CSV'}
-                </button>
-              ))}
+              <span className="font-medium">Atenção</span> — o template <span className="font-mono font-medium">{form.templateName}</span> tem {selectedTemplate?.variablesCount} variável(is). Ao enviar por tag, os espaços de variáveis ficarão em branco. Use <button type="button" className="underline font-medium" onClick={() => setRecipientMode('csv')}>Importar CSV</button> para personalizar cada mensagem.
             </div>
           )}
 
@@ -786,7 +786,7 @@ function NewBroadcastContent() {
             </>
           )}
 
-          {(recipientMode === 'csv' || templateRequiresCsv) && (
+          {recipientMode === 'csv' && (
             <div className="space-y-4">
               <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800 space-y-1.5">
                 <p className="font-medium">Formato esperado do CSV:</p>

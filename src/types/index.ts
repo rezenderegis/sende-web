@@ -281,6 +281,8 @@ export interface AutomationRule {
   templateName: string | null
   templateLanguage: string | null
   templateVariables: string[] | null
+  campaignPromptId: string | null
+  campaignPrompt: string | null
   isActive: boolean
   createdAt: string
   updatedAt: string

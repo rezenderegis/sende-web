@@ -124,8 +124,8 @@ function NewBroadcastContent() {
     message: '',
     templateName: '',
     templateLanguage: 'pt_BR',
-    campaignPrompt: '',
   })
+  const [campaignPromptId, setCampaignPromptId] = useState<string | null>(null)
   const [intentRules, setIntentRules] = useState<IntentRule[]>([])
 
   const [recipients, setRecipients] = useState<{ tagId?: string; contactIds?: string[] }>({})
@@ -158,8 +158,12 @@ function NewBroadcastContent() {
         message: draftData.message ?? '',
         templateName: draftData.templateName ?? '',
         templateLanguage: draftData.templateLanguage ?? 'pt_BR',
-        campaignPrompt: draftData.campaignPrompt ?? '',
       })
+      setCampaignPromptId(draftData.campaignPromptId ?? null)
+      if (draftData.campaignPromptId) {
+        const match = campaignPrompts.find((p) => p.id === draftData.campaignPromptId)
+        if (match) setSelectedPromptName(match.name)
+      }
       setIntentRules(draftData.intentRules ?? [])
       // Se já tem destinatários, começa no passo 1
       if (draftData.totalCount > 0) {
@@ -201,7 +205,7 @@ function NewBroadcastContent() {
           ...(form.type === 'text'
             ? { message: form.message }
             : { templateName: form.templateName, templateLanguage: form.templateLanguage }),
-          ...(form.campaignPrompt.trim() ? { campaignPrompt: form.campaignPrompt.trim() } : {}),
+          ...(campaignPromptId ? { campaignPromptId } : {}),
           intentRules: intentRules.filter((r) => r.intent.trim() && r.tagId),
         })
         .then((r) => r.data),
@@ -227,7 +231,7 @@ function NewBroadcastContent() {
           message: form.type === 'text' ? form.message : undefined,
           templateName: form.type === 'template' ? form.templateName : undefined,
           templateLanguage: form.type === 'template' ? form.templateLanguage : undefined,
-          campaignPrompt: form.campaignPrompt.trim() || undefined,
+          campaignPromptId: campaignPromptId ?? undefined,
           intentRules: intentRules.filter((r) => r.intent.trim() && r.tagId),
         })
         .then((r) => r.data),
@@ -361,13 +365,13 @@ function NewBroadcastContent() {
   }
 
   function selectPrompt(p: CampaignPrompt) {
-    setForm((f) => ({ ...f, campaignPrompt: p.content }))
+    setCampaignPromptId(p.id)
     setSelectedPromptName(p.name)
     setPromptPickerOpen(false)
   }
 
   function clearPrompt() {
-    setForm((f) => ({ ...f, campaignPrompt: '' }))
+    setCampaignPromptId(null)
     setSelectedPromptName(null)
   }
 
@@ -572,39 +576,50 @@ function NewBroadcastContent() {
                 Prompt de campanha{' '}
                 <span className="text-muted-foreground font-normal">(opcional)</span>
               </Label>
-              <button
-                type="button"
-                onClick={() => setPromptPickerOpen(true)}
-                className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 font-medium transition-colors"
-              >
-                <BotMessageSquare className="h-3.5 w-3.5" />
-                {selectedPromptName ? 'Trocar prompt' : 'Selecionar da biblioteca'}
-              </button>
+              <div className="flex items-center gap-3">
+                <a
+                  href="/settings/prompts"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gray-700 transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Criar novo
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPromptPickerOpen(true)}
+                  className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 font-medium transition-colors"
+                >
+                  <BotMessageSquare className="h-3.5 w-3.5" />
+                  {selectedPromptName ? 'Trocar' : 'Selecionar da biblioteca'}
+                </button>
+              </div>
             </div>
 
-            {selectedPromptName && form.campaignPrompt && (
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+            {campaignPromptId && selectedPromptName ? (
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
                 <div className="flex items-center gap-2 min-w-0">
                   <BotMessageSquare className="h-3.5 w-3.5 shrink-0 text-green-700" />
-                  <span className="text-sm font-medium text-green-800 truncate">
-                    {selectedPromptName}
-                  </span>
+                  <span className="text-sm font-medium text-green-800 truncate">{selectedPromptName}</span>
                 </div>
                 <button onClick={clearPrompt} className="text-green-600 hover:text-green-800 shrink-0">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPromptPickerOpen(true)}
+                className="flex w-full items-center gap-2 rounded-lg border border-dashed border-gray-200 px-3 py-3 text-sm text-muted-foreground hover:border-green-400 hover:text-green-700 transition-colors"
+              >
+                <BotMessageSquare className="h-4 w-4" />
+                Nenhum prompt selecionado — clique para escolher da biblioteca
+              </button>
             )}
 
-            <Textarea
-              placeholder="Você é um assistente de vendas especializado em [produto]. Seu objetivo é..."
-              value={form.campaignPrompt}
-              onChange={(e) => setForm((f) => ({ ...f, campaignPrompt: e.target.value }))}
-              className="min-h-24 resize-none font-mono text-sm"
-            />
             <p className="text-xs text-muted-foreground">
-              Quando o contato responder, o bot usará este prompt. Ativo por 72h ou até um atendente
-              responder.
+              Quando o contato responder, o bot usará este prompt. Ativo por 72h ou até um atendente responder.
             </p>
           </div>
 

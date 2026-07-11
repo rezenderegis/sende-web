@@ -156,6 +156,7 @@ export interface Broadcast {
   message: string | null
   templateName: string | null
   templateLanguage: string | null
+  campaignPromptId: string | null
   campaignPrompt: string | null
   intentRules: IntentRule[] | null
   tagId: string | null

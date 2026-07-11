@@ -393,6 +393,7 @@ export default function PromptsPage() {
   const [showNew, setShowNew] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [testingId, setTestingId] = useState<string | null>(null)
   const [historyId, setHistoryId] = useState<string | null>(null)
 
@@ -428,9 +429,14 @@ export default function PromptsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['campaign-prompts'] })
       setDeleteId(null)
+      setDeleteConfirmText('')
       toast({ title: 'Prompt excluído' })
     },
-    onError: () => toast({ title: 'Erro ao excluir prompt', variant: 'destructive' }),
+    onError: (err: any) => toast({
+      title: 'Não foi possível excluir',
+      description: err.response?.data?.message ?? 'Erro ao excluir prompt',
+      variant: 'destructive',
+    }),
   })
 
   return (
@@ -487,23 +493,30 @@ export default function PromptsPage() {
           ) : (
             <div key={prompt.id} className="rounded-xl border bg-white p-5">
               {deleteId === prompt.id ? (
-                <div className="flex items-center justify-between gap-4">
+                <div className="space-y-3">
                   <p className="text-sm text-gray-700">
-                    Excluir <span className="font-medium">"{prompt.name}"</span>?
+                    Digite <span className="font-mono font-semibold text-red-600">{prompt.name}</span> para confirmar a exclusão:
                   </p>
-                  <div className="flex gap-2 shrink-0">
+                  <input
+                    autoFocus
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder={prompt.name}
+                    className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-red-300"
+                  />
+                  <div className="flex gap-2">
                     <Button
                       size="sm"
                       variant="destructive"
                       className="gap-1.5"
-                      disabled={deleteMutation.isPending}
+                      disabled={deleteConfirmText !== prompt.name || deleteMutation.isPending}
                       onClick={() => deleteMutation.mutate(prompt.id)}
                     >
-                      <Check className="h-3.5 w-3.5" />
-                      Confirmar
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {deleteMutation.isPending ? 'Excluindo...' : 'Excluir permanentemente'}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setDeleteId(null)}>
-                      <X className="h-3.5 w-3.5" />
+                    <Button size="sm" variant="outline" onClick={() => { setDeleteId(null); setDeleteConfirmText('') }}>
+                      Cancelar
                     </Button>
                   </div>
                 </div>
@@ -545,7 +558,7 @@ export default function PromptsPage() {
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                        onClick={() => setDeleteId(prompt.id)}
+                        onClick={() => { setDeleteId(prompt.id); setDeleteConfirmText('') }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

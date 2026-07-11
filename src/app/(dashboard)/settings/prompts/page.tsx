@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, BotMessageSquare, Check, X, Play, Send, RotateCcw, ChevronDown, ChevronUp, History, CornerUpLeft } from 'lucide-react'
+import { Plus, Pencil, Trash2, BotMessageSquare, Check, X, Play, Send, RotateCcw, ChevronDown, ChevronUp, History, CornerUpLeft, Expand } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -396,6 +396,7 @@ export default function PromptsPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [testingId, setTestingId] = useState<string | null>(null)
   const [historyId, setHistoryId] = useState<string | null>(null)
+  const [viewingPrompt, setViewingPrompt] = useState<CampaignPrompt | null>(null)
 
   const { data: prompts = [], isLoading } = useQuery<CampaignPrompt[]>({
     queryKey: ['campaign-prompts'],
@@ -550,6 +551,15 @@ export default function PromptsPage() {
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-muted-foreground hover:text-gray-900"
+                        title="Ver prompt completo"
+                        onClick={() => setViewingPrompt(prompt)}
+                      >
+                        <Expand className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground hover:text-gray-900"
                         onClick={() => setEditingId(prompt.id)}
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -577,6 +587,48 @@ export default function PromptsPage() {
           ),
         )}
       </div>
+
+      {/* Modal de visualização completa */}
+      {viewingPrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setViewingPrompt(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl rounded-xl bg-white shadow-xl flex flex-col max-h-[80vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+              <div className="flex items-center gap-2">
+                <BotMessageSquare className="h-4 w-4 text-muted-foreground" />
+                <h2 className="font-semibold text-gray-900">{viewingPrompt.name}</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 h-7 text-xs"
+                  onClick={() => { setEditingId(viewingPrompt.id); setViewingPrompt(null) }}
+                >
+                  <Pencil className="h-3 w-3" />
+                  Editar
+                </Button>
+                <button onClick={() => setViewingPrompt(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5">
+              <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700 leading-relaxed">
+                {viewingPrompt.content}
+              </pre>
+            </div>
+            <div className="border-t px-5 py-3 text-xs text-muted-foreground">
+              {viewingPrompt.content.length} caracteres · atualizado {new Date(viewingPrompt.updatedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

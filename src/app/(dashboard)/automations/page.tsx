@@ -589,8 +589,9 @@ function RulesTab() {
 
   const [runningRuleId, setRunningRuleId] = useState<string | null>(null)
   const runRuleMutation = useMutation({
-    mutationFn: (id: string) => api.post(`/automations/${id}/run-now`),
-    onSuccess: (res, id) => {
+    mutationFn: ({ id, force }: { id: string; force: boolean }) =>
+      api.post(`/automations/${id}/run-now${force ? '?force=true' : ''}`),
+    onSuccess: (res) => {
       setRunningRuleId(null)
       qc.invalidateQueries({ queryKey: ['automations-history'] })
       const triggered = res.data?.triggered ?? 0
@@ -604,6 +605,15 @@ function RulesTab() {
       toast({ title: 'Erro ao executar', description: err.response?.data?.message, variant: 'destructive' })
     },
   })
+
+  function handleRunNow(rule: { id: string; name: string }) {
+    const confirmed = window.confirm(
+      `Executar "${rule.name}" agora?\n\nSe já foi executado hoje, as mensagens serão enviadas novamente para os contatos elegíveis.`
+    )
+    if (!confirmed) return
+    setRunningRuleId(rule.id)
+    runRuleMutation.mutate({ id: rule.id, force: true })
+  }
 
   return (
     <div>
@@ -679,7 +689,7 @@ function RulesTab() {
                     Ver público
                   </button>
                   <button
-                    onClick={() => { setRunningRuleId(rule.id); runRuleMutation.mutate(rule.id) }}
+                    onClick={() => handleRunNow(rule)}
                     disabled={runningRuleId === rule.id}
                     className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 transition-colors"
                     title="Executar agora"

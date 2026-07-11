@@ -1,8 +1,9 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Megaphone, Plus, CheckCircle2, Clock, XCircle, Pause, Send, AlertTriangle } from 'lucide-react'
+import { Megaphone, Plus, CheckCircle2, Clock, XCircle, Pause, Send, AlertTriangle, BotMessageSquare, X } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,12 +21,37 @@ const statusConfig: Record<string, { label: string; variant: any; icon: any }> =
 
 export default function BroadcastsPage() {
   const router = useRouter()
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [promptFilter, setPromptFilter] = useState<'all' | 'with' | 'without'>('all')
+  const [viewingPrompt, setViewingPrompt] = useState<string | null>(null)
 
   const { data: broadcasts = [], isLoading } = useQuery<Broadcast[]>({
     queryKey: ['broadcasts'],
     queryFn: () => api.get('/broadcasts').then((r) => r.data),
     refetchInterval: 10000,
   })
+
+  const filtered = useMemo(() => {
+    return broadcasts.filter((bc) => {
+      if (dateFrom) {
+        const created = new Date(bc.createdAt)
+        const from = new Date(dateFrom)
+        if (created < from) return false
+      }
+      if (dateTo) {
+        const created = new Date(bc.createdAt)
+        const to = new Date(dateTo)
+        to.setHours(23, 59, 59, 999)
+        if (created > to) return false
+      }
+      if (promptFilter === 'with' && !bc.campaignPrompt) return false
+      if (promptFilter === 'without' && bc.campaignPrompt) return false
+      return true
+    })
+  }, [broadcasts, dateFrom, dateTo, promptFilter])
+
+  const hasFilters = dateFrom || dateTo || promptFilter !== 'all'
 
   return (
     <div className="p-4 md:p-6 max-w-3xl">
@@ -48,6 +74,52 @@ export default function BroadcastsPage() {
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-8 rounded-md border border-gray-200 px-2 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-400"
+            title="Data inicial"
+          />
+          <span className="text-xs text-muted-foreground">até</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-8 rounded-md border border-gray-200 px-2 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-400"
+            title="Data final"
+          />
+        </div>
+
+        <div className="flex items-center rounded-md border border-gray-200 bg-white overflow-hidden">
+          {(['all', 'with', 'without'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setPromptFilter(v)}
+              className={`px-3 py-1.5 text-xs transition-colors ${
+                promptFilter === v
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {v === 'all' ? 'Todos' : v === 'with' ? 'Com prompt' : 'Sem prompt'}
+            </button>
+          ))}
+        </div>
+
+        {hasFilters && (
+          <button
+            onClick={() => { setDateFrom(''); setDateTo(''); setPromptFilter('all') }}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gray-700"
+          >
+            <X className="h-3 w-3" /> Limpar filtros
+          </button>
+        )}
+      </div>
+
       <div className="space-y-3">
         {isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}
 
@@ -61,7 +133,13 @@ export default function BroadcastsPage() {
           </div>
         )}
 
-        {broadcasts.map((bc) => {
+        {!isLoading && broadcasts.length > 0 && filtered.length === 0 && (
+          <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-xl border bg-white text-muted-foreground">
+            <p className="text-sm">Nenhum broadcast encontrado com esses filtros</p>
+          </div>
+        )}
+
+        {filtered.map((bc) => {
           const cfg = statusConfig[bc.status]
           const Icon = cfg.icon
           const pct = bc.totalCount > 0 ? Math.round((bc.sentCount / bc.totalCount) * 100) : 0
@@ -76,12 +154,22 @@ export default function BroadcastsPage() {
                 <Megaphone className="h-5 w-5 text-purple-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-gray-900 truncate">{bc.name}</span>
                   <Badge variant={cfg.variant} className="shrink-0 gap-1 text-xs">
                     <Icon className="h-3 w-3" />
                     {cfg.label}
                   </Badge>
+                  {bc.campaignPrompt && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setViewingPrompt(bc.campaignPrompt) }}
+                      title="Ver prompt de IA"
+                      className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 hover:bg-violet-200 transition-colors shrink-0"
+                    >
+                      <BotMessageSquare className="h-3 w-3" />
+                      Prompt ativo
+                    </button>
+                  )}
                 </div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{bc.whatsappNumber?.displayName ?? bc.whatsappNumberId.slice(0, 8)}</span>
@@ -110,6 +198,32 @@ export default function BroadcastsPage() {
           )
         })}
       </div>
+
+      {/* Prompt viewer modal */}
+      {viewingPrompt !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setViewingPrompt(null)}
+        >
+          <div
+            className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-violet-700">
+                <BotMessageSquare className="h-5 w-5" />
+                <h2 className="font-semibold">Prompt de IA do broadcast</h2>
+              </div>
+              <button onClick={() => setViewingPrompt(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="whitespace-pre-wrap rounded-lg bg-gray-50 p-4 text-sm text-gray-700 border max-h-96 overflow-y-auto">
+              {viewingPrompt}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

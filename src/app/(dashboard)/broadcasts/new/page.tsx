@@ -126,7 +126,6 @@ function NewBroadcastContent() {
     templateLanguage: 'pt_BR',
   })
   const [campaignPromptId, setCampaignPromptId] = useState<string | null>(null)
-  const [responseTagId, setResponseTagId] = useState<string | null>(null)
   const [intentRules, setIntentRules] = useState<IntentRule[]>([])
 
   const [recipients, setRecipients] = useState<{ tagId?: string; contactIds?: string[] }>({})
@@ -161,7 +160,6 @@ function NewBroadcastContent() {
         templateLanguage: draftData.templateLanguage ?? 'pt_BR',
       })
       setCampaignPromptId(draftData.campaignPromptId ?? null)
-      setResponseTagId(draftData.responseTagId ?? null)
       if (draftData.campaignPromptId) {
         const match = campaignPrompts.find((p) => p.id === draftData.campaignPromptId)
         if (match) setSelectedPromptName(match.name)
@@ -208,7 +206,6 @@ function NewBroadcastContent() {
             ? { message: form.message }
             : { templateName: form.templateName, templateLanguage: form.templateLanguage }),
           ...(campaignPromptId ? { campaignPromptId } : {}),
-          ...(responseTagId ? { responseTagId } : {}),
           intentRules: intentRules.filter((r) => r.intent.trim() && r.tagId),
         })
         .then((r) => r.data),
@@ -235,7 +232,6 @@ function NewBroadcastContent() {
           templateName: form.type === 'template' ? form.templateName : undefined,
           templateLanguage: form.type === 'template' ? form.templateLanguage : undefined,
           campaignPromptId: campaignPromptId ?? undefined,
-          responseTagId: responseTagId ?? undefined,
           intentRules: intentRules.filter((r) => r.intent.trim() && r.tagId),
         })
         .then((r) => r.data),
@@ -624,40 +620,6 @@ function NewBroadcastContent() {
 
             <p className="text-xs text-muted-foreground">
               Quando o contato responder, o bot usará este prompt. Ativo por 72h ou até um atendente responder.
-            </p>
-          </div>
-
-          {/* Tag para quem responder */}
-          <div className="space-y-2 border-t pt-4">
-            <div className="flex items-center justify-between">
-              <Label>
-                Tag para quem responder{' '}
-                <span className="text-muted-foreground font-normal">(opcional)</span>
-              </Label>
-              {responseTagId && (
-                <button type="button" onClick={() => setResponseTagId(null)}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500">
-                  <X className="h-3 w-3" /> Remover
-                </button>
-              )}
-            </div>
-            <Select value={responseTagId ?? ''} onValueChange={(v) => setResponseTagId(v || null)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma tag (opcional)" />
-              </SelectTrigger>
-              <SelectContent>
-                {tags.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    <span className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
-                      {t.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Aplicada automaticamente na conversa de qualquer contato que responder ao broadcast.
             </p>
           </div>
 
@@ -1052,21 +1014,6 @@ function NewBroadcastContent() {
               <span className="font-medium">{broadcast.totalCount}</span>
             </div>
           </div>
-
-          {broadcast.responseTagId && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Tag de resposta</span>
-              {(() => {
-                const t = tags.find((t) => t.id === broadcast.responseTagId)
-                return t ? (
-                  <span className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
-                    style={{ backgroundColor: t.color }}>
-                    <TagIcon className="h-3 w-3" />{t.name}
-                  </span>
-                ) : null
-              })()}
-            </div>
-          )}
 
           {broadcast.campaignPrompt && (
             <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 space-y-1">

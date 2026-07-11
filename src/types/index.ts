@@ -161,6 +161,8 @@ export interface Broadcast {
   intentRules: IntentRule[] | null
   tagId: string | null
   tag?: Tag | null
+  responseTagId: string | null
+  responseTag?: Tag | null
   status: BroadcastStatus
   totalCount: number
   sentCount: number

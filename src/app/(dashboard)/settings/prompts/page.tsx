@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
-import type { CampaignPrompt } from '@/types'
+import type { CampaignPrompt, WhatsappNumber, WhatsappTemplate } from '@/types'
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string }
 
@@ -71,7 +71,37 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPrompt, setShowPrompt] = useState(false)
+  const [startMode, setStartMode] = useState<'text' | 'template'>('text')
+  const [numberId, setNumberId] = useState('')
+  const [templateName, setTemplateName] = useState('')
+  const [started, setStarted] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  const { data: numbers = [] } = useQuery<WhatsappNumber[]>({
+    queryKey: ['whatsapp-numbers'],
+    queryFn: () => api.get('/whatsapp/numbers').then((r) => r.data),
+  })
+
+  const { data: templates = [] } = useQuery<WhatsappTemplate[]>({
+    queryKey: ['whatsapp-templates', numberId],
+    queryFn: () => api.get(`/whatsapp/numbers/${numberId}/templates`).then((r) => r.data),
+    enabled: !!numberId,
+  })
+
+  const approvedTemplates = templates.filter((t) => t.status === 'APPROVED')
+  const selectedTemplate = approvedTemplates.find((t) => t.name === templateName)
+
+  function startWithTemplate() {
+    if (!selectedTemplate?.bodyText) return
+    setHistory([{ role: 'assistant', content: selectedTemplate.bodyText }])
+    setStarted(true)
+  }
+
+  function reset() {
+    setHistory([])
+    setStarted(false)
+    setTemplateName('')
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -113,6 +143,74 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
         <pre className="rounded-lg bg-gray-50 border px-3 py-2 text-xs text-gray-600 font-mono whitespace-pre-wrap max-h-32 overflow-y-auto">
           {prompt.content}
         </pre>
+      )}
+
+      {/* Mode selector — shown only before starting */}
+      {!started && (
+        <div className="rounded-lg border bg-gray-50 p-3 space-y-3">
+          <p className="text-xs font-medium text-gray-700">Como iniciar a conversa de teste?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setStartMode('text')}
+              className={`flex-1 rounded-lg border py-2 text-xs font-medium transition-colors ${startMode === 'text' ? 'border-green-500 bg-green-50 text-green-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              Texto livre
+            </button>
+            <button
+              onClick={() => setStartMode('template')}
+              className={`flex-1 rounded-lg border py-2 text-xs font-medium transition-colors ${startMode === 'template' ? 'border-green-500 bg-green-50 text-green-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              Template aprovado
+            </button>
+          </div>
+
+          {startMode === 'template' && (
+            <div className="space-y-2">
+              <select
+                value={numberId}
+                onChange={(e) => { setNumberId(e.target.value); setTemplateName('') }}
+                className="w-full rounded-lg border px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Selecionar número...</option>
+                {numbers.map((n) => (
+                  <option key={n.id} value={n.id}>{n.displayName} ({n.phoneNumber})</option>
+                ))}
+              </select>
+              {numberId && (
+                <select
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  className="w-full rounded-lg border px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Selecionar template...</option>
+                  {approvedTemplates.map((t) => (
+                    <option key={t.id} value={t.name}>{t.name} {t.variablesCount > 0 ? `(${t.variablesCount} var)` : ''}</option>
+                  ))}
+                </select>
+              )}
+              {selectedTemplate?.bodyText && (
+                <div className="rounded-lg border bg-white px-3 py-2 text-xs text-gray-600 whitespace-pre-wrap">
+                  {selectedTemplate.bodyText}
+                </div>
+              )}
+              <Button
+                size="sm"
+                className="w-full gap-1.5"
+                disabled={!selectedTemplate}
+                onClick={startWithTemplate}
+              >
+                <Play className="h-3 w-3" />
+                Iniciar com este template
+              </Button>
+            </div>
+          )}
+
+          {startMode === 'text' && (
+            <p className="text-xs text-muted-foreground">
+              Digite sua primeira mensagem no campo abaixo como se fosse o contato respondendo.
+            </p>
+          )}
+        </div>
       )}
 
       {/* Chat area */}
@@ -169,7 +267,7 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
           </button>
           {history.length > 0 && (
             <button
-              onClick={() => setHistory([])}
+              onClick={reset}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-muted-foreground hover:text-gray-700 transition-colors"
               title="Limpar conversa"
             >

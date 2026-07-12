@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap } from 'lucide-react'
+import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap, Clock } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast'
 import { timeAgo, formatPhone, cn } from '@/lib/utils'
 import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User } from '@/types'
+
+type WindowFilter = 'all' | 'open' | 'closing' | 'closed'
 
 const statusLabel: Record<string, string> = {
   open: 'Aberta',
@@ -26,12 +28,39 @@ const statusVariant: Record<string, any> = {
   closed: 'secondary',
 }
 
+function getWindowStatus(lastInboundAt: string | null): 'open' | 'closing' | 'closed' {
+  if (!lastInboundAt) return 'closed'
+  const elapsed = Date.now() - new Date(lastInboundAt).getTime()
+  const remaining = 24 * 3600000 - elapsed
+  if (remaining <= 0) return 'closed'
+  if (remaining <= 3 * 3600000) return 'closing'
+  return 'open'
+}
+
+function getWindowLabel(lastInboundAt: string | null): string {
+  if (!lastInboundAt) return 'Expirada'
+  const remaining = 24 * 3600000 - (Date.now() - new Date(lastInboundAt).getTime())
+  if (remaining <= 0) return 'Expirada'
+  const hours = Math.floor(remaining / 3600000)
+  const minutes = Math.floor((remaining % 3600000) / 60000)
+  if (hours >= 1) return `${hours}h`
+  return `${minutes}min`
+}
+
+const windowFilters: { key: WindowFilter; label: string }[] = [
+  { key: 'all', label: 'Todas' },
+  { key: 'open', label: 'Janela aberta' },
+  { key: 'closing', label: 'Fechando' },
+  { key: 'closed', label: 'Expirada' },
+]
+
 export default function ConversationsPage() {
   const router = useRouter()
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [activeTagId, setActiveTagId] = useState<string | null>(null)
   const [activeUserId, setActiveUserId] = useState<string | null>(null)
+  const [windowFilter, setWindowFilter] = useState<WindowFilter>('all')
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const [userSearch, setUserSearch] = useState('')
   const [showNew, setShowNew] = useState(false)
@@ -47,6 +76,7 @@ export default function ConversationsPage() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
   const [form, setForm] = useState({
     whatsappNumberId: '',
     to: '',
@@ -118,11 +148,25 @@ export default function ConversationsPage() {
     u.name.toLowerCase().includes(userSearch.toLowerCase()),
   )
 
-  const conversations = data?.data?.filter((c) => {
+  let conversations = data?.data?.filter((c) => {
     if (search && !c.contact?.name?.toLowerCase().includes(search.toLowerCase()) && !c.contact?.phone?.includes(search)) return false
     if (activeUserId && c.assignedUserId !== activeUserId) return false
+    if (windowFilter !== 'all') {
+      const ws = getWindowStatus(c.lastInboundAt)
+      if (windowFilter === 'open' && ws === 'closed') return false
+      if (windowFilter === 'closing' && ws !== 'closing') return false
+      if (windowFilter === 'closed' && ws !== 'closed') return false
+    }
     return true
   }) ?? []
+
+  if (windowFilter === 'closing') {
+    conversations = [...conversations].sort((a, b) => {
+      const ta = a.lastInboundAt ? new Date(a.lastInboundAt).getTime() : 0
+      const tb = b.lastInboundAt ? new Date(b.lastInboundAt).getTime() : 0
+      return ta - tb
+    })
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -143,7 +187,27 @@ export default function ConversationsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+
+        {/* Filtros de janela */}
+        <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+          {windowFilters.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setWindowFilter(f.key)}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
+                windowFilter === f.key
+                  ? 'border-gray-700 bg-gray-900 text-white'
+                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50',
+              )}
+            >
+              {f.key === 'closing' && <Clock className="h-3 w-3" />}
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {/* Filtro por atendente */}
           <div ref={userFilterRef} className="relative">
             <button
@@ -334,73 +398,91 @@ export default function ConversationsPage() {
         {!isLoading && !conversations.length && (
           <div className="flex h-64 flex-col items-center justify-center gap-3 text-muted-foreground">
             <MessageSquare className="h-10 w-10 opacity-30" />
-            <p>Nenhuma conversa ainda</p>
-            <Button size="sm" variant="outline" onClick={() => setShowNew(true)}>
-              Iniciar primeira conversa
-            </Button>
+            <p>Nenhuma conversa encontrada</p>
+            {windowFilter === 'all' && (
+              <Button size="sm" variant="outline" onClick={() => setShowNew(true)}>
+                Iniciar primeira conversa
+              </Button>
+            )}
           </div>
         )}
-        {conversations.map((conv) => (
-          <button
-            key={conv.id}
-            onClick={() => router.push(`/conversations/${conv.id}`)}
-            className="flex w-full items-center gap-4 border-b px-6 py-4 text-left hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-200 text-base font-semibold text-gray-600">
-              {conv.contact?.name?.charAt(0).toUpperCase() || '?'}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="truncate font-medium text-gray-900">
-                  {conv.contact?.name || formatPhone(conv.contact?.phone || '')}
-                </span>
-                <div className="flex items-center gap-2 shrink-0">
-                  {(() => {
-                    const assigned = conv.assignedUser ?? users.find((u) => u.id === conv.assignedUserId)
-                    if (!assigned) return null
-                    return (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600">
-                          {assigned.name.charAt(0).toUpperCase()}
-                        </div>
-                        {assigned.name.split(' ')[0]}
-                      </span>
-                    )
-                  })()}
-                  <span className="text-xs text-muted-foreground">
-                    {timeAgo(conv.lastMessageAt || conv.updatedAt)}
-                  </span>
-                </div>
+        {conversations.map((conv) => {
+          const ws = getWindowStatus(conv.lastInboundAt)
+          const wLabel = getWindowLabel(conv.lastInboundAt)
+          return (
+            <button
+              key={conv.id}
+              onClick={() => router.push(`/conversations/${conv.id}`)}
+              className="flex w-full items-center gap-4 border-b px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-200 text-base font-semibold text-gray-600">
+                {conv.contact?.name?.charAt(0).toUpperCase() || '?'}
               </div>
-              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                <span className="truncate text-sm text-muted-foreground">
-                  {conv.whatsappNumber?.phoneNumber}
-                  {conv.whatsappNumber?.id && (
-                    <span className="ml-1 font-mono text-xs opacity-60">
-                      #{conv.whatsappNumber.id.slice(0, 4)}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate font-medium text-gray-900">
+                    {conv.contact?.name || formatPhone(conv.contact?.phone || '')}
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {(() => {
+                      const assigned = conv.assignedUser ?? users.find((u) => u.id === conv.assignedUserId)
+                      if (!assigned) return null
+                      return (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600">
+                            {assigned.name.charAt(0).toUpperCase()}
+                          </div>
+                          {assigned.name.split(' ')[0]}
+                        </span>
+                      )
+                    })()}
+                    <span className="text-xs text-muted-foreground">
+                      {timeAgo(conv.lastMessageAt || conv.updatedAt)}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span className="truncate text-sm text-muted-foreground">
+                    {conv.whatsappNumber?.phoneNumber}
+                    {conv.whatsappNumber?.id && (
+                      <span className="ml-1 font-mono text-xs opacity-60">
+                        #{conv.whatsappNumber.id.slice(0, 4)}
+                      </span>
+                    )}
+                  </span>
+                  <Badge variant={statusVariant[conv.status]}>{statusLabel[conv.status]}</Badge>
+
+                  {/* Badge de janela */}
+                  <span className={cn(
+                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+                    ws === 'open' && 'bg-gray-100 text-gray-600',
+                    ws === 'closing' && 'bg-amber-100 text-amber-800 font-semibold',
+                    ws === 'closed' && 'bg-gray-100 text-gray-400',
+                  )}>
+                    <Clock className="h-3 w-3 shrink-0" />
+                    {wLabel}
+                  </span>
+
+                  {conv.campaignPrompt && conv.campaignExpiresAt && new Date(conv.campaignExpiresAt) > new Date() && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                      <Zap className="h-3 w-3" />
+                      Campanha
                     </span>
                   )}
-                </span>
-                <Badge variant={statusVariant[conv.status]}>{statusLabel[conv.status]}</Badge>
-                {conv.campaignPrompt && conv.campaignExpiresAt && new Date(conv.campaignExpiresAt) > new Date() && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                    <Zap className="h-3 w-3" />
-                    Campanha
-                  </span>
-                )}
-                {conv.tags?.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white"
-                    style={{ backgroundColor: tag.color }}
-                  >
-                    {tag.name}
-                  </span>
-                ))}
+                  {conv.tags?.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-white"
+                      style={{ backgroundColor: tag.color }}
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          )
+        })}
       </div>
     </div>
   )

@@ -82,6 +82,7 @@ export interface Conversation {
   status: ConversationStatus
   aiState: AiState
   lastMessageAt: string
+  lastInboundAt: string | null
   assignedUserId?: string
   assignedUser?: User
   tags: Tag[]

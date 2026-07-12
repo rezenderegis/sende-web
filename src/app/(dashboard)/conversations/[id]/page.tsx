@@ -8,11 +8,12 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TagSelector } from '@/components/tags/tag-selector'
 import { toast } from '@/hooks/use-toast'
-import { formatTime, formatPhone } from '@/lib/utils'
+import { formatTime, formatPhone, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import type { Conversation, ConversationEvent, Message, User, SavedMessage } from '@/types'
+import type { Conversation, ConversationEvent, Message, User, SavedMessage, WhatsappTemplate } from '@/types'
 
 function renderContent(content: string, contactName?: string): string {
   if (!content.includes('{{')) return content
@@ -20,6 +21,24 @@ function renderContent(content: string, contactName?: string): string {
   if (contactName) out = out.replace(/\{\{1\}\}/g, contactName.split(' ')[0])
   out = out.replace(/\{\{\d+\}\}/g, '_____')
   return out
+}
+
+function getWindowStatus(lastInboundAt: string | null): 'open' | 'closing' | 'closed' {
+  if (!lastInboundAt) return 'closed'
+  const remaining = 24 * 3600000 - (Date.now() - new Date(lastInboundAt).getTime())
+  if (remaining <= 0) return 'closed'
+  if (remaining <= 3 * 3600000) return 'closing'
+  return 'open'
+}
+
+function getWindowTimeLeft(lastInboundAt: string | null): string {
+  if (!lastInboundAt) return 'Expirada'
+  const remaining = 24 * 3600000 - (Date.now() - new Date(lastInboundAt).getTime())
+  if (remaining <= 0) return 'Expirada'
+  const hours = Math.floor(remaining / 3600000)
+  const minutes = Math.floor((remaining % 3600000) / 60000)
+  if (hours >= 1) return `fecha em ${hours}h`
+  return `fecha em ${minutes}min`
 }
 
 function campaignTimeLeft(expiresAt: string): string {
@@ -45,6 +64,7 @@ export default function ConversationPage() {
   const qc = useQueryClient()
   const { user } = useAuthStore()
   const [message, setMessage] = useState('')
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState('')
   const [assignOpen, setAssignOpen] = useState(false)
   const [savedOpen, setSavedOpen] = useState(false)
   const [savedSearch, setSavedSearch] = useState('')
@@ -114,6 +134,15 @@ export default function ConversationPage() {
     queryFn: () => api.get('/saved-messages').then((r) => r.data),
   })
 
+  const { data: templates = [] } = useQuery<WhatsappTemplate[]>({
+    queryKey: ['whatsapp-templates', conversation?.whatsappNumberId],
+    queryFn: () =>
+      api.get(`/whatsapp/numbers/${conversation!.whatsappNumberId}/templates`).then((r) => r.data),
+    enabled: !!conversation?.whatsappNumberId,
+  })
+  const approvedTemplates = templates.filter((t) => t.status === 'APPROVED')
+  const selectedTpl = approvedTemplates.find((t) => `${t.name}|${t.language}` === selectedTemplateKey) ?? null
+
   const { data: events = [] } = useQuery<ConversationEvent[]>({
     queryKey: ['conversation-events', id],
     queryFn: () => api.get(`/conversations/${id}/events`).then((r) => r.data),
@@ -182,6 +211,30 @@ export default function ConversationPage() {
       toast({ title: 'Erro', description: 'Não foi possível enviar a mensagem', variant: 'destructive' })
     },
   })
+
+  const sendTemplateMutation = useMutation({
+    mutationFn: (key: string) => {
+      const [templateName, templateLanguage] = key.split('|')
+      return api.post('/whatsapp/messages/send', {
+        whatsappNumberId: conversation?.whatsappNumberId,
+        to: conversation?.contact?.phone,
+        type: 'template',
+        templateName,
+        templateLanguage,
+      })
+    },
+    onSuccess: () => {
+      setSelectedTemplateKey('')
+      qc.invalidateQueries({ queryKey: ['messages', id] })
+      qc.invalidateQueries({ queryKey: ['conversation', id] })
+    },
+    onError: () => {
+      toast({ title: 'Erro', description: 'Não foi possível enviar o template', variant: 'destructive' })
+    },
+  })
+
+  const windowStatus = getWindowStatus(conversation?.lastInboundAt ?? null)
+  const windowLabel = getWindowTimeLeft(conversation?.lastInboundAt ?? null)
 
   function handleSend() {
     const text = message.trim()
@@ -420,70 +473,120 @@ export default function ConversationPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t bg-white p-4">
-        <div className="flex items-end gap-2">
-          <div ref={savedRef} className="relative shrink-0">
-            <button
-              onClick={() => setSavedOpen((v) => !v)}
-              className="flex h-11 w-11 items-center justify-center rounded-md border text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
-              title="Mensagens salvas"
-            >
-              <BookMarked className="h-4 w-4" />
-            </button>
-            {savedOpen && (
-              <div className="absolute bottom-full left-0 z-50 mb-1 w-72 rounded-lg border bg-white shadow-lg">
-                <div className="p-2">
-                  <input
-                    autoFocus
-                    value={savedSearch}
-                    onChange={(e) => setSavedSearch(e.target.value)}
-                    placeholder="Buscar mensagem..."
-                    className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
-                <div className="max-h-60 overflow-y-auto pb-1">
-                  {savedMessages
-                    .filter((m) => m.name.toLowerCase().includes(savedSearch.toLowerCase()) || m.content.toLowerCase().includes(savedSearch.toLowerCase()))
-                    .map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => { setMessage(m.content); setSavedOpen(false); setSavedSearch('') }}
-                        className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-gray-50"
-                      >
-                        <span className="text-sm font-medium text-gray-900">{m.name}</span>
-                        <span className="text-xs text-muted-foreground line-clamp-1">{m.content}</span>
-                      </button>
-                    ))}
-                  {savedMessages.length === 0 && (
-                    <p className="px-3 py-2 text-xs text-gray-400">Nenhuma mensagem salva.</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <Textarea
-              placeholder="Digite uma mensagem..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="min-h-[44px] max-h-32 resize-none"
-              rows={1}
-            />
-          </div>
-          <Button
-            size="icon"
-            variant="whatsapp"
-            onClick={handleSend}
-            disabled={!message.trim() || sendMutation.isPending}
-            className="shrink-0 h-11 w-11"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+      <div className="border-t bg-white p-4 space-y-3">
+        {/* Indicador de janela */}
+        <div className={cn(
+          'flex items-center gap-1.5 text-xs rounded-md px-3 py-1.5',
+          windowStatus === 'open' && 'bg-gray-50 text-gray-500',
+          windowStatus === 'closing' && 'bg-amber-50 text-amber-700 font-medium',
+          windowStatus === 'closed' && 'bg-gray-100 text-gray-500',
+        )}>
+          <Clock className="h-3.5 w-3.5 shrink-0" />
+          {windowStatus === 'closed'
+            ? 'Janela de 24h expirada — use um template para retomar a conversa'
+            : `Janela aberta · ${windowLabel}`}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Mensagens de texto requerem janela ativa de 24h.
-        </p>
+
+        {windowStatus === 'closed' ? (
+          /* Seletor de template quando janela fechada */
+          <div className="space-y-2">
+            <Select value={selectedTemplateKey} onValueChange={setSelectedTemplateKey}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um template para enviar..." />
+              </SelectTrigger>
+              <SelectContent>
+                {approvedTemplates.length === 0 ? (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    Nenhum template aprovado. Sincronize em Configurações → Números.
+                  </div>
+                ) : (
+                  approvedTemplates.map((t) => (
+                    <SelectItem key={t.id} value={`${t.name}|${t.language}`}>
+                      <span className="font-medium">{t.name}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">{t.language}</span>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            {selectedTpl?.bodyText && (
+              <p className="rounded border bg-gray-50 px-3 py-2 text-xs text-gray-600 whitespace-pre-wrap">
+                {renderContent(selectedTpl.bodyText, contact?.name)}
+              </p>
+            )}
+            <Button
+              className="w-full gap-2"
+              variant="whatsapp"
+              disabled={!selectedTemplateKey || sendTemplateMutation.isPending}
+              onClick={() => sendTemplateMutation.mutate(selectedTemplateKey)}
+            >
+              <Send className="h-4 w-4" />
+              {sendTemplateMutation.isPending ? 'Enviando...' : 'Enviar template'}
+            </Button>
+          </div>
+        ) : (
+          /* Input de texto quando janela aberta */
+          <div className="flex items-end gap-2">
+            <div ref={savedRef} className="relative shrink-0">
+              <button
+                onClick={() => setSavedOpen((v) => !v)}
+                className="flex h-11 w-11 items-center justify-center rounded-md border text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+                title="Mensagens salvas"
+              >
+                <BookMarked className="h-4 w-4" />
+              </button>
+              {savedOpen && (
+                <div className="absolute bottom-full left-0 z-50 mb-1 w-72 rounded-lg border bg-white shadow-lg">
+                  <div className="p-2">
+                    <input
+                      autoFocus
+                      value={savedSearch}
+                      onChange={(e) => setSavedSearch(e.target.value)}
+                      placeholder="Buscar mensagem..."
+                      className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto pb-1">
+                    {savedMessages
+                      .filter((m) => m.name.toLowerCase().includes(savedSearch.toLowerCase()) || m.content.toLowerCase().includes(savedSearch.toLowerCase()))
+                      .map((m) => (
+                        <button
+                          key={m.id}
+                          onClick={() => { setMessage(m.content); setSavedOpen(false); setSavedSearch('') }}
+                          className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-gray-50"
+                        >
+                          <span className="text-sm font-medium text-gray-900">{m.name}</span>
+                          <span className="text-xs text-muted-foreground line-clamp-1">{m.content}</span>
+                        </button>
+                      ))}
+                    {savedMessages.length === 0 && (
+                      <p className="px-3 py-2 text-xs text-gray-400">Nenhuma mensagem salva.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <Textarea
+                placeholder="Digite uma mensagem..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="min-h-[44px] max-h-32 resize-none"
+                rows={1}
+              />
+            </div>
+            <Button
+              size="icon"
+              variant="whatsapp"
+              onClick={handleSend}
+              disabled={!message.trim() || sendMutation.isPending}
+              className="shrink-0 h-11 w-11"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

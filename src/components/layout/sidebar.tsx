@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { MessageSquare, Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap } from 'lucide-react'
+import { MessageSquare, Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ const salesItems = [
   { href: '/sales/import', icon: Upload, label: 'Importar' },
   { href: '/settings/products', icon: Package, label: 'Produtos' },
   { href: '/automations', icon: Zap, label: 'Automações' },
+  { href: '/agenda', icon: Calendar, label: 'Agenda' },
 ]
 
 const settingsItems = [

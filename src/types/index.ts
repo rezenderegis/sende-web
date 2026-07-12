@@ -379,6 +379,42 @@ export interface Sale {
   updatedAt: string
 }
 
+export type FollowOnType = 'meeting' | 'call' | 'message'
+export type FollowOnStatus = 'pending' | 'done' | 'cancelled'
+
+export interface FollowOn {
+  id: string
+  companyId: string
+  conversationId: string
+  assignedUserId: string | null
+  assignedUser?: User | null
+  type: FollowOnType
+  scheduledAt: string
+  note: string | null
+  message: string | null
+  templateName: string | null
+  templateLanguage: string | null
+  templateVariables: string[] | null
+  status: FollowOnStatus
+  sentAt: string | null
+  createdAt: string
+  updatedAt: string
+  // joined on frontend
+  conversation?: Conversation
+}
+
+export interface AppNotification {
+  id: string
+  companyId: string
+  userId: string
+  title: string
+  body: string | null
+  conversationId: string | null
+  followOnId: string | null
+  readAt: string | null
+  createdAt: string
+}
+
 export interface AuthResponse {
   accessToken: string
   user: User

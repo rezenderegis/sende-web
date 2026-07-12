@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History } from 'lucide-react'
+import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -13,7 +13,7 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { toast } from '@/hooks/use-toast'
 import { formatTime, formatPhone, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import type { Conversation, ConversationEvent, Message, User, SavedMessage, WhatsappTemplate } from '@/types'
+import type { Conversation, ConversationEvent, FollowOn, FollowOnType, Message, User, SavedMessage, WhatsappTemplate } from '@/types'
 
 function renderContent(content: string, contactName?: string): string {
   if (!content.includes('{{')) return content
@@ -51,11 +51,31 @@ function campaignTimeLeft(expiresAt: string): string {
   return `expira em ${minutes}min`
 }
 
+function followOnLabel(fo: FollowOn): string {
+  const icons: Record<string, string> = { meeting: 'Reunião', call: 'Ligação', message: 'Mensagem' }
+  const d = new Date(fo.scheduledAt)
+  const today = new Date()
+  const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  if (d.toDateString() === today.toDateString()) return `${icons[fo.type]} · Hoje ${time}`
+  return `${icons[fo.type]} · ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} ${time}`
+}
+
 const statusIcon: Record<string, any> = {
   sent: <Clock className="h-3 w-3 text-gray-400" />,
   delivered: <CheckCheck className="h-3 w-3 text-gray-400" />,
   read: <CheckCheck className="h-3 w-3 text-blue-500" />,
   failed: <X className="h-3 w-3 text-red-500" />,
+}
+
+const TYPE_ICONS: Record<string, any> = {
+  meeting: <Users className="h-3.5 w-3.5" />,
+  call: <Phone className="h-3.5 w-3.5" />,
+  message: <MessageSquare className="h-3.5 w-3.5" />,
+}
+
+function toLocalDatetimeValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 export default function ConversationPage() {
@@ -70,9 +90,21 @@ export default function ConversationPage() {
   const [savedOpen, setSavedOpen] = useState(false)
   const [savedSearch, setSavedSearch] = useState('')
   const [showHistory, setShowHistory] = useState(false)
+  const [showFollowOns, setShowFollowOns] = useState(false)
+  const [followOnModal, setFollowOnModal] = useState(false)
   const assignRef = useRef<HTMLDivElement>(null)
   const savedRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  // Follow-on form state
+  const defaultScheduledAt = toLocalDatetimeValue(new Date(Date.now() + 60 * 60000))
+  const [foType, setFoType] = useState<FollowOnType>('call')
+  const [foScheduledAt, setFoScheduledAt] = useState(defaultScheduledAt)
+  const [foNote, setFoNote] = useState('')
+  const [foAssignedUserId, setFoAssignedUserId] = useState(user?.id ?? '')
+  const [foMessage, setFoMessage] = useState('')
+  const [foTemplateKey, setFoTemplateKey] = useState('')
+  const [foTemplateVars, setFoTemplateVars] = useState<string[]>([])
 
   const firstName = user?.name?.split(' ')[0] ?? ''
 
@@ -149,6 +181,13 @@ export default function ConversationPage() {
     queryFn: () => api.get(`/conversations/${id}/events`).then((r) => r.data),
     enabled: showHistory,
   })
+
+  const { data: followOns = [] } = useQuery<FollowOn[]>({
+    queryKey: ['follow-ons-conv', id],
+    queryFn: () => api.get(`/follow-ons/conversation/${id}`).then((r) => r.data),
+    refetchInterval: 30000,
+  })
+  const activeFollowOns = followOns.filter((fo) => fo.status === 'pending')
 
   const assignMutation = useMutation({
     mutationFn: (assignedUserId: string | null) =>
@@ -236,8 +275,79 @@ export default function ConversationPage() {
     },
   })
 
+  const cancelFollowOnMutation = useMutation({
+    mutationFn: (foId: string) => api.patch(`/follow-ons/${foId}/cancel`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['follow-ons-conv', id] })
+      toast({ title: 'Follow-on cancelado', variant: 'success' })
+    },
+  })
+
+  const createFollowOnMutation = useMutation({
+    mutationFn: (dto: any) => api.post('/follow-ons', dto),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['follow-ons-conv', id] })
+      qc.invalidateQueries({ queryKey: ['follow-ons'] })
+      setFollowOnModal(false)
+      resetFollowOnForm()
+      toast({ title: 'Follow-on agendado', variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao agendar follow-on', variant: 'destructive' }),
+  })
+
+  function resetFollowOnForm() {
+    setFoType('call')
+    setFoScheduledAt(toLocalDatetimeValue(new Date(Date.now() + 60 * 60000)))
+    setFoNote('')
+    setFoAssignedUserId(user?.id ?? '')
+    setFoMessage('')
+    setFoTemplateKey('')
+    setFoTemplateVars([])
+  }
+
+  function handleCreateFollowOn() {
+    const scheduledDate = new Date(foScheduledAt)
+    const isBeyond24h = scheduledDate.getTime() - Date.now() > 24 * 3600000
+    const dto: any = {
+      conversationId: id,
+      type: foType,
+      scheduledAt: scheduledDate.toISOString(),
+      ...(foNote.trim() ? { note: foNote.trim() } : {}),
+      ...(foAssignedUserId ? { assignedUserId: foAssignedUserId } : {}),
+    }
+    if (foType === 'message') {
+      if (isBeyond24h) {
+        const [templateName, templateLanguage] = foTemplateKey.split('|')
+        dto.templateName = templateName
+        dto.templateLanguage = templateLanguage
+        if (foTemplateVars.length > 0) dto.templateVariables = foTemplateVars
+      } else {
+        dto.message = foMessage.trim()
+      }
+    }
+    createFollowOnMutation.mutate(dto)
+  }
+
   const windowStatus = getWindowStatus(conversation?.lastInboundAt ?? null)
   const windowLabel = getWindowTimeLeft(conversation?.lastInboundAt ?? null)
+
+  // For follow-on modal: determine if scheduledAt is beyond 24h from now
+  const foScheduledDate = foScheduledAt ? new Date(foScheduledAt) : null
+  const foIsBeyond24h = foScheduledDate ? foScheduledDate.getTime() - Date.now() > 24 * 3600000 : false
+  const foSelectedTpl = approvedTemplates.find((t) => `${t.name}|${t.language}` === foTemplateKey) ?? null
+
+  const foIsValid = (() => {
+    if (!foScheduledAt) return false
+    if (foType === 'message') {
+      if (foIsBeyond24h) {
+        if (!foTemplateKey) return false
+        if ((foSelectedTpl?.variablesCount ?? 0) > 0 && foTemplateVars.some((v) => !v.trim())) return false
+      } else {
+        if (!foMessage.trim()) return false
+      }
+    }
+    return true
+  })()
 
   function handleSend() {
     const text = message.trim()
@@ -353,6 +463,32 @@ export default function ConversationPage() {
             Histórico
           </button>
 
+          <button
+            onClick={() => setShowFollowOns((v) => !v)}
+            title="Follow-ons agendados"
+            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
+              showFollowOns
+                ? 'border-blue-300 bg-blue-50 text-blue-700'
+                : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            }`}
+          >
+            <Calendar className="h-3 w-3" />
+            Follow-ons
+            {activeFollowOns.length > 0 && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">
+                {activeFollowOns.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => { resetFollowOnForm(); setFollowOnModal(true) }}
+            className="flex items-center gap-1 rounded-full border border-dashed border-gray-300 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+          >
+            <Plus className="h-3 w-3" />
+            Agendar
+          </button>
+
           <div ref={assignRef} className="relative">
             <button
               onClick={() => setAssignOpen((v) => !v)}
@@ -441,6 +577,49 @@ export default function ConversationPage() {
         </div>
       )}
 
+      {showFollowOns && (
+        <div className="shrink-0 border-b bg-blue-50 px-4 py-3 max-h-52 overflow-y-auto">
+          <p className="text-xs font-semibold text-blue-700 mb-2 uppercase tracking-wide">Follow-ons agendados</p>
+          {followOns.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Nenhum follow-on agendado para esta conversa.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {followOns.map((fo) => (
+                <div key={fo.id} className="flex items-start gap-2 rounded-lg border bg-white px-3 py-2">
+                  <div className="mt-0.5 text-blue-600 shrink-0">{TYPE_ICONS[fo.type]}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-900">{followOnLabel(fo)}</p>
+                    {fo.note && <p className="text-xs text-muted-foreground truncate">{fo.note}</p>}
+                    {fo.type === 'message' && (fo.message || fo.templateName) && (
+                      <p className="text-xs text-muted-foreground font-mono truncate">
+                        {fo.templateName ? `Template: ${fo.templateName}` : fo.message}
+                      </p>
+                    )}
+                  </div>
+                  <span className={cn(
+                    'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
+                    fo.status === 'pending' && 'bg-amber-100 text-amber-700',
+                    fo.status === 'done' && 'bg-green-100 text-green-700',
+                    fo.status === 'cancelled' && 'bg-gray-100 text-gray-500',
+                  )}>
+                    {fo.status === 'pending' ? 'Pendente' : fo.status === 'done' ? 'Concluído' : 'Cancelado'}
+                  </span>
+                  {fo.status === 'pending' && (
+                    <button
+                      onClick={() => cancelFollowOnMutation.mutate(fo.id)}
+                      className="shrink-0 text-gray-400 hover:text-red-500"
+                      title="Cancelar"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex-1 overflow-auto bg-gray-100 p-4 space-y-2">
         {messages?.data?.map((msg) => (
           <div
@@ -477,7 +656,6 @@ export default function ConversationPage() {
       </div>
 
       <div className="border-t bg-white p-4 space-y-3">
-        {/* Indicador de janela */}
         <div className={cn(
           'flex items-center gap-1.5 text-xs rounded-md px-3 py-1.5',
           windowStatus === 'open' && 'bg-gray-50 text-gray-500',
@@ -491,7 +669,6 @@ export default function ConversationPage() {
         </div>
 
         {windowStatus === 'closed' ? (
-          /* Seletor de template quando janela fechada */
           <div className="space-y-2">
             <Select value={selectedTemplateKey} onValueChange={(v) => {
               setSelectedTemplateKey(v)
@@ -564,7 +741,6 @@ export default function ConversationPage() {
             </Button>
           </div>
         ) : (
-          /* Input de texto quando janela aberta */
           <div className="flex items-end gap-2">
             <div ref={savedRef} className="relative shrink-0">
               <button
@@ -627,6 +803,166 @@ export default function ConversationPage() {
           </div>
         )}
       </div>
+
+      {/* Follow-on creation modal */}
+      {followOnModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl border bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b px-5 py-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                <h2 className="text-sm font-semibold text-gray-900">Agendar Follow-on</h2>
+              </div>
+              <button onClick={() => setFollowOnModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 p-5">
+              {/* Tipo */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-gray-700">Tipo</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['call', 'meeting', 'message'] as FollowOnType[]).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setFoType(t)}
+                      className={cn(
+                        'flex flex-col items-center gap-1 rounded-lg border py-2.5 text-xs font-medium transition-colors',
+                        foType === t
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+                      )}
+                    >
+                      {t === 'call' && <Phone className="h-4 w-4" />}
+                      {t === 'meeting' && <Users className="h-4 w-4" />}
+                      {t === 'message' && <MessageSquare className="h-4 w-4" />}
+                      {t === 'call' ? 'Ligação' : t === 'meeting' ? 'Reunião' : 'Mensagem'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Data/hora */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-gray-700">Data e hora</label>
+                <input
+                  type="datetime-local"
+                  value={foScheduledAt}
+                  onChange={(e) => setFoScheduledAt(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                {foIsBeyond24h && (
+                  <p className="mt-1 text-xs text-amber-600">Agendado além de 24h — apenas template permitido.</p>
+                )}
+              </div>
+
+              {/* Nota */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-gray-700">Nota <span className="text-gray-400">(opcional)</span></label>
+                <input
+                  type="text"
+                  value={foNote}
+                  onChange={(e) => setFoNote(e.target.value)}
+                  placeholder="Ex: Cliente pediu para ligar depois das 18h"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Mensagem (só quando tipo = message) */}
+              {foType === 'message' && (
+                foIsBeyond24h ? (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-medium text-gray-700">Template</label>
+                    <Select value={foTemplateKey} onValueChange={(v) => {
+                      setFoTemplateKey(v)
+                      const tpl = approvedTemplates.find((t) => `${t.name}|${t.language}` === v)
+                      setFoTemplateVars(Array(tpl?.variablesCount ?? 0).fill(''))
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um template..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {approvedTemplates.map((t) => (
+                          <SelectItem key={t.id} value={`${t.name}|${t.language}`}>
+                            {t.name} <span className="text-xs text-muted-foreground">{t.language}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {foSelectedTpl && (foSelectedTpl.variablesCount ?? 0) > 0 && (
+                      <div className="space-y-1.5">
+                        {Array.from({ length: foSelectedTpl.variablesCount! }, (_, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="shrink-0 rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-500">{`{{${i + 1}}}`}</span>
+                            <input
+                              type="text"
+                              placeholder={`Valor para {{${i + 1}}}`}
+                              value={foTemplateVars[i] ?? ''}
+                              onChange={(e) => setFoTemplateVars((v) => { const next = [...v]; next[i] = e.target.value; return next })}
+                              className="flex-1 rounded-md border border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {foSelectedTpl?.bodyText && (
+                      <p className="rounded border bg-gray-50 px-3 py-2 text-xs text-gray-600 whitespace-pre-wrap">
+                        {(() => {
+                          let preview = foSelectedTpl.bodyText
+                          foTemplateVars.forEach((val, i) => {
+                            preview = preview.replace(new RegExp(`\\{\\{${i + 1}\\}\\}`, 'g'), val || `{{${i + 1}}}`)
+                          })
+                          return preview
+                        })()}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-700">Mensagem a enviar</label>
+                    <Textarea
+                      value={foMessage}
+                      onChange={(e) => setFoMessage(e.target.value)}
+                      placeholder="Texto da mensagem que será enviada automaticamente..."
+                      className="min-h-[80px] resize-none text-sm"
+                    />
+                  </div>
+                )
+              )}
+
+              {/* Atribuir a */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-gray-700">Atribuir a</label>
+                <select
+                  value={foAssignedUserId}
+                  onChange={(e) => setFoAssignedUserId(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}{u.id === user?.id ? ' (eu)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 border-t px-5 py-4">
+              <Button variant="outline" className="flex-1" onClick={() => setFollowOnModal(false)}>
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={!foIsValid || createFollowOnMutation.isPending}
+                onClick={handleCreateFollowOn}
+              >
+                {createFollowOnMutation.isPending ? 'Agendando...' : 'Agendar follow-on'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Menu } from 'lucide-react'
 import { Sidebar } from '@/components/layout/sidebar'
+import { NotificationBell } from '@/components/layout/notification-bell'
 import { useAuthStore } from '@/store/auth.store'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -34,10 +35,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 items-center border-b bg-white px-4 md:hidden">
-          <button onClick={() => setSidebarOpen(true)} className="p-1 text-gray-600">
+        <header className="flex h-14 items-center justify-between border-b bg-white px-4">
+          <button onClick={() => setSidebarOpen(true)} className="p-1 text-gray-600 md:hidden">
             <Menu className="h-6 w-6" />
           </button>
+          <div className="ml-auto">
+            <NotificationBell />
+          </div>
         </header>
         <main className="flex-1 overflow-auto">{children}</main>
       </div>

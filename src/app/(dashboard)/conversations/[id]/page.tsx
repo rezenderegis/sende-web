@@ -65,6 +65,7 @@ export default function ConversationPage() {
   const { user } = useAuthStore()
   const [message, setMessage] = useState('')
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('')
+  const [templateVars, setTemplateVars] = useState<string[]>([])
   const [assignOpen, setAssignOpen] = useState(false)
   const [savedOpen, setSavedOpen] = useState(false)
   const [savedSearch, setSavedSearch] = useState('')
@@ -213,18 +214,20 @@ export default function ConversationPage() {
   })
 
   const sendTemplateMutation = useMutation({
-    mutationFn: (key: string) => {
-      const [templateName, templateLanguage] = key.split('|')
+    mutationFn: () => {
+      const [templateName, templateLanguage] = selectedTemplateKey.split('|')
       return api.post('/whatsapp/messages/send', {
         whatsappNumberId: conversation?.whatsappNumberId,
         to: conversation?.contact?.phone,
         type: 'template',
         templateName,
         templateLanguage,
+        ...(templateVars.length > 0 ? { templateVariables: templateVars } : {}),
       })
     },
     onSuccess: () => {
       setSelectedTemplateKey('')
+      setTemplateVars([])
       qc.invalidateQueries({ queryKey: ['messages', id] })
       qc.invalidateQueries({ queryKey: ['conversation', id] })
     },
@@ -490,7 +493,11 @@ export default function ConversationPage() {
         {windowStatus === 'closed' ? (
           /* Seletor de template quando janela fechada */
           <div className="space-y-2">
-            <Select value={selectedTemplateKey} onValueChange={setSelectedTemplateKey}>
+            <Select value={selectedTemplateKey} onValueChange={(v) => {
+              setSelectedTemplateKey(v)
+              const tpl = approvedTemplates.find((t) => `${t.name}|${t.language}` === v)
+              setTemplateVars(Array(tpl?.variablesCount ?? 0).fill(''))
+            }}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione um template para enviar..." />
               </SelectTrigger>
@@ -509,16 +516,48 @@ export default function ConversationPage() {
                 )}
               </SelectContent>
             </Select>
+            {selectedTpl && (selectedTpl.variablesCount ?? 0) > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">Preencha as variáveis do template:</p>
+                {Array.from({ length: selectedTpl.variablesCount! }, (_, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="shrink-0 rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-500">{`{{${i + 1}}}`}</span>
+                    <input
+                      type="text"
+                      placeholder={`Valor para {{${i + 1}}}`}
+                      value={templateVars[i] ?? ''}
+                      onChange={(e) => setTemplateVars((v) => {
+                        const next = [...v]
+                        next[i] = e.target.value
+                        return next
+                      })}
+                      className="flex-1 rounded-md border border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-green-500"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
             {selectedTpl?.bodyText && (
               <p className="rounded border bg-gray-50 px-3 py-2 text-xs text-gray-600 whitespace-pre-wrap">
-                {renderContent(selectedTpl.bodyText, contact?.name)}
+                {(() => {
+                  let preview = selectedTpl.bodyText
+                  templateVars.forEach((val, i) => {
+                    preview = preview.replace(new RegExp(`\\{\\{${i + 1}\\}\\}`, 'g'), val || `{{${i + 1}}}`)
+                  })
+                  if (contact?.name) preview = preview.replace(/\{\{1\}\}/g, contact.name.split(' ')[0])
+                  return preview
+                })()}
               </p>
             )}
             <Button
               className="w-full gap-2"
               variant="whatsapp"
-              disabled={!selectedTemplateKey || sendTemplateMutation.isPending}
-              onClick={() => sendTemplateMutation.mutate(selectedTemplateKey)}
+              disabled={
+                !selectedTemplateKey ||
+                ((selectedTpl?.variablesCount ?? 0) > 0 && templateVars.some((v) => !v.trim())) ||
+                sendTemplateMutation.isPending
+              }
+              onClick={() => sendTemplateMutation.mutate()}
             >
               <Send className="h-4 w-4" />
               {sendTemplateMutation.isPending ? 'Enviando...' : 'Enviar template'}

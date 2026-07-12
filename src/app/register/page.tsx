@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { MessageSquare } from 'lucide-react'
+import Image from 'next/image'
 import api from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { toast } from '@/hooks/use-toast'
@@ -50,12 +50,10 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-whatsapp">
-              <MessageSquare className="h-6 w-6 text-white" />
-            </div>
+            <Image src="/brand/sende-simbolo.svg" alt="Sende" width={48} height={48} priority />
           </div>
           <CardTitle className="text-2xl">Criar conta</CardTitle>
-          <CardDescription>Configure sua empresa no Sendi</CardDescription>
+          <CardDescription>Configure sua empresa no Sende</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

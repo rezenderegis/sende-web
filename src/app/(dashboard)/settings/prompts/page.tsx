@@ -152,13 +152,13 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
           <div className="flex gap-2">
             <button
               onClick={() => setStartMode('text')}
-              className={`flex-1 rounded-lg border py-2 text-xs font-medium transition-colors ${startMode === 'text' ? 'border-green-500 bg-green-50 text-green-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              className={`flex-1 rounded-lg border py-2 text-xs font-medium transition-colors ${startMode === 'text' ? 'border-teal-500 bg-teal-50 text-teal-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
             >
               Texto livre
             </button>
             <button
               onClick={() => setStartMode('template')}
-              className={`flex-1 rounded-lg border py-2 text-xs font-medium transition-colors ${startMode === 'template' ? 'border-green-500 bg-green-50 text-green-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              className={`flex-1 rounded-lg border py-2 text-xs font-medium transition-colors ${startMode === 'template' ? 'border-teal-500 bg-teal-50 text-teal-700' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
             >
               Template aprovado
             </button>
@@ -169,7 +169,7 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
               <select
                 value={numberId}
                 onChange={(e) => { setNumberId(e.target.value); setTemplateName('') }}
-                className="w-full rounded-lg border px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-lg border px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-teal-600"
               >
                 <option value="">Selecionar número...</option>
                 {numbers.map((n) => (
@@ -180,7 +180,7 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
                 <select
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
-                  className="w-full rounded-lg border px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full rounded-lg border px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-teal-600"
                 >
                   <option value="">Selecionar template...</option>
                   {approvedTemplates.map((t) => (
@@ -226,7 +226,7 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
               <div
                 className={`rounded-2xl px-3 py-2 text-sm max-w-[80%] whitespace-pre-wrap ${
                   msg.role === 'user'
-                    ? 'bg-green-600 text-white rounded-br-sm'
+                    ? 'bg-teal-600 text-white rounded-br-sm'
                     : 'bg-white border text-gray-800 rounded-bl-sm'
                 }`}
               >
@@ -251,7 +251,7 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
         {/* Input */}
         <div className="flex gap-2 border-t bg-white rounded-b-xl p-2">
           <input
-            className="flex-1 rounded-lg border px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+            className="flex-1 rounded-lg border px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-600"
             placeholder="Digite uma mensagem..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -261,7 +261,7 @@ function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
           <button
             onClick={send}
             disabled={!input.trim() || loading}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-40 transition-colors"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-600 text-white hover:bg-teal-700 disabled:opacity-40 transition-colors"
           >
             <Send className="h-3.5 w-3.5" />
           </button>
@@ -353,7 +353,7 @@ function PromptHistory({ prompt, onClose }: { prompt: CampaignPrompt; onClose: (
                     <button
                       onClick={() => restoreMutation.mutate(v.id)}
                       disabled={restoreMutation.isPending}
-                      className="flex items-center gap-1 rounded bg-green-600 px-2 py-0.5 text-xs text-white hover:bg-green-700 disabled:opacity-50"
+                      className="flex items-center gap-1 rounded bg-teal-600 px-2 py-0.5 text-xs text-white hover:bg-teal-700 disabled:opacity-50"
                     >
                       <Check className="h-3 w-3" />
                       Confirmar
@@ -368,7 +368,7 @@ function PromptHistory({ prompt, onClose }: { prompt: CampaignPrompt; onClose: (
                 ) : (
                   <button
                     onClick={() => setConfirmRestoreId(v.id)}
-                    className="flex items-center gap-1 rounded border px-2 py-0.5 text-xs text-gray-600 hover:bg-white hover:border-green-400 hover:text-green-700 transition-colors"
+                    className="flex items-center gap-1 rounded border px-2 py-0.5 text-xs text-gray-600 hover:bg-white hover:border-teal-600 hover:text-teal-700 transition-colors"
                   >
                     <CornerUpLeft className="h-3 w-3" />
                     Restaurar
@@ -444,7 +444,7 @@ export default function PromptsPage() {
     <div className="p-4 md:p-6 max-w-3xl">
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Prompts de IA</h1>
+          <h1 className="text-xl font-semibold text-teal-900">Prompts de IA</h1>
           <p className="text-sm text-muted-foreground">
             Prompts reutilizáveis para campanhas de broadcast
           </p>
@@ -532,7 +532,7 @@ export default function PromptsPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className={`gap-1.5 h-7 text-xs ${testingId === prompt.id ? 'border-green-400 text-green-700 bg-green-50' : ''}`}
+                        className={`gap-1.5 h-7 text-xs ${testingId === prompt.id ? 'border-teal-500 text-teal-700 bg-teal-50' : ''}`}
                         onClick={() => { setTestingId(testingId === prompt.id ? null : prompt.id); setHistoryId(null) }}
                       >
                         <Play className="h-3 w-3" />
@@ -601,7 +601,7 @@ export default function PromptsPage() {
             <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
               <div className="flex items-center gap-2">
                 <BotMessageSquare className="h-4 w-4 text-muted-foreground" />
-                <h2 className="font-semibold text-gray-900">{viewingPrompt.name}</h2>
+                <h2 className="font-semibold text-teal-900">{viewingPrompt.name}</h2>
               </div>
               <div className="flex items-center gap-2">
                 <Button

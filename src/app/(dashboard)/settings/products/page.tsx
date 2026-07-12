@@ -57,7 +57,7 @@ function RecurrenceInput({
       <select
         value={unit}
         onChange={(e) => onUnitChange(e.target.value as Unit)}
-        className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+        className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
       >
         <option value="dias">dias</option>
         <option value="semanas">semanas</option>
@@ -157,8 +157,8 @@ export default function ProductsSettingsPage() {
     <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Package className="h-5 w-5 text-green-600" />
+          <h1 className="text-xl font-bold text-teal-900 flex items-center gap-2">
+            <Package className="h-5 w-5 text-teal-600" />
             Produtos
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -191,7 +191,7 @@ export default function ProductsSettingsPage() {
 
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                <DollarSign className="h-3.5 w-3.5 text-green-600" />
+                <DollarSign className="h-3.5 w-3.5 text-teal-600" />
                 Preço padrão
               </label>
               <div className="relative">
@@ -213,7 +213,7 @@ export default function ProductsSettingsPage() {
 
             <div>
               <label className="mb-1.5 block text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                <RefreshCw className="h-3.5 w-3.5 text-green-600" />
+                <RefreshCw className="h-3.5 w-3.5 text-teal-600" />
                 Recorrência de recompra
               </label>
               <RecurrenceInput
@@ -276,7 +276,7 @@ export default function ProductsSettingsPage() {
                   />
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1">
-                      <DollarSign className="h-3 w-3 text-green-600" />
+                      <DollarSign className="h-3 w-3 text-teal-600" />
                       Preço padrão
                     </label>
                     <div className="relative">
@@ -294,7 +294,7 @@ export default function ProductsSettingsPage() {
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1">
-                      <RefreshCw className="h-3 w-3 text-green-600" />
+                      <RefreshCw className="h-3 w-3 text-teal-600" />
                       Recorrência de recompra
                     </label>
                     <RecurrenceInput
@@ -315,7 +315,7 @@ export default function ProductsSettingsPage() {
                     <button
                       onClick={() => updateMutation.mutate(product.id)}
                       disabled={!editName.trim() || updateMutation.isPending}
-                      className="flex-1 rounded-lg bg-green-600 py-1.5 text-xs text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                      className="flex-1 rounded-lg bg-teal-600 py-1.5 text-xs text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
                     >
                       {updateMutation.isPending ? 'Salvando...' : 'Salvar'}
                     </button>
@@ -327,13 +327,13 @@ export default function ProductsSettingsPage() {
                     <div className="flex items-center gap-3">
                       <p className="font-medium text-sm text-gray-900">{product.name}</p>
                       {product.defaultPrice != null && (
-                        <span className="text-sm font-semibold text-green-700">
+                        <span className="text-sm font-semibold text-teal-700">
                           {Number(product.defaultPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </span>
                       )}
                     </div>
                     {product.repurchaseIntervalDays ? (
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-green-700">
+                      <p className="mt-0.5 flex items-center gap-1 text-xs text-teal-700">
                         <RefreshCw className="h-3 w-3" />
                         {formatRecurrence(product.repurchaseIntervalDays)} · disparo automático ativo
                       </p>

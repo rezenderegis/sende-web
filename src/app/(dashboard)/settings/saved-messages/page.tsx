@@ -63,7 +63,7 @@ export default function SavedMessagesPage() {
     <div className="p-4 md:p-6 max-w-2xl">
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Mensagens Salvas</h1>
+          <h1 className="text-xl font-semibold text-teal-900">Mensagens Salvas</h1>
           <p className="text-sm text-muted-foreground">Respostas rápidas para usar nas conversas.</p>
         </div>
         <Button size="sm" className="gap-2 shrink-0" onClick={() => setShowForm((v) => !v)}>

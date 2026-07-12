@@ -36,7 +36,7 @@ function DeleteNumberDialog({
             <AlertTriangle className="h-5 w-5 text-red-600" />
           </div>
           <div>
-            <h2 className="font-semibold text-gray-900">Excluir número WhatsApp</h2>
+            <h2 className="font-semibold text-teal-900">Excluir número WhatsApp</h2>
             <p className="text-xs text-muted-foreground">Esta ação é irreversível</p>
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function NumbersPage() {
       )}
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Números WhatsApp</h1>
+          <h1 className="text-xl font-semibold text-teal-900">Números WhatsApp</h1>
           <p className="text-sm text-muted-foreground">Gerencie seus números da Meta Business API</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="gap-2 shrink-0">
@@ -251,8 +251,8 @@ export default function NumbersPage() {
           <Card key={num.id} className="overflow-hidden">
             <CardContent className="p-0">
               <div className="flex items-center gap-4 p-5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-50">
-                  <Phone className="h-5 w-5 text-whatsapp" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-50">
+                  <Phone className="h-5 w-5 text-teal-600" />
                 </div>
 
                 <div className="flex-1 min-w-0">

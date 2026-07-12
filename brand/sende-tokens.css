@@ -1,0 +1,50 @@
+/* ============================================
+   SENDE — Design Tokens (identidade oficial)
+   Fonte da verdade para cores, tipografia e raios.
+   Importar este arquivo na raiz do app (ex: index.css)
+   ============================================ */
+
+:root {
+  /* ---- Paleta Teal (marca) ---- */
+  --sende-teal-900: #134E4A;  /* headers, títulos, texto de marca */
+  --sende-teal-700: #0F766E;  /* hover de botões, header do chat */
+  --sende-teal-600: #0D9488;  /* botões primários, links de ação */
+  --sende-teal-500: #14B8A6;  /* destaques, stats, ícones ativos */
+  --sende-teal-100: #CCFBF1;  /* badges, fundos de ícone, tags */
+  --sende-teal-50:  #F0FDFA;  /* fundos de seção, hover de linha */
+
+  /* ---- Coral (EXCLUSIVO para conversão) ---- */
+  /* Usar apenas em CTAs de conversão (assinar, testar, upgrade).
+     Nunca em erros, avisos, ícones decorativos ou texto comum. */
+  --sende-coral: #F97316;
+  --sende-coral-hover: #EA6A0C;
+  --sende-coral-soft: #FFEDD5; /* fundo de badge "com atendente"/humano */
+
+  /* ---- Neutros ---- */
+  --sende-ink:       #1E293B;  /* texto principal */
+  --sende-ink-soft:  #475569;  /* texto secundário */
+  --sende-ink-faint: #94A3B8;  /* placeholders, timestamps, metadados */
+  --sende-border:    #EEF2F6;  /* bordas de cards e inputs */
+  --sende-bg:        #FFFFFF;  /* fundo padrão */
+
+  /* ---- Semânticas de status (padrão do painel) ---- */
+  --sende-status-bot-bg:    var(--sende-teal-100);  /* IA respondendo */
+  --sende-status-bot-fg:    var(--sende-teal-700);
+  --sende-status-human-bg:  var(--sende-coral-soft); /* com atendente */
+  --sende-status-human-fg:  #C2410C;
+  --sende-status-done-bg:   #DCFCE7;                 /* resolvido/venda */
+  --sende-status-done-fg:   #15803D;
+
+  /* ---- Tipografia ---- */
+  --sende-font-display: 'Sora', system-ui, sans-serif;   /* títulos, wordmark, números de destaque (weight 700-800) */
+  --sende-font-body:    'Inter', system-ui, sans-serif;  /* todo o resto (weight 400-600) */
+
+  /* ---- Forma ---- */
+  --sende-radius:      20px;   /* cards e painéis */
+  --sende-radius-sm:   12px;   /* inputs, itens de lista */
+  --sende-radius-pill: 999px;  /* botões e badges */
+
+  /* ---- Sombra ---- */
+  --sende-shadow: 0 12px 40px rgba(19, 78, 74, .10);
+  --sende-shadow-sm: 0 4px 20px rgba(19, 78, 74, .05);
+}

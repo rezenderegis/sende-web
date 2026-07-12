@@ -123,7 +123,7 @@ export function TagSelector({ assignedTags, addEndpoint, removeEndpoint, invalid
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCreating(false) }}
               placeholder="Buscar ou criar tag..."
-              className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-600"
             />
           </div>
 
@@ -139,7 +139,7 @@ export function TagSelector({ assignedTags, addEndpoint, removeEndpoint, invalid
                   style={{ backgroundColor: tag.color }}
                 />
                 <span className="flex-1 text-left truncate">{tag.name}</span>
-                {isAssigned(tag.id) && <Check className="h-3 w-3 text-green-600 shrink-0" />}
+                {isAssigned(tag.id) && <Check className="h-3 w-3 text-teal-600 shrink-0" />}
               </button>
             ))}
 
@@ -171,7 +171,7 @@ export function TagSelector({ assignedTags, addEndpoint, removeEndpoint, invalid
               <button
                 onClick={handleCreate}
                 disabled={createMutation.isPending}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-green-700 hover:bg-green-50"
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-teal-700 hover:bg-teal-50"
               >
                 <Plus className="h-3 w-3" />
                 {creating

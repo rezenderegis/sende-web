@@ -54,7 +54,7 @@ export default function FailuresPage() {
         </Button>
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-red-500" />
-          <h1 className="text-base font-semibold text-gray-900">Falhas de Entrega</h1>
+          <h1 className="text-base font-semibold text-teal-900">Falhas de Entrega</h1>
         </div>
         <div className="ml-auto flex items-center gap-2 min-w-0">
           <Filter className="h-4 w-4 text-gray-400 shrink-0" />

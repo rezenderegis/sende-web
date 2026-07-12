@@ -13,14 +13,14 @@ import type { FollowOn, FollowOnStatus, User } from '@/types'
 
 const TYPE_CONFIG = {
   meeting: { label: 'Reunião', icon: Users, className: 'bg-blue-100 text-blue-700' },
-  call: { label: 'Ligação', icon: Phone, className: 'bg-green-100 text-green-700' },
+  call: { label: 'Ligação', icon: Phone, className: 'bg-teal-100 text-teal-700' },
   message: { label: 'Envio automático', icon: MessageSquare, className: 'bg-violet-100 text-violet-700' },
   message_manual: { label: 'Mensagem', icon: MessageSquare, className: 'bg-teal-100 text-teal-700' },
 } as const
 
 const STATUS_CONFIG = {
   pending: { label: 'Pendente', className: 'bg-amber-100 text-amber-700' },
-  done: { label: 'Concluído', className: 'bg-green-100 text-green-700' },
+  done: { label: 'Concluído', className: 'bg-teal-100 text-teal-700' },
   cancelled: { label: 'Cancelado', className: 'bg-gray-100 text-gray-500' },
 }
 
@@ -205,7 +205,7 @@ export default function AgendaPage() {
     <div className="p-6 max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Agenda</h1>
+          <h1 className="text-xl font-semibold text-teal-900">Agenda</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Follow-ons agendados</p>
         </div>
         {isManager && (
@@ -213,7 +213,7 @@ export default function AgendaPage() {
             <select
               value={filterUserId ?? ''}
               onChange={(e) => setFilterUserId(e.target.value || null)}
-              className="h-9 rounded-lg border border-gray-200 pl-3 pr-8 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-green-500 appearance-none bg-white"
+              className="h-9 rounded-lg border border-gray-200 pl-3 pr-8 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-teal-600 appearance-none bg-white"
             >
               <option value="">Todos os atendentes</option>
               {users.map((u) => (

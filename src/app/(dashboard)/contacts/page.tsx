@@ -105,7 +105,7 @@ function ImportModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-md rounded-2xl border bg-white shadow-xl p-6">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Importar planilha</h2>
+          <h2 className="text-base font-semibold text-teal-900">Importar planilha</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
             <X className="h-4 w-4" />
           </button>
@@ -125,7 +125,7 @@ function ImportModal({ onClose }: { onClose: () => void }) {
             onClick={() => fileRef.current?.click()}
             className={cn(
               'flex w-full items-center gap-3 rounded-lg border-2 border-dashed px-4 py-3 text-sm transition-colors',
-              file ? 'border-green-400 bg-green-50 text-green-700' : 'border-gray-200 text-muted-foreground hover:border-gray-300 hover:bg-gray-50',
+              file ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-200 text-muted-foreground hover:border-gray-300 hover:bg-gray-50',
             )}
           >
             <FileSpreadsheet className="h-4 w-4 shrink-0" />
@@ -163,7 +163,7 @@ function ImportModal({ onClose }: { onClose: () => void }) {
                 onChange={(e) => { setTagSearch(e.target.value); setCreating(false) }}
                 onFocus={() => setTagOpen(true)}
                 placeholder="Buscar ou criar tag..."
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
               />
               {tagOpen && (
                 <div className="absolute left-0 top-full z-10 mt-1 w-full rounded-lg border bg-white shadow-lg">
@@ -201,7 +201,7 @@ function ImportModal({ onClose }: { onClose: () => void }) {
                       )}
                       <button
                         onClick={handleCreateTag}
-                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-green-700 hover:bg-green-50"
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-teal-700 hover:bg-teal-50"
                       >
                         <Plus className="h-3 w-3" />
                         {creating ? `Criar "${tagSearch.trim()}" com esta cor` : `Criar tag "${tagSearch.trim()}"`}
@@ -316,7 +316,7 @@ function TagMultiSelect({ selected, onChange }: { selected: Tag[]; onChange: (ta
           onChange={(e) => { setSearch(e.target.value); setCreating(false) }}
           onFocus={() => setOpen(true)}
           placeholder="Buscar ou criar tag..."
-          className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
         />
         {open && (
           <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-lg border bg-white shadow-lg">
@@ -356,7 +356,7 @@ function TagMultiSelect({ selected, onChange }: { selected: Tag[]; onChange: (ta
                 )}
                 <button
                   onClick={handleCreate}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-green-700 hover:bg-green-50"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-teal-700 hover:bg-teal-50"
                 >
                   <Plus className="h-3 w-3" />
                   {creating ? `Criar "${search.trim()}" com esta cor` : `Criar tag "${search.trim()}"`}
@@ -529,7 +529,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
               {contact.name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div>
-              <h2 className="text-base font-semibold text-gray-900">{editForm.name || contact.name}</h2>
+              <h2 className="text-base font-semibold text-teal-900">{editForm.name || contact.name}</h2>
               <p className="text-sm text-muted-foreground">{formatPhone(editForm.phone || contact.phone)}</p>
             </div>
           </div>
@@ -548,13 +548,13 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
         <div className="flex border-b">
           <button
             onClick={() => setTab('info')}
-            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 ${tab === 'info' ? 'border-green-600 text-green-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
+            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 ${tab === 'info' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
           >
             Informações
           </button>
           <button
             onClick={() => setTab('sales')}
-            className={`flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors border-b-2 ${tab === 'sales' ? 'border-green-600 text-green-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
+            className={`flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors border-b-2 ${tab === 'sales' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
           >
             <ShoppingBag className="h-3.5 w-3.5" />
             Vendas
@@ -613,7 +613,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                   value={editForm.notes}
                   onChange={(e) => setField('notes', e.target.value)}
                   placeholder="Observações sobre o contato"
-                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600 resize-none"
                 />
               </div>
 
@@ -700,9 +700,9 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
               {/* Totais */}
               {sales.length > 0 && (
                 <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="rounded-xl border bg-green-50 p-3">
+                  <div className="rounded-xl border bg-teal-50 p-3">
                     <p className="text-xs text-muted-foreground mb-1">Pago</p>
-                    <p className="text-base font-semibold text-green-700">{formatCurrency(totalPaid)}</p>
+                    <p className="text-base font-semibold text-teal-700">{formatCurrency(totalPaid)}</p>
                   </div>
                   <div className="rounded-xl border bg-amber-50 p-3">
                     <p className="text-xs text-muted-foreground mb-1">Pendente</p>
@@ -753,7 +753,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                       <select
                         value={saleForm.paymentStatus}
                         onChange={(e) => setSaleForm((f) => ({ ...f, paymentStatus: e.target.value }))}
-                        className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
                       >
                         <option value="pending">Pendente</option>
                         <option value="paid">Pago</option>
@@ -802,7 +802,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-700'}`}>
                         {sale.paymentStatus === 'paid' ? <><CheckCircle2 className="h-3 w-3" />Pago</> : <><Clock className="h-3 w-3" />Pendente</>}
                       </span>
                       <p className="text-sm font-semibold text-gray-900">{formatCurrency(Number(sale.totalValue))}</p>
@@ -850,7 +850,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                               <p className="text-xs text-muted-foreground">
                                 {override ? (
                                   <>
-                                    <span className="text-green-700 font-medium">Personalizado: a cada {fromDays(override.repurchaseIntervalDays).value} {fromDays(override.repurchaseIntervalDays).unit}</span>
+                                    <span className="text-teal-700 font-medium">Personalizado: a cada {fromDays(override.repurchaseIntervalDays).value} {fromDays(override.repurchaseIntervalDays).unit}</span>
                                     <span className="text-gray-400"> · padrão: {defaultInterval.value} {defaultInterval.unit}</span>
                                   </>
                                 ) : (
@@ -878,7 +878,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                                     setEditingRecurrence(product.id)
                                   }
                                 }}
-                                className="text-xs text-green-700 hover:text-green-800 font-medium px-2 py-1 rounded hover:bg-green-50 transition-colors"
+                                className="text-xs text-teal-700 hover:text-teal-700 font-medium px-2 py-1 rounded hover:bg-teal-50 transition-colors"
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </button>
@@ -891,12 +891,12 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                                 min="1"
                                 value={recurrenceInput.value}
                                 onChange={(e) => setRecurrenceInput((r) => ({ ...r, value: e.target.value }))}
-                                className="w-16 rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-16 rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-600"
                               />
                               <select
                                 value={recurrenceInput.unit}
                                 onChange={(e) => setRecurrenceInput((r) => ({ ...r, unit: e.target.value as 'dias' | 'semanas' | 'meses' }))}
-                                className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                                className="rounded-lg border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-600"
                               >
                                 <option value="dias">dias</option>
                                 <option value="semanas">semanas</option>
@@ -905,7 +905,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                               <button
                                 disabled={!recurrenceInput.value || upsertRecurrenceMutation.isPending}
                                 onClick={() => upsertRecurrenceMutation.mutate({ productId: product.id, days: toDays(recurrenceInput.value, recurrenceInput.unit) })}
-                                className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                className="flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 text-xs text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
                               >
                                 <Check className="h-3 w-3" />
                                 Salvar
@@ -969,7 +969,7 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-md rounded-2xl border bg-white shadow-xl p-6">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Novo contato</h2>
+          <h2 className="text-base font-semibold text-teal-900">Novo contato</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
             <X className="h-4 w-4" />
           </button>
@@ -1158,7 +1158,7 @@ export default function ContactsPage() {
 
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Contatos</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-teal-900">Contatos</h1>
           <p className="text-sm text-muted-foreground">
             {data.length} contato{data.length !== 1 ? 's' : ''}
             {activeBroadcast && (
@@ -1246,7 +1246,7 @@ export default function ContactsPage() {
             <div className="flex items-center gap-3 border-b bg-gray-50 px-4 md:px-6 py-2">
               <button onClick={toggleAll} className="shrink-0 text-gray-400 hover:text-gray-700 transition-colors">
                 {allSelected
-                  ? <CheckSquare className="h-4 w-4 text-green-600" />
+                  ? <CheckSquare className="h-4 w-4 text-teal-600" />
                   : <Square className="h-4 w-4" />
                 }
               </button>
@@ -1259,7 +1259,7 @@ export default function ContactsPage() {
           {contacts.map((contact) => (
             <div
               key={contact.id}
-              className={`flex items-center gap-3 md:gap-4 border-b px-4 md:px-6 py-3 md:py-4 last:border-0 transition-colors cursor-pointer ${selected.has(contact.id) ? 'bg-green-50' : 'hover:bg-gray-50/50'}`}
+              className={`flex items-center gap-3 md:gap-4 border-b px-4 md:px-6 py-3 md:py-4 last:border-0 transition-colors cursor-pointer ${selected.has(contact.id) ? 'bg-teal-50' : 'hover:bg-gray-50/50'}`}
               onClick={() => setSelectedContact(contact)}
             >
               <button
@@ -1267,7 +1267,7 @@ export default function ContactsPage() {
                 className="shrink-0 text-gray-300 hover:text-gray-600 transition-colors"
               >
                 {selected.has(contact.id)
-                  ? <CheckSquare className="h-4 w-4 text-green-600" />
+                  ? <CheckSquare className="h-4 w-4 text-teal-600" />
                   : <Square className="h-4 w-4" />
                 }
               </button>

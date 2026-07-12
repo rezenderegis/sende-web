@@ -27,7 +27,7 @@ function SaleDetailModal({ sale, onClose, onMarkPaid, onDelete }: {
       <div className="w-full max-w-md rounded-2xl border bg-white shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-base font-semibold text-gray-900">Detalhe da venda</h2>
+          <h2 className="text-base font-semibold text-teal-900">Detalhe da venda</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
             <X className="h-4 w-4" />
           </button>
@@ -70,10 +70,10 @@ function SaleDetailModal({ sale, onClose, onMarkPaid, onDelete }: {
             <div className="rounded-xl border p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-green-600 shrink-0" />
+                  <Package className="h-4 w-4 text-teal-600 shrink-0" />
                   <p className="font-medium text-sm text-gray-900">{p?.name || '—'}</p>
                 </div>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-700'}`}>
                   {sale.paymentStatus === 'paid' ? <><CheckCircle2 className="h-3 w-3" />Pago</> : <><Clock className="h-3 w-3" />Pendente</>}
                 </span>
               </div>
@@ -126,7 +126,7 @@ function SaleDetailModal({ sale, onClose, onMarkPaid, onDelete }: {
           {sale.paymentStatus === 'pending' && (
             <button
               onClick={() => { onMarkPaid(sale.id); onClose() }}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white hover:bg-teal-700 transition-colors"
             >
               <CheckCircle2 className="h-4 w-4" />
               Marcar como pago
@@ -289,8 +289,8 @@ export default function SalesPage() {
 
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <ShoppingBag className="h-6 w-6 text-green-600" />
+          <h1 className="text-xl md:text-2xl font-bold text-teal-900 flex items-center gap-2">
+            <ShoppingBag className="h-6 w-6 text-teal-600" />
             Vendas
           </h1>
           <p className="text-sm text-muted-foreground">{filtered.length} venda{filtered.length !== 1 ? 's' : ''}</p>
@@ -314,9 +314,9 @@ export default function SalesPage() {
           <p className="text-lg font-semibold text-gray-900">{formatCurrency(totalPaid + totalPending)}</p>
           <p className="text-xs text-muted-foreground">{filtered.length} venda{filtered.length !== 1 ? 's' : ''}</p>
         </div>
-        <div className="rounded-xl border bg-green-50 p-4">
+        <div className="rounded-xl border bg-teal-50 p-4">
           <p className="text-xs text-muted-foreground mb-1">Pago</p>
-          <p className="text-lg font-semibold text-green-700">{formatCurrency(totalPaid)}</p>
+          <p className="text-lg font-semibold text-teal-700">{formatCurrency(totalPaid)}</p>
           <p className="text-xs text-muted-foreground">{filtered.filter((s) => s.paymentStatus === 'paid').length} venda{filtered.filter((s) => s.paymentStatus === 'paid').length !== 1 ? 's' : ''}</p>
         </div>
         <div className="rounded-xl border bg-amber-50 p-4">
@@ -335,7 +335,7 @@ export default function SalesPage() {
       {showNewSale && (
         <div className="mb-6 rounded-xl border bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-900">Nova venda</h2>
+            <h2 className="text-sm font-semibold text-teal-900">Nova venda</h2>
             <button onClick={() => { setShowNewSale(false); setContactSearch({ status: 'idle' }) }} className="text-muted-foreground hover:text-gray-700">
               <X className="h-4 w-4" />
             </button>
@@ -348,27 +348,27 @@ export default function SalesPage() {
                   placeholder="(61) 99999-9999"
                   value={saleForm.contactPhone}
                   onChange={(e) => setSaleForm((f) => ({ ...f, contactPhone: e.target.value }))}
-                  className={contactSearch.status === 'found' ? 'border-green-400 pr-8' : contactSearch.status === 'not_found' ? 'border-red-400 pr-8' : ''}
+                  className={contactSearch.status === 'found' ? 'border-teal-500 pr-8' : contactSearch.status === 'not_found' ? 'border-red-400 pr-8' : ''}
                 />
                 {contactSearch.status === 'loading' && (
                   <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-gray-400 animate-pulse" />
                 )}
                 {contactSearch.status === 'found' && (
-                  <CheckCircle2 className="absolute right-2.5 top-2.5 h-4 w-4 text-green-500" />
+                  <CheckCircle2 className="absolute right-2.5 top-2.5 h-4 w-4 text-teal-500" />
                 )}
                 {contactSearch.status === 'not_found' && (
                   <AlertCircle className="absolute right-2.5 top-2.5 h-4 w-4 text-red-400" />
                 )}
               </div>
               {contactSearch.status === 'found' && (
-                <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-semibold text-green-700">
+                <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-semibold text-teal-700">
                     {contactSearch.contact.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-green-800">{contactSearch.contact.name}</p>
+                    <p className="text-xs font-medium text-teal-700">{contactSearch.contact.name}</p>
                     {contactSearch.contact.companyName && (
-                      <p className="text-xs text-green-600">{contactSearch.contact.companyName}</p>
+                      <p className="text-xs text-teal-600">{contactSearch.contact.companyName}</p>
                     )}
                   </div>
                 </div>
@@ -410,7 +410,7 @@ export default function SalesPage() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700">Status</label>
-              <select value={saleForm.paymentStatus} onChange={(e) => setSaleForm((f) => ({ ...f, paymentStatus: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500">
+              <select value={saleForm.paymentStatus} onChange={(e) => setSaleForm((f) => ({ ...f, paymentStatus: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600">
                 <option value="pending">Pendente</option>
                 <option value="paid">Pago</option>
               </select>
@@ -495,7 +495,7 @@ export default function SalesPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-medium text-sm text-gray-900">{sale.contact?.name || '—'}</p>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${sale.paymentStatus === 'paid' ? 'bg-teal-100 text-teal-700' : 'bg-amber-100 text-amber-700'}`}>
                     {sale.paymentStatus === 'paid' ? <><CheckCircle2 className="h-3 w-3" />Pago</> : <><Clock className="h-3 w-3" />Pendente</>}
                   </span>
                 </div>
@@ -516,7 +516,7 @@ export default function SalesPage() {
                   {sale.paymentStatus === 'pending' && (
                     <button
                       onClick={() => markPaidMutation.mutate(sale.id)}
-                      className="rounded-md border px-2 py-1 text-xs text-green-700 hover:bg-green-50 transition-colors disabled:opacity-50"
+                      className="rounded-md border px-2 py-1 text-xs text-teal-700 hover:bg-teal-50 transition-colors disabled:opacity-50"
                       disabled={markPaidMutation.isPending}
                       title="Marcar como pago"
                     >

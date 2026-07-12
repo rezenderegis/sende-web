@@ -84,7 +84,7 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
             <select
               value={newUnit}
               onChange={(e) => setNewUnit(e.target.value as Unit)}
-              className="rounded-lg border px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-green-500"
+              className="rounded-lg border px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-teal-600"
             >
               <option value="dias">dias</option>
               <option value="semanas">semanas</option>
@@ -104,7 +104,7 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
             type="button"
             disabled={!newName.trim() || createMutation.isPending}
             onClick={() => createMutation.mutate()}
-            className="flex-1 rounded-lg bg-green-600 py-1.5 text-xs text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+            className="flex-1 rounded-lg bg-teal-600 py-1.5 text-xs text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
           >
             {createMutation.isPending ? 'Criando...' : 'Criar produto'}
           </button>
@@ -122,7 +122,7 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
           onChange(e.target.value, p)
         }}
         disabled={disabled}
-        className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+        className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600 disabled:opacity-50"
       >
         <option value="">Selecionar produto...</option>
         {products.map((p) => (
@@ -134,7 +134,7 @@ export function ProductPicker({ value, onChange, disabled }: ProductPickerProps)
       <button
         type="button"
         onClick={() => setShowCreate(true)}
-        className="shrink-0 flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs text-green-700 hover:bg-green-50 transition-colors"
+        className="shrink-0 flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs text-teal-700 hover:bg-teal-50 transition-colors"
         title="Criar novo produto"
       >
         <Plus className="h-3.5 w-3.5" />

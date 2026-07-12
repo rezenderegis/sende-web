@@ -39,7 +39,7 @@ function PromptPickerModal({
         <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
           <div className="flex items-center gap-2">
             <BotMessageSquare className="h-4 w-4 text-muted-foreground" />
-            <h2 className="font-semibold text-gray-900">Selecionar prompt de campanha</h2>
+            <h2 className="font-semibold text-teal-900">Selecionar prompt de campanha</h2>
           </div>
           <button onClick={onClose} className="rounded-md p-1 hover:bg-gray-100">
             <X className="h-4 w-4 text-gray-500" />
@@ -54,7 +54,7 @@ function PromptPickerModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar prompt..."
-              className="w-full rounded-md border pl-8 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full rounded-md border pl-8 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
             />
           </div>
         </div>
@@ -68,7 +68,7 @@ function PromptPickerModal({
                   <p className="text-sm">Nenhum prompt criado ainda</p>
                   <button
                     onClick={() => { onClose(); router.push('/settings/prompts') }}
-                    className="flex items-center gap-1.5 text-xs text-green-700 hover:underline"
+                    className="flex items-center gap-1.5 text-xs text-teal-700 hover:underline"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Criar prompts na biblioteca
@@ -412,7 +412,7 @@ function NewBroadcastContent() {
         Voltar para broadcasts
       </button>
 
-      <h1 className="text-xl font-semibold text-gray-900 mb-6">
+      <h1 className="text-xl font-semibold text-teal-900 mb-6">
         {broadcast ? 'Editar broadcast' : 'Novo Broadcast'}
       </h1>
 
@@ -424,7 +424,7 @@ function NewBroadcastContent() {
               className={cn(
                 'flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold',
                 i < step
-                  ? 'bg-green-500 text-white'
+                  ? 'bg-teal-500 text-white'
                   : i === step
                   ? 'bg-gray-900 text-white'
                   : 'bg-gray-100 text-gray-400',
@@ -486,7 +486,7 @@ function NewBroadcastContent() {
                   className={cn(
                     'flex-1 rounded-lg border py-2 text-sm font-medium transition-colors',
                     form.type === t
-                      ? 'border-green-500 bg-green-50 text-green-700'
+                      ? 'border-teal-500 bg-teal-50 text-teal-700'
                       : 'border-gray-200 hover:bg-gray-50',
                   )}
                 >
@@ -549,7 +549,7 @@ function NewBroadcastContent() {
                         className={cn(
                           'w-full rounded-lg border p-3 text-left transition-colors',
                           form.templateName === t.name
-                            ? 'border-green-500 bg-green-50'
+                            ? 'border-teal-500 bg-teal-50'
                             : 'border-gray-200 hover:bg-gray-50',
                         )}
                       >
@@ -589,7 +589,7 @@ function NewBroadcastContent() {
                 <button
                   type="button"
                   onClick={() => setPromptPickerOpen(true)}
-                  className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 font-medium transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-teal-700 hover:text-teal-700 font-medium transition-colors"
                 >
                   <BotMessageSquare className="h-3.5 w-3.5" />
                   {selectedPromptName ? 'Trocar' : 'Selecionar da biblioteca'}
@@ -598,12 +598,12 @@ function NewBroadcastContent() {
             </div>
 
             {campaignPromptId && selectedPromptName ? (
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2.5">
                 <div className="flex items-center gap-2 min-w-0">
-                  <BotMessageSquare className="h-3.5 w-3.5 shrink-0 text-green-700" />
-                  <span className="text-sm font-medium text-green-800 truncate">{selectedPromptName}</span>
+                  <BotMessageSquare className="h-3.5 w-3.5 shrink-0 text-teal-700" />
+                  <span className="text-sm font-medium text-teal-700 truncate">{selectedPromptName}</span>
                 </div>
-                <button onClick={clearPrompt} className="text-green-600 hover:text-green-800 shrink-0">
+                <button onClick={clearPrompt} className="text-teal-600 hover:text-teal-700 shrink-0">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -611,7 +611,7 @@ function NewBroadcastContent() {
               <button
                 type="button"
                 onClick={() => setPromptPickerOpen(true)}
-                className="flex w-full items-center gap-2 rounded-lg border border-dashed border-gray-200 px-3 py-3 text-sm text-muted-foreground hover:border-green-400 hover:text-green-700 transition-colors"
+                className="flex w-full items-center gap-2 rounded-lg border border-dashed border-gray-200 px-3 py-3 text-sm text-muted-foreground hover:border-teal-600 hover:text-teal-700 transition-colors"
               >
                 <BotMessageSquare className="h-4 w-4" />
                 Nenhum prompt selecionado — clique para escolher da biblioteca
@@ -633,7 +633,7 @@ function NewBroadcastContent() {
               <button
                 type="button"
                 onClick={() => setIntentRules((r) => [...r, { intent: '', tagId: '' }])}
-                className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 font-medium transition-colors"
+                className="flex items-center gap-1.5 text-xs text-teal-700 hover:text-teal-700 font-medium transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Adicionar intenção
@@ -657,7 +657,7 @@ function NewBroadcastContent() {
                       rules.map((r, idx) => (idx === i ? { ...r, intent: e.target.value } : r)),
                     )
                   }
-                  className="flex-1 h-9 rounded-md border border-gray-200 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+                  className="flex-1 h-9 rounded-md border border-gray-200 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-teal-600"
                 />
                 <select
                   value={rule.tagId}
@@ -666,7 +666,7 @@ function NewBroadcastContent() {
                       rules.map((r, idx) => (idx === i ? { ...r, tagId: e.target.value } : r)),
                     )
                   }
-                  className="h-9 rounded-md border border-gray-200 px-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-green-500"
+                  className="h-9 rounded-md border border-gray-200 px-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-teal-600"
                 >
                   <option value="">Tag...</option>
                   {tags.map((t) => (
@@ -725,7 +725,7 @@ function NewBroadcastContent() {
           )}
 
           {recipientsAdded && (
-            <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+            <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-sm text-teal-700">
               Destinatários já adicionados. Selecione novos para incluir mais, ou clique em Continuar.
             </div>
           )}
@@ -862,9 +862,9 @@ function NewBroadcastContent() {
                 className={cn(
                   'relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer',
                   isDragging
-                    ? 'border-green-500 bg-green-50'
+                    ? 'border-teal-500 bg-teal-50'
                     : csvFile
-                    ? 'border-green-400 bg-green-50'
+                    ? 'border-teal-500 bg-teal-50'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50',
                 )}
                 onClick={() => document.getElementById('csv-file-input')?.click()}
@@ -882,7 +882,7 @@ function NewBroadcastContent() {
                 />
                 {csvFile ? (
                   <>
-                    <FileText className="h-8 w-8 text-green-600" />
+                    <FileText className="h-8 w-8 text-teal-600" />
                     <div className="text-center">
                       <p className="text-sm font-medium text-gray-900">{csvFile.name}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">
@@ -939,8 +939,8 @@ function NewBroadcastContent() {
               {csvUploadResult && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                    <span className="text-green-700 font-medium">{csvUploadResult.added} adicionado(s)</span>
+                    <CheckCircle2 className="h-4 w-4 text-teal-600 shrink-0" />
+                    <span className="text-teal-700 font-medium">{csvUploadResult.added} adicionado(s)</span>
                     {csvUploadResult.skipped > 0 && (
                       <span className="text-muted-foreground">· {csvUploadResult.skipped} duplicado(s) ignorado(s)</span>
                     )}

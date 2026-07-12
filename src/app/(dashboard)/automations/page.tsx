@@ -200,7 +200,7 @@ function RuleForm({
               onClick={() => setType(key as AutomationTriggerType)}
               className={cn(
                 'flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-medium transition-colors',
-                form.type === key ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50',
+                form.type === key ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50',
               )}
             >
               <meta.icon className="h-4 w-4" />
@@ -216,7 +216,7 @@ function RuleForm({
         <select
           value={form.whatsappNumberId}
           onChange={(e) => setForm((f) => ({ ...f, whatsappNumberId: e.target.value }))}
-          className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+          className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
         >
           <option value="">Selecionar número...</option>
           {numbers.map((n) => (
@@ -248,7 +248,7 @@ function RuleForm({
             onClick={() => setMessageType('template')}
             className={cn(
               'flex-1 rounded-lg border py-2 text-xs font-medium transition-colors',
-              form.messageType === 'template' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+              form.messageType === 'template' ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50',
             )}
           >
             Template Meta
@@ -258,7 +258,7 @@ function RuleForm({
             onClick={() => setMessageType('text')}
             className={cn(
               'flex-1 rounded-lg border py-2 text-xs font-medium transition-colors',
-              form.messageType === 'text' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+              form.messageType === 'text' ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50',
             )}
           >
             Texto livre
@@ -287,7 +287,7 @@ function RuleForm({
               <select
                 value={form.templateName}
                 onChange={(e) => selectTemplate(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
               >
                 <option value="">Selecionar template...</option>
                 {templates
@@ -327,7 +327,7 @@ function RuleForm({
                         type="button"
                         title={VAR_DESCRIPTIONS[v] ?? v}
                         onClick={() => insertVar(v)}
-                        className="rounded-full border bg-white px-2 py-0.5 text-xs text-gray-600 hover:bg-green-50 hover:border-green-400 hover:text-green-700 transition-colors font-mono"
+                        className="rounded-full border bg-white px-2 py-0.5 text-xs text-gray-600 hover:bg-teal-50 hover:border-teal-600 hover:text-teal-700 transition-colors font-mono"
                       >
                         {v}
                       </button>
@@ -350,7 +350,7 @@ function RuleForm({
                   <label className="mb-0.5 block text-xs text-muted-foreground">
                     {`{{${i + 1}}}`}
                     {activeVarIndex === i && (
-                      <span className="ml-1.5 text-green-600">← campo ativo</span>
+                      <span className="ml-1.5 text-teal-600">← campo ativo</span>
                     )}
                   </label>
                   <Input
@@ -358,7 +358,7 @@ function RuleForm({
                     value={form.templateVariables[i] ?? ''}
                     onChange={(e) => setTemplateVar(i, e.target.value)}
                     onFocus={() => setActiveVarIndex(i)}
-                    className={activeVarIndex === i ? 'border-green-400 ring-1 ring-green-300' : ''}
+                    className={activeVarIndex === i ? 'border-teal-500 ring-1 ring-teal-600/50' : ''}
                   />
                 </div>
               ))}
@@ -389,7 +389,7 @@ function RuleForm({
             rows={4}
             value={form.messageTemplate ?? ''}
             onChange={(e) => setForm((f) => ({ ...f, messageTemplate: e.target.value }))}
-            className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
+            className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600 resize-none"
             placeholder="Digite a mensagem..."
           />
         </div>
@@ -402,7 +402,7 @@ function RuleForm({
             <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
               <div className="flex items-center gap-2">
                 <BotMessageSquare className="h-4 w-4 text-muted-foreground" />
-                <h2 className="font-semibold text-gray-900 text-sm">Selecionar prompt de campanha</h2>
+                <h2 className="font-semibold text-teal-900 text-sm">Selecionar prompt de campanha</h2>
               </div>
               <button onClick={() => setPromptPickerOpen(false)}><X className="h-4 w-4 text-gray-400" /></button>
             </div>
@@ -411,13 +411,13 @@ function RuleForm({
                 <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
                   <BotMessageSquare className="h-8 w-8 opacity-20" />
                   <p className="text-xs">Nenhum prompt criado ainda</p>
-                  <a href="/settings/prompts" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-700 hover:underline">
+                  <a href="/settings/prompts" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-teal-700 hover:underline">
                     <ExternalLink className="h-3 w-3" />Criar prompts
                   </a>
                 </div>
               ) : campaignPrompts.map((p) => (
                 <button key={p.id} onClick={() => { setCampaignPromptId(p.id); setPromptPickerOpen(false) }}
-                  className={`w-full rounded-lg px-4 py-3 text-left transition-colors ${campaignPromptId === p.id ? 'bg-green-50 border border-green-400' : 'hover:bg-gray-50'}`}>
+                  className={`w-full rounded-lg px-4 py-3 text-left transition-colors ${campaignPromptId === p.id ? 'bg-teal-50 border border-teal-500' : 'hover:bg-gray-50'}`}>
                   <p className="text-sm font-medium text-gray-900">{p.name}</p>
                   <p className="mt-0.5 text-xs text-gray-500 line-clamp-2 font-mono">{p.content}</p>
                 </button>
@@ -444,7 +444,7 @@ function RuleForm({
               <ExternalLink className="h-3 w-3" />Criar novo
             </a>
             <button type="button" onClick={() => setPromptPickerOpen(true)}
-              className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 font-medium">
+              className="flex items-center gap-1.5 text-xs text-teal-700 hover:text-teal-700 font-medium">
               <BotMessageSquare className="h-3.5 w-3.5" />
               {selectedPrompt ? 'Trocar' : 'Selecionar'}
             </button>
@@ -452,18 +452,18 @@ function RuleForm({
         </div>
 
         {selectedPrompt ? (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2">
             <div className="flex items-center gap-2 min-w-0">
-              <BotMessageSquare className="h-3.5 w-3.5 shrink-0 text-green-700" />
-              <span className="text-sm font-medium text-green-800 truncate">{selectedPrompt.name}</span>
+              <BotMessageSquare className="h-3.5 w-3.5 shrink-0 text-teal-700" />
+              <span className="text-sm font-medium text-teal-700 truncate">{selectedPrompt.name}</span>
             </div>
-            <button onClick={() => setCampaignPromptId(null)} className="text-green-600 hover:text-green-800 shrink-0">
+            <button onClick={() => setCampaignPromptId(null)} className="text-teal-600 hover:text-teal-700 shrink-0">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ) : (
           <button type="button" onClick={() => setPromptPickerOpen(true)}
-            className="flex w-full items-center gap-2 rounded-lg border border-dashed border-gray-200 px-3 py-2.5 text-sm text-muted-foreground hover:border-green-400 hover:text-green-700 transition-colors">
+            className="flex w-full items-center gap-2 rounded-lg border border-dashed border-gray-200 px-3 py-2.5 text-sm text-muted-foreground hover:border-teal-600 hover:text-teal-700 transition-colors">
             <BotMessageSquare className="h-4 w-4" />
             Nenhum prompt — clique para escolher da biblioteca
           </button>
@@ -497,7 +497,7 @@ function ExecutionsPanel({ rule }: { rule: AutomationRule }) {
       {executions.map((e) => (
         <div key={e.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
           {e.status === 'sent'
-            ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-600" />
+            ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-teal-600" />
             : <XCircle className="h-3.5 w-3.5 shrink-0 text-red-500" />}
           <span className="flex-1 text-gray-700 truncate">{e.contact?.name || e.contactId}</span>
           <span className="text-muted-foreground shrink-0">{new Date(e.createdAt).toLocaleDateString('pt-BR')}</span>
@@ -519,7 +519,7 @@ function RuleStatsRow({ ruleId }: { ruleId: string }) {
   return (
     <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
       <span className="flex items-center gap-1">
-        <Check className="h-3 w-3 text-green-500" />
+        <Check className="h-3 w-3 text-teal-500" />
         {stats.sent} enviados
       </span>
       <span>·</span>
@@ -547,7 +547,7 @@ function AudienceModal({ rule, onClose }: { rule: AutomationRule; onClose: () =>
   const Icon = meta?.icon ?? Zap
 
   const STATUS_CONFIG = {
-    will_send: { label: 'Vai receber', className: 'bg-green-100 text-green-700' },
+    will_send: { label: 'Vai receber', className: 'bg-teal-100 text-teal-700' },
     already_sent: { label: 'Já recebeu hoje', className: 'bg-gray-100 text-gray-500' },
     opted_out: { label: 'Opt-out', className: 'bg-red-100 text-red-600' },
   }
@@ -561,7 +561,7 @@ function AudienceModal({ rule, onClose }: { rule: AutomationRule; onClose: () =>
               <Icon className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-gray-900">{rule.name}</h2>
+              <h2 className="text-base font-semibold text-teal-900">{rule.name}</h2>
               <p className="text-xs text-muted-foreground">Público de hoje</p>
             </div>
           </div>
@@ -577,8 +577,8 @@ function AudienceModal({ rule, onClose }: { rule: AutomationRule; onClose: () =>
             <>
               {/* Resumo */}
               <div className="grid grid-cols-3 gap-3 mb-5">
-                <div className="rounded-xl border bg-green-50 p-3 text-center">
-                  <p className="text-lg font-bold text-green-700">{data.willSend}</p>
+                <div className="rounded-xl border bg-teal-50 p-3 text-center">
+                  <p className="text-lg font-bold text-teal-700">{data.willSend}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">Vão receber</p>
                 </div>
                 <div className="rounded-xl border bg-gray-50 p-3 text-center">
@@ -707,7 +707,7 @@ function RulesTab() {
     <div>
       {showCreate && (
         <div className="mb-6 rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900">Nova automação</h2>
+          <h2 className="mb-4 text-sm font-semibold text-teal-900">Nova automação</h2>
           <RuleForm
             onSave={(data) => createMutation.mutate(data)}
             onCancel={() => setShowCreate(false)}
@@ -739,7 +739,7 @@ function RulesTab() {
             return (
               <div key={rule.id} className="rounded-2xl border bg-white p-6 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-gray-900">Editar automação</h2>
+                  <h2 className="text-sm font-semibold text-teal-900">Editar automação</h2>
                   <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-700">
                     <X className="h-4 w-4" />
                   </button>
@@ -779,7 +779,7 @@ function RulesTab() {
                   <button
                     onClick={() => handleRunNow(rule)}
                     disabled={runningRuleId === rule.id}
-                    className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 disabled:opacity-50 transition-colors"
                     title="Executar agora"
                   >
                     <Play className="h-3 w-3" />
@@ -787,7 +787,7 @@ function RulesTab() {
                   </button>
                   <button
                     onClick={() => toggleMutation.mutate({ id: rule.id, isActive: !rule.isActive })}
-                    className={cn('flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors', rule.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}
+                    className={cn('flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors', rule.isActive ? 'bg-teal-100 text-teal-700 hover:bg-teal-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200')}
                     title={rule.isActive ? 'Desativar' : 'Ativar'}
                   >
                     <Power className="h-3 w-3" />
@@ -978,7 +978,7 @@ function HistoryTab() {
     if (exec.status === 'failed') {
       return <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700"><XCircle className="h-3 w-3" />Falhou</span>
     }
-    return <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700"><CheckCircle2 className="h-3 w-3" />Enviado</span>
+    return <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-700"><CheckCircle2 className="h-3 w-3" />Enviado</span>
   }
 
   return (
@@ -988,7 +988,7 @@ function HistoryTab() {
         <select
           value={ruleId}
           onChange={(e) => { setRuleId(e.target.value); resetPage() }}
-          className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+          className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
         >
           <option value="">Todas as automações</option>
           {rules.map((r) => (
@@ -998,7 +998,7 @@ function HistoryTab() {
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); resetPage() }}
-          className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+          className="rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
         >
           <option value="">Todos os status</option>
           <option value="sent">Enviado</option>
@@ -1053,7 +1053,7 @@ function HistoryTab() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     {exec.messageStatus === 'delivered' || exec.messageStatus === 'read'
-                      ? <span title="Entregue"><Check className="h-4 w-4 text-green-500 mx-auto" /></span>
+                      ? <span title="Entregue"><Check className="h-4 w-4 text-teal-500 mx-auto" /></span>
                       : <span className="text-gray-300 text-xs">—</span>}
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -1134,7 +1134,7 @@ export default function AutomationsPage() {
     <div className="flex-1 overflow-y-auto p-8">
       <div className="mx-auto max-w-3xl">
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-gray-900">Automações</h1>
+          <h1 className="text-xl font-semibold text-teal-900">Automações</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Disparos automáticos por aniversário, pagamento em atraso e recompra
           </p>
@@ -1153,7 +1153,7 @@ export default function AutomationsPage() {
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                 tab === key
-                  ? 'border-green-600 text-green-700'
+                  ? 'border-teal-600 text-teal-700'
                   : 'border-transparent text-muted-foreground hover:text-gray-700',
               )}
             >

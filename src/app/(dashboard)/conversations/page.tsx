@@ -172,7 +172,7 @@ export default function ConversationsPage() {
     <div className="flex h-full flex-col">
       <div className="border-b bg-white px-6 py-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-gray-900">Conversas</h1>
+          <h1 className="text-lg font-semibold text-teal-900">Conversas</h1>
           <Button size="sm" className="gap-2" onClick={() => setShowNew(!showNew)}>
             <Plus className="h-4 w-4" />
             Nova conversa
@@ -239,7 +239,7 @@ export default function ConversationsPage() {
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     placeholder="Buscar atendente..."
-                    className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-600"
                   />
                 </div>
                 <div className="max-h-52 overflow-y-auto pb-1">
@@ -302,7 +302,7 @@ export default function ConversationsPage() {
       </div>
 
       {showNew && (
-        <div className="border-b bg-green-50 px-6 py-4">
+        <div className="border-b bg-teal-50 px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <p className="font-medium text-gray-900">Nova conversa via template</p>
             <button onClick={() => setShowNew(false)}>

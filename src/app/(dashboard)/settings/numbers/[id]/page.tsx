@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 import type { WhatsappNumber, WhatsappTemplate } from '@/types'
 
 const templateStatusConfig: Record<string, { label: string; icon: any; color: string }> = {
-  APPROVED:  { label: 'Aprovado',  icon: CheckCircle2, color: 'text-green-500' },
+  APPROVED:  { label: 'Aprovado',  icon: CheckCircle2, color: 'text-teal-500' },
   PENDING:   { label: 'Pendente',  icon: Clock,        color: 'text-amber-500' },
   REJECTED:  { label: 'Rejeitado', icon: XCircle,      color: 'text-red-500'   },
 }
@@ -92,12 +92,12 @@ export default function NumberConfigPage() {
           Voltar para números
         </button>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-50">
-            <Phone className="h-4 w-4 text-whatsapp" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-50">
+            <Phone className="h-4 w-4 text-teal-600" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-semibold text-gray-900">{num.displayName}</h1>
+              <h1 className="font-semibold text-teal-900">{num.displayName}</h1>
               <Badge variant={num.isActive ? 'success' : 'secondary'}>
                 {num.isActive ? 'Ativo' : 'Inativo'}
               </Badge>
@@ -140,7 +140,7 @@ export default function NumberConfigPage() {
         <div className="w-full lg:w-72 lg:shrink-0 flex flex-col gap-4 lg:overflow-y-auto">
           <div className="rounded-xl border bg-white p-5 space-y-4">
             <div>
-              <h2 className="font-semibold text-gray-900">Contexto de memória</h2>
+              <h2 className="font-semibold text-teal-900">Contexto de memória</h2>
               <p className="text-xs text-muted-foreground mt-1">
                 Mensagens anteriores enviadas ao LLM em cada resposta. Mais = melhor memória, porém custo maior.
               </p>
@@ -173,7 +173,7 @@ export default function NumberConfigPage() {
           <div className="rounded-xl border bg-white p-5 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-semibold text-gray-900">Templates WhatsApp</h2>
+                <h2 className="font-semibold text-teal-900">Templates WhatsApp</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Templates aprovados pela Meta para envios em massa.
                 </p>

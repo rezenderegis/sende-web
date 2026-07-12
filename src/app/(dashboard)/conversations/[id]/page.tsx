@@ -523,7 +523,7 @@ export default function ConversationPage() {
                       </div>
                       <span className="flex-1 text-left truncate">{u.name}</span>
                       {conversation?.assignedUserId === u.id && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 shrink-0" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-teal-500 shrink-0" />
                       )}
                     </button>
                   ))}
@@ -607,7 +607,7 @@ export default function ConversationPage() {
                   <span className={cn(
                     'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
                     fo.status === 'pending' && 'bg-amber-100 text-amber-700',
-                    fo.status === 'done' && 'bg-green-100 text-green-700',
+                    fo.status === 'done' && 'bg-teal-100 text-teal-700',
                     fo.status === 'cancelled' && 'bg-gray-100 text-gray-500',
                   )}>
                     {fo.status === 'pending' ? 'Pendente' : fo.status === 'done' ? 'Concluído' : 'Cancelado'}
@@ -637,13 +637,13 @@ export default function ConversationPage() {
             <div
               className={`max-w-[70%] rounded-lg px-4 py-2 text-sm shadow-sm ${
                 msg.direction === 'outbound'
-                  ? 'bg-whatsapp text-white rounded-br-none'
+                  ? 'bg-teal-600 text-white rounded-br-none'
                   : 'bg-white text-gray-900 rounded-bl-none'
               }`}
             >
               <p className="whitespace-pre-wrap break-words">{renderContent(msg.content, contact?.name)}</p>
               <div className={`flex items-center justify-end gap-1 mt-1 ${
-                msg.direction === 'outbound' ? 'text-green-100' : 'text-gray-400'
+                msg.direction === 'outbound' ? 'text-teal-100' : 'text-gray-400'
               }`}>
                 {msg.direction === 'outbound' && msg.aiPromptSource && (
                   <span className={`text-xs rounded-full px-1.5 py-0 mr-1 ${
@@ -716,7 +716,7 @@ export default function ConversationPage() {
                         next[i] = e.target.value
                         return next
                       })}
-                      className="flex-1 rounded-md border border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-green-500"
+                      className="flex-1 rounded-md border border-gray-200 px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-teal-600"
                     />
                   </div>
                 ))}
@@ -766,7 +766,7 @@ export default function ConversationPage() {
                       value={savedSearch}
                       onChange={(e) => setSavedSearch(e.target.value)}
                       placeholder="Buscar mensagem..."
-                      className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full rounded-md border px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-teal-600"
                     />
                   </div>
                   <div className="max-h-60 overflow-y-auto pb-1">
@@ -819,7 +819,7 @@ export default function ConversationPage() {
             <div className="flex items-center justify-between border-b px-5 py-4">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-blue-600" />
-                <h2 className="text-sm font-semibold text-gray-900">Agendar Follow-on</h2>
+                <h2 className="text-sm font-semibold text-teal-900">Agendar Follow-on</h2>
               </div>
               <button onClick={() => setFollowOnModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="h-4 w-4" />

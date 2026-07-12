@@ -48,7 +48,7 @@ export default function DashboardPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-teal-900">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Visão geral da sua plataforma</p>
       </div>
 
@@ -77,7 +77,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Conversas recentes</h2>
+        <h2 className="mb-4 text-lg font-semibold text-teal-900">Conversas recentes</h2>
         <Card>
           <CardContent className="p-0">
             {conversations?.data?.slice(0, 5).map((conv) => (
@@ -90,7 +90,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground">{conv.whatsappNumber?.phoneNumber}</p>
                 </div>
                 <span className={`rounded-full px-2 py-1 text-xs font-medium ${
-                  conv.status === 'open' ? 'bg-green-100 text-green-700'
+                  conv.status === 'open' ? 'bg-teal-100 text-teal-700'
                   : conv.status === 'pending' ? 'bg-yellow-100 text-yellow-700'
                   : 'bg-gray-100 text-gray-600'
                 }`}>

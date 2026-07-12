@@ -24,13 +24,13 @@ const statusConfig: Record<string, { label: string; variant: any }> = {
 }
 
 const conversationStatusConfig: Record<string, { label: string; className: string }> = {
-  open:    { label: 'Aberta',   className: 'bg-green-100 text-green-700' },
+  open:    { label: 'Aberta',   className: 'bg-teal-100 text-teal-700' },
   closed:  { label: 'Fechada',  className: 'bg-gray-100 text-gray-600' },
   pending: { label: 'Pendente', className: 'bg-amber-100 text-amber-700' },
 }
 
 const sentimentConfig = {
-  positive: { icon: SmilePlus, label: 'Positivo', className: 'text-green-600' },
+  positive: { icon: SmilePlus, label: 'Positivo', className: 'text-teal-600' },
   negative: { icon: Frown,     label: 'Negativo', className: 'text-red-500' },
   neutral:  { icon: Minus,     label: 'Neutro',   className: 'text-gray-400' },
 }
@@ -219,7 +219,7 @@ export default function BroadcastDetailPage() {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl font-semibold text-gray-900">{broadcast.name}</h1>
+            <h1 className="text-xl font-semibold text-teal-900">{broadcast.name}</h1>
             <Badge variant={cfg.variant}>{cfg.label}</Badge>
           </div>
           <p className="text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
@@ -286,7 +286,7 @@ export default function BroadcastDetailPage() {
       <div className="mb-4 grid grid-cols-3 gap-3">
         {[
           { label: 'Total', value: broadcast.totalCount, color: 'text-gray-900' },
-          { label: 'Enviados', value: broadcast.sentCount, color: 'text-green-600' },
+          { label: 'Enviados', value: broadcast.sentCount, color: 'text-teal-600' },
           { label: 'Falhas', value: broadcast.failedCount, color: 'text-red-500' },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border bg-white p-4 text-center">
@@ -303,7 +303,7 @@ export default function BroadcastDetailPage() {
             <span>{pct}%</span>
           </div>
           <div className="h-2 w-full rounded-full bg-gray-100">
-            <div className="h-2 rounded-full bg-green-500 transition-all" style={{ width: `${pct}%` }} />
+            <div className="h-2 rounded-full bg-teal-500 transition-all" style={{ width: `${pct}%` }} />
           </div>
         </div>
       )}
@@ -332,8 +332,8 @@ export default function BroadcastDetailPage() {
             </div>
             <div className="flex flex-col items-center justify-center gap-1">
               <div className="flex items-center gap-2 text-xs">
-                <SmilePlus className="h-3.5 w-3.5 text-green-600" />
-                <span className="font-medium text-green-600">{stats.sentiment.positive}</span>
+                <SmilePlus className="h-3.5 w-3.5 text-teal-600" />
+                <span className="font-medium text-teal-600">{stats.sentiment.positive}</span>
                 <Minus className="h-3.5 w-3.5 text-gray-400" />
                 <span className="font-medium text-gray-500">{stats.sentiment.neutral}</span>
                 <Frown className="h-3.5 w-3.5 text-red-500" />

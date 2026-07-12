@@ -54,7 +54,7 @@ export default function SalesImportPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Importar Vendas</h1>
+          <h1 className="text-xl font-bold text-teal-900">Importar Vendas</h1>
           <p className="text-sm text-muted-foreground">CSV ou XLSX com histórico de vendas</p>
         </div>
       </div>
@@ -113,11 +113,11 @@ export default function SalesImportPage() {
 
           <div
             onClick={() => fileRef.current?.click()}
-            className="cursor-pointer rounded-xl border-2 border-dashed border-gray-200 p-8 text-center transition-colors hover:border-green-400 hover:bg-green-50/30"
+            className="cursor-pointer rounded-xl border-2 border-dashed border-gray-200 p-8 text-center transition-colors hover:border-teal-600 hover:bg-teal-50/30"
           >
             {file ? (
               <div className="flex flex-col items-center gap-2">
-                <FileSpreadsheet className="h-8 w-8 text-green-600" />
+                <FileSpreadsheet className="h-8 w-8 text-teal-600" />
                 <p className="font-medium text-gray-900">{file.name}</p>
                 <p className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(1)} KB · Clique para trocar</p>
               </div>
@@ -153,8 +153,8 @@ export default function SalesImportPage() {
           <CardContent className="p-5">
             <p className="text-sm font-semibold text-gray-900 mb-4">Resultado da importação</p>
             <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="rounded-xl border bg-green-50 p-3 text-center">
-                <p className="text-2xl font-bold text-green-700">{result.created}</p>
+              <div className="rounded-xl border bg-teal-50 p-3 text-center">
+                <p className="text-2xl font-bold text-teal-700">{result.created}</p>
                 <p className="text-xs text-muted-foreground">Criadas</p>
               </div>
               <div className="rounded-xl border bg-blue-50 p-3 text-center">
@@ -182,7 +182,7 @@ export default function SalesImportPage() {
             )}
 
             {result.failed === 0 && (
-              <div className="flex items-center gap-2 rounded-lg bg-green-50 p-2.5 text-sm text-green-700">
+              <div className="flex items-center gap-2 rounded-lg bg-teal-50 p-2.5 text-sm text-teal-700">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 Todos os registros foram importados com sucesso!
               </div>

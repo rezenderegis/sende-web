@@ -24,7 +24,7 @@ export default function CompanyPage() {
   return (
     <div className="p-4 md:p-8 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Empresa</h1>
+        <h1 className="text-2xl font-bold text-teal-900">Empresa</h1>
         <p className="text-sm text-muted-foreground">Informações da sua conta</p>
       </div>
 
@@ -33,8 +33,8 @@ export default function CompanyPage() {
       {company && (
         <Card>
           <CardHeader className="flex flex-row items-center gap-4 pb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-green-100">
-              <Building2 className="h-7 w-7 text-whatsapp" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-teal-100">
+              <Building2 className="h-7 w-7 text-teal-600" />
             </div>
             <div>
               <CardTitle>{company.name}</CardTitle>

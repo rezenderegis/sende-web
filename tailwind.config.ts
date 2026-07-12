@@ -10,6 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // shadcn/ui tokens (mantidos para compatibilidade)
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -43,15 +44,40 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        whatsapp: {
-          DEFAULT: '#25D366',
-          dark: '#128C7E',
+        // Sende brand tokens
+        teal: {
+          50:  '#F0FDFA',
+          100: '#CCFBF1',
+          500: '#14B8A6',
+          600: '#0D9488',
+          700: '#0F766E',
+          900: '#134E4A',
+        },
+        coral: {
+          DEFAULT: '#F97316',
+          hover:   '#EA6A0C',
+          soft:    '#FFEDD5',
+        },
+        ink: {
+          DEFAULT: '#1E293B',
+          soft:    '#475569',
+          faint:   '#94A3B8',
         },
       },
+      fontFamily: {
+        display: ['var(--font-sora)', 'system-ui', 'sans-serif'],
+        body:    ['var(--font-inter)', 'system-ui', 'sans-serif'],
+      },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg:   'var(--radius)',
+        md:   'calc(var(--radius) - 4px)',
+        sm:   'calc(var(--radius) - 8px)',
+        card: '20px',
+        pill: '999px',
+      },
+      boxShadow: {
+        sende:      '0 12px 40px rgba(19,78,74,.10)',
+        'sende-sm': '0 4px 20px rgba(19,78,74,.05)',
       },
       keyframes: {
         'accordion-down': {

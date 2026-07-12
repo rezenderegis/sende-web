@@ -57,7 +57,7 @@ export default function BroadcastsPage() {
     <div className="p-4 md:p-6 max-w-3xl">
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Broadcasts</h1>
+          <h1 className="text-xl font-semibold text-teal-900">Broadcasts</h1>
           <p className="text-sm text-muted-foreground">Envie mensagens em massa para seus contatos.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -185,7 +185,7 @@ export default function BroadcastsPage() {
                 {bc.status === 'sending' && bc.totalCount > 0 && (
                   <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100">
                     <div
-                      className="h-1.5 rounded-full bg-green-500 transition-all"
+                      className="h-1.5 rounded-full bg-teal-500 transition-all"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

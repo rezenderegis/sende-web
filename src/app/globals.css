@@ -4,30 +4,75 @@
 
 @layer base {
   :root {
+    /* ---- Sende Design Tokens ---- */
+    --sende-teal-900: #134E4A;
+    --sende-teal-700: #0F766E;
+    --sende-teal-600: #0D9488;
+    --sende-teal-500: #14B8A6;
+    --sende-teal-100: #CCFBF1;
+    --sende-teal-50:  #F0FDFA;
+
+    --sende-coral:       #F97316;
+    --sende-coral-hover: #EA6A0C;
+    --sende-coral-soft:  #FFEDD5;
+
+    --sende-ink:       #1E293B;
+    --sende-ink-soft:  #475569;
+    --sende-ink-faint: #94A3B8;
+    --sende-border:    #EEF2F6;
+    --sende-bg:        #FFFFFF;
+
+    --sende-status-bot-bg:   var(--sende-teal-100);
+    --sende-status-bot-fg:   var(--sende-teal-700);
+    --sende-status-human-bg: var(--sende-coral-soft);
+    --sende-status-human-fg: #C2410C;
+    --sende-status-done-bg:  #DCFCE7;
+    --sende-status-done-fg:  #15803D;
+
+    --sende-font-display: var(--font-sora), system-ui, sans-serif;
+    --sende-font-body:    var(--font-inter), system-ui, sans-serif;
+
+    --sende-radius:      20px;
+    --sende-radius-sm:   12px;
+    --sende-radius-pill: 999px;
+
+    --sende-shadow:    0 12px 40px rgba(19,78,74,.10);
+    --sende-shadow-sm: 0 4px 20px rgba(19,78,74,.05);
+
+    /* ---- shadcn/ui tokens (mapeados para Sende) ---- */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 215 28% 17%;         /* ink #1E293B */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 28% 17%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 142 71% 45%;
+    --popover-foreground: 215 28% 17%;
+    --primary: 174 71% 32%;            /* teal-600 #0D9488 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 71% 45%;
-    --radius: 0.5rem;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 28% 17%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 174 100% 97%;            /* teal-50 */
+    --accent-foreground: 174 56% 16%;  /* teal-900 */
+    --destructive: 0 72% 51%;          /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 30% 95%;             /* próximo de #EEF2F6 */
+    --input: 220 30% 95%;
+    --ring: 174 71% 32%;               /* teal-600 */
+    --radius: 1.25rem;                 /* 20px — cards */
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--sende-font-body);
+  }
+  h1, h2, h3 {
+    font-family: var(--sende-font-display);
+    font-weight: 700;
+    color: var(--sende-teal-900);
+    letter-spacing: -0.02em;
+  }
 }

@@ -157,7 +157,7 @@ function TagContactsPanel({ tag, onClose }: { tag: Tag; onClose: () => void }) {
               className="flex w-full items-center gap-3 border-b px-4 py-2.5 text-xs text-muted-foreground hover:bg-gray-50"
             >
               {allSelected
-                ? <CheckSquare className="h-4 w-4 text-green-600 shrink-0" />
+                ? <CheckSquare className="h-4 w-4 text-teal-600 shrink-0" />
                 : <Square className="h-4 w-4 shrink-0" />
               }
               Selecionar todos
@@ -168,12 +168,12 @@ function TagContactsPanel({ tag, onClose }: { tag: Tag; onClose: () => void }) {
                 key={contact.id}
                 className={cn(
                   'flex items-center gap-3 border-b px-4 py-3 last:border-0',
-                  selected.has(contact.id) && 'bg-green-50',
+                  selected.has(contact.id) && 'bg-teal-50',
                 )}
               >
                 <button onClick={() => toggleOne(contact.id)} className="shrink-0">
                   {selected.has(contact.id)
-                    ? <CheckSquare className="h-4 w-4 text-green-600" />
+                    ? <CheckSquare className="h-4 w-4 text-teal-600" />
                     : <Square className="h-4 w-4 text-gray-300" />
                   }
                 </button>
@@ -258,7 +258,7 @@ export default function TagsSettingsPage() {
           : 'w-full md:max-w-2xl',
       )}>
         <div className="p-4 md:p-6">
-          <h1 className="text-lg font-semibold text-gray-900 mb-1">Tags</h1>
+          <h1 className="text-lg font-semibold text-teal-900 mb-1">Tags</h1>
           <p className="text-sm text-muted-foreground mb-5">
             Crie tags coloridas para categorizar seus contatos e conversas.
           </p>

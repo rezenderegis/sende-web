@@ -189,7 +189,7 @@ export default function UsersPage() {
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-2xl border bg-white shadow-2xl p-6">
-            <h2 className="font-semibold text-gray-900 mb-1">Permissões de {editingUser.name}</h2>
+            <h2 className="font-semibold text-teal-900 mb-1">Permissões de {editingUser.name}</h2>
             <p className="text-sm text-muted-foreground mb-4">{editingUser.email}</p>
             <PermissionsForm
               numbers={numbers}
@@ -216,7 +216,7 @@ export default function UsersPage() {
 
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Usuários</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-teal-900">Usuários</h1>
           <p className="text-sm text-muted-foreground">Gerencie quem tem acesso à plataforma</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="gap-2 shrink-0">

@@ -379,7 +379,7 @@ export interface Sale {
   updatedAt: string
 }
 
-export type FollowOnType = 'meeting' | 'call' | 'message'
+export type FollowOnType = 'meeting' | 'call' | 'message' | 'message_manual'
 export type FollowOnStatus = 'pending' | 'done' | 'cancelled'
 
 export interface FollowOn {

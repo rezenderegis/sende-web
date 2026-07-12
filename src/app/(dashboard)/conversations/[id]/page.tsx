@@ -52,12 +52,12 @@ function campaignTimeLeft(expiresAt: string): string {
 }
 
 function followOnLabel(fo: FollowOn): string {
-  const icons: Record<string, string> = { meeting: 'Reunião', call: 'Ligação', message: 'Mensagem' }
   const d = new Date(fo.scheduledAt)
   const today = new Date()
+  const label = TYPE_LABELS[fo.type] ?? fo.type
   const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  if (d.toDateString() === today.toDateString()) return `${icons[fo.type]} · Hoje ${time}`
-  return `${icons[fo.type]} · ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} ${time}`
+  if (d.toDateString() === today.toDateString()) return `${label} · Hoje ${time}`
+  return `${label} · ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} ${time}`
 }
 
 const statusIcon: Record<string, any> = {
@@ -71,6 +71,14 @@ const TYPE_ICONS: Record<string, any> = {
   meeting: <Users className="h-3.5 w-3.5" />,
   call: <Phone className="h-3.5 w-3.5" />,
   message: <MessageSquare className="h-3.5 w-3.5" />,
+  message_manual: <MessageSquare className="h-3.5 w-3.5" />,
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  meeting: 'Reunião',
+  call: 'Ligação',
+  message: 'Envio automático',
+  message_manual: 'Mensagem',
 }
 
 function toLocalDatetimeValue(date: Date): string {
@@ -822,25 +830,34 @@ export default function ConversationPage() {
               {/* Tipo */}
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-gray-700">Tipo</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['call', 'meeting', 'message'] as FollowOnType[]).map((t) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: 'call', icon: <Phone className="h-4 w-4" /> },
+                    { value: 'meeting', icon: <Users className="h-4 w-4" /> },
+                    { value: 'message_manual', icon: <MessageSquare className="h-4 w-4" /> },
+                    { value: 'message', icon: <Send className="h-4 w-4" /> },
+                  ] as { value: FollowOnType; icon: React.ReactNode }[]).map(({ value, icon }) => (
                     <button
-                      key={t}
-                      onClick={() => setFoType(t)}
+                      key={value}
+                      onClick={() => setFoType(value)}
                       className={cn(
-                        'flex flex-col items-center gap-1 rounded-lg border py-2.5 text-xs font-medium transition-colors',
-                        foType === t
+                        'flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors text-left',
+                        foType === value
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-200 text-gray-600 hover:bg-gray-50',
                       )}
                     >
-                      {t === 'call' && <Phone className="h-4 w-4" />}
-                      {t === 'meeting' && <Users className="h-4 w-4" />}
-                      {t === 'message' && <MessageSquare className="h-4 w-4" />}
-                      {t === 'call' ? 'Ligação' : t === 'meeting' ? 'Reunião' : 'Mensagem'}
+                      {icon}
+                      {TYPE_LABELS[value]}
                     </button>
                   ))}
                 </div>
+                {foType === 'message_manual' && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">Lembrete para enviar manualmente. Nenhuma mensagem será disparada automaticamente.</p>
+                )}
+                {foType === 'message' && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">A mensagem ou template será enviado automaticamente no horário agendado.</p>
+                )}
               </div>
 
               {/* Data/hora */}

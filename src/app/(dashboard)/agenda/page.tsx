@@ -14,8 +14,9 @@ import type { FollowOn, FollowOnStatus, User } from '@/types'
 const TYPE_CONFIG = {
   meeting: { label: 'Reunião', icon: Users, className: 'bg-blue-100 text-blue-700' },
   call: { label: 'Ligação', icon: Phone, className: 'bg-green-100 text-green-700' },
-  message: { label: 'Mensagem', icon: MessageSquare, className: 'bg-violet-100 text-violet-700' },
-}
+  message: { label: 'Envio automático', icon: MessageSquare, className: 'bg-violet-100 text-violet-700' },
+  message_manual: { label: 'Mensagem', icon: MessageSquare, className: 'bg-teal-100 text-teal-700' },
+} as const
 
 const STATUS_CONFIG = {
   pending: { label: 'Pendente', className: 'bg-amber-100 text-amber-700' },

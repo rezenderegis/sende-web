@@ -89,6 +89,7 @@ export interface Conversation {
   campaignPrompt: string | null
   campaignBroadcastId: string | null
   campaignExpiresAt: string | null
+  waitingReply: boolean
   createdAt: string
   updatedAt: string
 }

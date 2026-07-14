@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap, Clock } from 'lucide-react'
+import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap, Clock, MessageCircleWarning } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -61,6 +61,7 @@ export default function ConversationsPage() {
   const [activeTagId, setActiveTagId] = useState<string | null>(null)
   const [activeUserId, setActiveUserId] = useState<string | null>(null)
   const [windowFilter, setWindowFilter] = useState<WindowFilter>('all')
+  const [waitingReply, setWaitingReply] = useState(false)
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const [userSearch, setUserSearch] = useState('')
   const [showNew, setShowNew] = useState(false)
@@ -95,10 +96,11 @@ export default function ConversationsPage() {
   })
 
   const { data, isLoading } = useQuery<{ data: Conversation[]; total: number }>({
-    queryKey: ['conversations', activeTagId],
+    queryKey: ['conversations', activeTagId, waitingReply],
     queryFn: () => {
       const params = new URLSearchParams({ limit: '50' })
       if (activeTagId) params.set('tagId', activeTagId)
+      if (waitingReply) params.set('waitingReply', 'true')
       return api.get(`/conversations?${params}`).then((r) => r.data)
     },
     refetchInterval: 10000,
@@ -205,6 +207,18 @@ export default function ConversationsPage() {
               {f.label}
             </button>
           ))}
+          <button
+            onClick={() => setWaitingReply((v) => !v)}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
+              waitingReply
+                ? 'border-coral-600 bg-orange-500 text-white'
+                : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50',
+            )}
+          >
+            <MessageCircleWarning className="h-3 w-3" />
+            Aguardando
+          </button>
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-1.5">

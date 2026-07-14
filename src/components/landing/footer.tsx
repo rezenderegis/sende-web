@@ -10,6 +10,8 @@ const product = [
 const company = [
   { href: '/login', label: 'Entrar' },
   { href: '/register', label: 'Criar conta' },
+  { href: '/politica-privacidade', label: 'Política de Privacidade' },
+  { href: '/delete-account', label: 'Excluir minha conta' },
 ]
 
 export default function LandingFooter() {

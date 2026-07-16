@@ -42,10 +42,10 @@ export default function LandingNav() {
             Entrar
           </Link>
           <Link
-            href="/register"
-            className="rounded-pill bg-coral px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-coral-hover"
+            href="#cta"
+            className="rounded-pill bg-coral px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-coral-hover"
           >
-            Começar grátis
+            TESTE GRÁTIS
           </Link>
         </div>
 
@@ -84,7 +84,6 @@ export default function LandingNav() {
                 href="/register"
                 className="rounded-pill bg-coral px-4 py-2.5 text-center text-sm font-semibold text-white"
               >
-                Começar grátis
               </Link>
             </div>
           </nav>

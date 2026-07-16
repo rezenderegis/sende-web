@@ -12,6 +12,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import TrialForm from "@/components/landing/trial-form";
 
 /* ─── Header ────────────────────────────────────────────── */
 function Header() {
@@ -84,9 +85,9 @@ function Hero() {
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             href="#cta"
-            className="inline-flex items-center gap-2 rounded-pill bg-teal-600 px-7 py-3.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-teal-700"
+            className="inline-flex items-center gap-2 rounded-pill bg-coral px-7 py-3.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-coral-hover"
           >
-            Começar agora
+            TESTE GRÁTIS POR 7 DIAS
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
@@ -607,25 +608,17 @@ function Credits() {
 function CtaFinal() {
   return (
     <section id="cta" className="bg-teal-50 py-20 md:py-24">
-      <div className="mx-auto max-w-2xl px-6 text-center">
-        <MessageCircleMore className="mx-auto mb-4 h-10 w-10 text-teal-500" />
-        <h2 className="text-3xl font-bold tracking-tight text-teal-900 md:text-4xl">
-          Pronto para ter um time que atende 24h?
-        </h2>
-        <p className="mt-4 text-base text-ink-soft">
-          Configure seu atendimento e comece a vender pelo WhatsApp com mais
-          organização, automação e contexto.
-        </p>
-        <Link
-          href="#"
-          className="mt-8 inline-flex items-center gap-2 rounded-pill bg-coral px-8 py-3.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-coral-hover"
-        >
-          Começar agora
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-        <p className="mt-5 text-xs text-ink-faint">
-          Configuração em 1 dia útil · Cancele quando quiser
-        </p>
+      <div className="mx-auto max-w-lg px-6">
+        <div className="text-center">
+          <MessageCircleMore className="mx-auto mb-4 h-10 w-10 text-teal-500" />
+          <h2 className="text-3xl font-bold tracking-tight text-teal-900 md:text-4xl">
+            Comece seu teste gratuito
+          </h2>
+          <p className="mt-4 text-base text-ink-soft">
+            Preencha o formulário e nossa equipe configura tudo para você em até 1 dia útil.
+          </p>
+        </div>
+        <TrialForm />
       </div>
     </section>
   );

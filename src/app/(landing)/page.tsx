@@ -15,48 +15,6 @@ import {
 import TrialForm from "@/components/landing/trial-form";
 
 /* ─── Header ────────────────────────────────────────────── */
-function Header() {
-  return (
-    <header className="sticky top-0 z-50 border-b border-teal-100 bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-6">
-        <Link
-          href="#"
-          className="font-display text-2xl font-extrabold tracking-tight text-teal-900"
-        >
-          sende<span className="text-teal-500">.</span>
-        </Link>
-
-        <nav className="flex items-center gap-7">
-          <Link
-            href="#recursos"
-            className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-teal-700 md:inline"
-          >
-            Recursos
-          </Link>
-          <Link
-            href="#como-funciona"
-            className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-teal-700 md:inline"
-          >
-            Como funciona
-          </Link>
-          <Link
-            href="#planos"
-            className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-teal-700 md:inline"
-          >
-            Planos
-          </Link>
-          <Link
-            href="#cta"
-            className="rounded-pill bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-teal-700"
-          >
-            Agendar demonstração
-          </Link>
-        </nav>
-      </div>
-    </header>
-  );
-}
-
 /* ─── Hero ──────────────────────────────────────────────── */
 function Hero() {
   return (
@@ -625,59 +583,16 @@ function CtaFinal() {
 }
 
 /* ─── Footer ────────────────────────────────────────────── */
-function Footer() {
-  return (
-    <footer className="border-t border-teal-100 bg-white py-10">
-      <div className="mx-auto flex max-w-6xl flex-col justify-between gap-8 px-6 md:flex-row">
-        <div>
-          <Link
-            href="#"
-            className="font-display text-xl font-extrabold tracking-tight text-teal-900"
-          >
-            sende<span className="text-teal-500">.</span>
-          </Link>
-          <p className="mt-2 text-xs leading-relaxed text-ink-faint">
-            Atendimento inteligente via WhatsApp
-            <br />
-            sende.app.br
-          </p>
-        </div>
-
-        <div className="text-xs leading-relaxed text-ink-faint md:text-right">
-          <p>
-            Sende é um produto{" "}
-            <strong className="font-semibold text-ink-soft">
-              GlobalSix Technology
-            </strong>
-          </p>
-          <p>CNPJ 53.843.384/0001-70</p>
-          <p>Asa Sul, Brasília – DF, 70200-002</p>
-        </div>
-      </div>
-
-      <div className="mx-auto mt-8 max-w-6xl border-t border-[#EEF2F6] px-6 pt-5 text-center">
-        <p className="text-xs text-ink-faint">
-          © 2026 GlobalSix Technology · Todos os direitos reservados
-        </p>
-      </div>
-    </footer>
-  );
-}
-
 /* ─── Page ──────────────────────────────────────────────── */
 export default function LandingPage() {
   return (
     <>
-      <Header />
-      <main>
-        <Hero />
-        <SocialProof />
-        <Features />
-        <HowItWorks />
-        <Pricing />
-        <CtaFinal />
-      </main>
-      <Footer />
+      <Hero />
+      <SocialProof />
+      <Features />
+      <HowItWorks />
+      <Pricing />
+      <CtaFinal />
     </>
   );
 }

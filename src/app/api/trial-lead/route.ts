@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+
 export async function POST(req: NextRequest) {
   const { name, email, phone } = await req.json()
 
@@ -7,8 +9,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Campos obrigatórios' }, { status: 400 })
   }
 
-  // TODO: integrar com CRM / Resend / planilha
-  console.log('[trial-lead]', { name, email, phone, at: new Date().toISOString() })
+  const res = await fetch(`${API_URL}/api/v1/leads`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, phone, source: 'form' }),
+  })
 
-  return NextResponse.json({ ok: true })
+  if (!res.ok) {
+    return NextResponse.json({ error: 'Erro ao salvar lead' }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true }, { status: 201 })
 }

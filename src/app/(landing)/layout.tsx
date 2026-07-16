@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import LandingNav from '@/components/landing/nav'
 import LandingFooter from '@/components/landing/footer'
+import WhatsAppFloat from '@/components/landing/whatsapp-float'
 
 export default function LandingLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export default function LandingLayout({ children }: { children: ReactNode }) {
       <LandingNav />
       <main className="flex-1">{children}</main>
       <LandingFooter />
+      <WhatsAppFloat />
     </div>
   )
 }

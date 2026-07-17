@@ -62,6 +62,7 @@ export default function ConversationsPage() {
   const [activeUserId, setActiveUserId] = useState<string | null>(null)
   const [windowFilter, setWindowFilter] = useState<WindowFilter>('all')
   const [waitingReply, setWaitingReply] = useState(false)
+  const [waitingCustomerReply, setWaitingCustomerReply] = useState(false)
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const [userSearch, setUserSearch] = useState('')
   const [showNew, setShowNew] = useState(false)
@@ -96,11 +97,12 @@ export default function ConversationsPage() {
   })
 
   const { data, isLoading } = useQuery<{ data: Conversation[]; total: number }>({
-    queryKey: ['conversations', activeTagId, waitingReply],
+    queryKey: ['conversations', activeTagId, waitingReply, waitingCustomerReply],
     queryFn: () => {
       const params = new URLSearchParams({ limit: '50' })
       if (activeTagId) params.set('tagId', activeTagId)
       if (waitingReply) params.set('waitingReply', 'true')
+      if (waitingCustomerReply) params.set('waitingCustomerReply', 'true')
       return api.get(`/conversations?${params}`).then((r) => r.data)
     },
     refetchInterval: 10000,
@@ -208,16 +210,28 @@ export default function ConversationsPage() {
             </button>
           ))}
           <button
-            onClick={() => setWaitingReply((v) => !v)}
+            onClick={() => { setWaitingReply((v) => !v); setWaitingCustomerReply(false) }}
             className={cn(
               'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
               waitingReply
-                ? 'border-coral-600 bg-orange-500 text-white'
+                ? 'border-orange-500 bg-orange-500 text-white'
                 : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50',
             )}
           >
             <MessageCircleWarning className="h-3 w-3" />
             Aguardando
+          </button>
+          <button
+            onClick={() => { setWaitingCustomerReply((v) => !v); setWaitingReply(false) }}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
+              waitingCustomerReply
+                ? 'border-blue-500 bg-blue-500 text-white'
+                : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50',
+            )}
+          >
+            <MessageCircleWarning className="h-3 w-3" />
+            Sem resposta
           </button>
         </div>
 

@@ -219,7 +219,7 @@ export default function ConversationsPage() {
             )}
           >
             <MessageCircleWarning className="h-3 w-3" />
-            Aguardando
+            Cliente aguardando
           </button>
           <button
             onClick={() => { setWaitingCustomerReply((v) => !v); setWaitingReply(false) }}

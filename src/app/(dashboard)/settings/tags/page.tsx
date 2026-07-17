@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Trash2, Plus, ChevronRight, X, Users, CheckSquare, Square, ArrowLeft } from 'lucide-react'
+import { Trash2, Plus, ChevronRight, X, Users, CheckSquare, Square, ArrowLeft, Pencil, Check } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -206,6 +206,9 @@ export default function TagsSettingsPage() {
   const [color, setColor] = useState(COLORS[0])
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<Tag | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editColor, setEditColor] = useState('')
 
   const { data: tags = [], isLoading } = useQuery<Tag[]>({
     queryKey: ['tags'],
@@ -224,6 +227,23 @@ export default function TagsSettingsPage() {
       const msg = err.response?.status === 409
         ? 'Já existe uma tag com esse nome'
         : 'Erro ao criar tag'
+      toast({ title: msg, variant: 'destructive' })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, name, color }: { id: string; name?: string; color?: string }) =>
+      api.patch(`/tags/${id}`, { name, color }),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['tags'] })
+      if (selectedTag?.id === vars.id) {
+        setSelectedTag((prev) => prev ? { ...prev, ...vars } : prev)
+      }
+      setEditingId(null)
+      toast({ title: 'Tag atualizada', variant: 'success' })
+    },
+    onError: (err: any) => {
+      const msg = err.response?.status === 409 ? 'Já existe uma tag com esse nome' : 'Erro ao atualizar tag'
       toast({ title: msg, variant: 'destructive' })
     },
   })
@@ -324,33 +344,94 @@ export default function TagsSettingsPage() {
               <div
                 key={tag.id}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 transition-colors',
+                  'flex flex-col px-4 py-3 transition-colors gap-2',
                   selectedTag?.id === tag.id && 'bg-gray-50',
                 )}
               >
-                <button
-                  onClick={() => setSelectedTag(selectedTag?.id === tag.id ? null : tag)}
-                  className="flex flex-1 items-center gap-3 min-w-0 text-left"
-                >
-                  <span
-                    className="h-4 w-4 rounded-full shrink-0"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  <span className="flex-1 text-sm font-medium text-gray-900 truncate">
-                    {tag.name}
-                  </span>
-                  <ChevronRight className={cn(
-                    'h-4 w-4 text-gray-300 transition-transform shrink-0',
-                    selectedTag?.id === tag.id && 'rotate-90',
-                  )} />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmDelete(tag) }}
-                  disabled={deleteMutation.isPending}
-                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-3">
+                  {editingId === tag.id ? (
+                    <>
+                      <span
+                        className="h-4 w-4 rounded-full shrink-0"
+                        style={{ backgroundColor: editColor }}
+                      />
+                      <input
+                        autoFocus
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && editName.trim()) {
+                            updateMutation.mutate({ id: tag.id, name: editName.trim(), color: editColor })
+                          }
+                          if (e.key === 'Escape') setEditingId(null)
+                        }}
+                        className="flex-1 rounded-md border border-teal-400 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
+                      />
+                      <button
+                        onClick={() => editName.trim() && updateMutation.mutate({ id: tag.id, name: editName.trim(), color: editColor })}
+                        className="p-1.5 text-teal-600 hover:text-teal-700 transition-colors shrink-0"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setSelectedTag(selectedTag?.id === tag.id ? null : tag)}
+                        className="flex flex-1 items-center gap-3 min-w-0 text-left"
+                      >
+                        <span
+                          className="h-4 w-4 rounded-full shrink-0"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <span className="flex-1 text-sm font-medium text-gray-900 truncate">
+                          {tag.name}
+                        </span>
+                        <ChevronRight className={cn(
+                          'h-4 w-4 text-gray-300 transition-transform shrink-0',
+                          selectedTag?.id === tag.id && 'rotate-90',
+                        )} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingId(tag.id); setEditName(tag.name); setEditColor(tag.color) }}
+                        className="p-1.5 text-gray-400 hover:text-teal-600 transition-colors shrink-0"
+                        title="Editar"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmDelete(tag) }}
+                        disabled={deleteMutation.isPending}
+                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Seletor de cor inline ao editar */}
+                {editingId === tag.id && (
+                  <div className="flex flex-wrap gap-2 pl-7">
+                    {COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setEditColor(c)}
+                        className={cn(
+                          'h-6 w-6 rounded-full transition-transform hover:scale-110',
+                          editColor === c && 'ring-2 ring-offset-2 ring-gray-400',
+                        )}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

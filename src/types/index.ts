@@ -72,6 +72,16 @@ export interface Tag {
   updatedAt: string
 }
 
+export interface KanbanColumn {
+  id: string
+  companyId: string
+  name: string
+  color: string
+  position: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Conversation {
   id: string
   companyId: string
@@ -90,6 +100,8 @@ export interface Conversation {
   campaignBroadcastId: string | null
   campaignExpiresAt: string | null
   waitingReply: boolean
+  kanbanColumnId: string | null
+  kanbanColumn: KanbanColumn | null
   createdAt: string
   updatedAt: string
 }

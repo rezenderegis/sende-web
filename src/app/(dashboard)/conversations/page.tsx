@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap, Clock, MessageCircleWarning } from 'lucide-react'
+import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap, Clock, MessageCircleWarning, LayoutList, Kanban } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { timeAgo, formatPhone, cn } from '@/lib/utils'
-import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User } from '@/types'
+import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User, KanbanColumn } from '@/types'
+import KanbanBoard from '@/components/conversations/kanban-board'
 
 type WindowFilter = 'all' | 'open' | 'closing' | 'closed'
 
@@ -66,7 +67,18 @@ export default function ConversationsPage() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const [userSearch, setUserSearch] = useState('')
   const [showNew, setShowNew] = useState(false)
+  const [view, setView] = useState<'list' | 'kanban'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('conversations-view') as 'list' | 'kanban') ?? 'list'
+    }
+    return 'list'
+  })
   const userFilterRef = useRef<HTMLDivElement>(null)
+
+  function toggleView(v: 'list' | 'kanban') {
+    setView(v)
+    localStorage.setItem('conversations-view', v)
+  }
 
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -106,6 +118,11 @@ export default function ConversationsPage() {
       return api.get(`/conversations?${params}`).then((r) => r.data)
     },
     refetchInterval: 10000,
+  })
+
+  const { data: kanbanColumns = [] } = useQuery<KanbanColumn[]>({
+    queryKey: ['kanban-columns'],
+    queryFn: () => api.get('/kanban-columns').then((r) => r.data),
   })
 
   const { data: numbers } = useQuery<WhatsappNumber[]>({
@@ -177,10 +194,28 @@ export default function ConversationsPage() {
       <div className="border-b bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-teal-900">Conversas</h1>
-          <Button size="sm" className="gap-2" onClick={() => setShowNew(!showNew)}>
-            <Plus className="h-4 w-4" />
-            Nova conversa
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border border-gray-200 p-0.5">
+              <button
+                onClick={() => toggleView('list')}
+                className={cn('rounded-md p-1.5 transition-colors', view === 'list' ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600')}
+                title="Visualização em lista"
+              >
+                <LayoutList className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => toggleView('kanban')}
+                className={cn('rounded-md p-1.5 transition-colors', view === 'kanban' ? 'bg-gray-900 text-white' : 'text-gray-400 hover:text-gray-600')}
+                title="Visualização Kanban"
+              >
+                <Kanban className="h-4 w-4" />
+              </button>
+            </div>
+            <Button size="sm" className="gap-2" onClick={() => setShowNew(!showNew)}>
+              <Plus className="h-4 w-4" />
+              Nova conversa
+            </Button>
+          </div>
         </div>
         <div className="mt-3 relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -417,7 +452,17 @@ export default function ConversationsPage() {
         </div>
       )}
 
-      <div className="flex-1 overflow-auto">
+      {view === 'kanban' && (
+        <KanbanBoard
+          conversations={data?.data ?? []}
+          columns={kanbanColumns}
+          onColumnsChange={() => qc.invalidateQueries({ queryKey: ['kanban-columns'] })}
+          onConversationMove={() => qc.invalidateQueries({ queryKey: ['conversations'] })}
+          onOpenConversation={(id) => router.push(`/conversations/${id}`)}
+        />
+      )}
+
+      {view === 'list' && <div className="flex-1 overflow-auto">
         {isLoading && (
           <div className="flex h-32 items-center justify-center text-muted-foreground">
             Carregando...
@@ -511,7 +556,7 @@ export default function ConversationsPage() {
             </button>
           )
         })}
-      </div>
+      </div>}
     </div>
   )
 }

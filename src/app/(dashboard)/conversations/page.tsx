@@ -67,12 +67,12 @@ export default function ConversationsPage() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const [userSearch, setUserSearch] = useState('')
   const [showNew, setShowNew] = useState(false)
-  const [view, setView] = useState<'list' | 'kanban'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('conversations-view') as 'list' | 'kanban') ?? 'list'
-    }
-    return 'list'
-  })
+  const [view, setView] = useState<'list' | 'kanban'>('list')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('conversations-view') as 'list' | 'kanban' | null
+    if (saved) setView(saved)
+  }, [])
   const userFilterRef = useRef<HTMLDivElement>(null)
 
   function toggleView(v: 'list' | 'kanban') {

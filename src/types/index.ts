@@ -154,6 +154,17 @@ export type BroadcastMode = 'standard' | 'csv'
 export type BroadcastStatus = 'draft' | 'queued' | 'sending' | 'completed' | 'paused' | 'failed'
 export type RecipientStatus = 'pending' | 'sent' | 'failed'
 
+export type LeadSource = 'form' | 'whatsapp'
+
+export interface Lead {
+  id: string
+  name: string
+  email: string
+  phone: string
+  source: LeadSource
+  createdAt: string
+}
+
 export interface IntentRule {
   intent: string
   tagId: string

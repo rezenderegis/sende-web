@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare } from 'lucide-react'
+import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/contacts', icon: Contact, label: 'Contatos' },
   { href: '/broadcasts', icon: Megaphone, label: 'Broadcasts' },
   { href: '/broadcasts/failures', icon: AlertTriangle, label: 'Falhas de Entrega' },
+  { href: '/leads', icon: UserCheck, label: 'Leads' },
 ]
 
 const salesItems = [

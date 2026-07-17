@@ -68,10 +68,13 @@ export default function ConversationsPage() {
   const [userSearch, setUserSearch] = useState('')
   const [showNew, setShowNew] = useState(false)
   const [view, setView] = useState<'list' | 'kanban'>('list')
+  const [nextId, setNextId] = useState<string | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('conversations-view') as 'list' | 'kanban' | null
     if (saved) setView(saved)
+    const savedNext = sessionStorage.getItem('conversations-next')
+    if (savedNext) setNextId(savedNext)
   }, [])
   const userFilterRef = useRef<HTMLDivElement>(null)
 
@@ -479,22 +482,44 @@ export default function ConversationsPage() {
             )}
           </div>
         )}
-        {conversations.map((conv) => {
+        {conversations.map((conv, i) => {
           const ws = getWindowStatus(conv.lastInboundAt)
           const wLabel = getWindowLabel(conv.lastInboundAt)
+          const isNext = conv.id === nextId
+          const next = conversations[i + 1] ?? null
+
+          function handleOpen() {
+            const nextConvId = next?.id ?? null
+            if (nextConvId) sessionStorage.setItem('conversations-next', nextConvId)
+            else sessionStorage.removeItem('conversations-next')
+            setNextId(nextConvId)
+            router.push(`/conversations/${conv.id}`)
+          }
+
           return (
             <button
               key={conv.id}
-              onClick={() => router.push(`/conversations/${conv.id}`)}
-              className="flex w-full items-center gap-4 border-b px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+              onClick={handleOpen}
+              className={cn(
+                'flex w-full items-center gap-4 border-b px-6 py-4 text-left transition-colors',
+                isNext ? 'bg-teal-50 hover:bg-teal-100' : 'hover:bg-gray-50',
+              )}
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gray-200 text-base font-semibold text-gray-600">
+              <div className={cn(
+                'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-semibold',
+                isNext ? 'bg-teal-600 text-white ring-2 ring-teal-300' : 'bg-gray-200 text-gray-600',
+              )}>
                 {conv.contact?.name?.charAt(0).toUpperCase() || '?'}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate font-medium text-gray-900">
+                  <span className="truncate font-medium text-gray-900 flex items-center gap-2">
                     {conv.contact?.name || formatPhone(conv.contact?.phone || '')}
+                    {isNext && (
+                      <span className="shrink-0 rounded-full bg-teal-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                        Próximo
+                      </span>
+                    )}
                   </span>
                   <div className="flex items-center gap-2 shrink-0">
                     {(() => {

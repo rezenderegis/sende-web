@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from 'next/server'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
 export async function POST(req: NextRequest) {
-  const { name, email, phone } = await req.json()
+  const { name, email, phone, brand, website } = await req.json()
+
+  // honeypot: campo invisível que só bots preenchem — finge sucesso sem gravar nada
+  if (website) {
+    return NextResponse.json({ ok: true }, { status: 201 })
+  }
 
   if (!name || !email || !phone) {
     return NextResponse.json({ error: 'Campos obrigatórios' }, { status: 400 })
@@ -12,11 +17,12 @@ export async function POST(req: NextRequest) {
   const res = await fetch(`${API_URL}/api/v1/leads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, phone, source: 'form' }),
+    body: JSON.stringify({ name, email, phone, source: 'form', brand: brand === 'globalsix' ? 'globalsix' : 'sende' }),
   })
 
   if (!res.ok) {
-    return NextResponse.json({ error: 'Erro ao salvar lead' }, { status: 500 })
+    const error = res.status === 400 ? 'E-mail ou telefone inválido' : 'Erro ao salvar lead'
+    return NextResponse.json({ error }, { status: res.status === 400 ? 400 : 500 })
   }
 
   return NextResponse.json({ ok: true }, { status: 201 })

@@ -155,6 +155,7 @@ export type BroadcastStatus = 'draft' | 'queued' | 'sending' | 'completed' | 'pa
 export type RecipientStatus = 'pending' | 'sent' | 'failed'
 
 export type LeadSource = 'form' | 'whatsapp'
+export type LeadBrand = 'sende' | 'globalsix'
 
 export interface Lead {
   id: string
@@ -162,6 +163,7 @@ export interface Lead {
   email: string
   phone: string
   source: LeadSource
+  brand: LeadBrand
   createdAt: string
 }
 

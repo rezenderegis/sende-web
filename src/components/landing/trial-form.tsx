@@ -22,7 +22,7 @@ function fireConversion(label: string | undefined) {
 }
 
 export default function TrialForm() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', website: '' })
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
@@ -44,11 +44,14 @@ export default function TrialForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error)
+      }
       fireConversion(GAD_CONVERSION_LABEL)
       setDone(true)
-    } catch {
-      setError('Erro ao enviar. Tente novamente.')
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : 'Erro ao enviar. Tente novamente.')
     } finally {
       setLoading(false)
     }
@@ -71,6 +74,18 @@ export default function TrialForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+      {/* honeypot — invisível para humanos, bots costumam preencher todo input */}
+      <input
+        type="text"
+        name="website"
+        value={form.website}
+        onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="absolute -left-[9999px] h-px w-px opacity-0"
+      />
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="trial-name" className="mb-1.5 block text-sm font-medium text-gray-700">

@@ -8,8 +8,8 @@ declare global {
 
 const GAD_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID
 const GAD_WA_CONVERSION_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_WA_CONVERSION_LABEL
-const WA_NUMBER = '5561993796669'
-const WA_MESSAGE = encodeURIComponent('Olá! Quero conhecer o Sende e fazer o teste gratuito.')
+const WA_NUMBER = '5561991587508'
+const WA_MESSAGE = encodeURIComponent('Olá! Quero saber mais sobre o Sende!')
 
 function fireWaConversion() {
   if (typeof window === 'undefined' || !window.gtag || !GAD_ID || !GAD_WA_CONVERSION_LABEL) return

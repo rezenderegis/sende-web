@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\('/Users/fabricio/Documents/projects/sendi-web/node_modules/lucide-react'\\)\")",
+      "Bash(npm install *)"
+    ]
+  }
+}

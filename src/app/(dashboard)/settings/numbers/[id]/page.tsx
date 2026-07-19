@@ -53,7 +53,8 @@ function CreateTemplateModal({ numberId, onClose }: { numberId: string; onClose:
     },
   })
 
-  const isValid = /^[a-z0-9_]+$/.test(name) && bodyText.trim().length > 0
+  const hasEmptyPlaceholder = [bodyText, headerText, footerText].some((t) => t.includes('{{}}'))
+  const isValid = /^[a-z0-9_]+$/.test(name) && bodyText.trim().length > 0 && !hasEmptyPlaceholder
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -107,6 +108,11 @@ function CreateTemplateModal({ numberId, onClose }: { numberId: string; onClose:
               className="min-h-[100px]"
             />
             <p className="mt-1 text-[11px] text-muted-foreground">Use {'{{1}}, {{2}}...'} pra variáveis</p>
+            {hasEmptyPlaceholder && (
+              <p className="mt-1 text-[11px] text-red-600">
+                Variável vazia encontrada ({'{{}}'}) — a Meta rejeita isso. Use {'{{1}}'}, {'{{2}}'} etc.
+              </p>
+            )}
           </div>
 
           <div>

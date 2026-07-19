@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -136,26 +136,52 @@ export default function ConversationPage() {
 
   const LIMIT = 50
   type MessagesPage = { data: Message[]; hasMore: boolean }
-  const {
-    data: messagePages,
-    fetchPreviousPage,
-    hasPreviousPage,
-    isFetchingPreviousPage,
-  } = useInfiniteQuery<MessagesPage, Error, InfiniteData<MessagesPage, string | undefined>, [string, string], string | undefined>({
-    queryKey: ['messages', id],
-    queryFn: ({ pageParam }) =>
-      api
-        .get(`/conversations/${id}/messages?limit=${LIMIT}${pageParam ? `&before=${pageParam}` : ''}`)
-        .then((r) => r.data),
-    initialPageParam: undefined,
-    getNextPageParam: () => undefined,
-    getPreviousPageParam: (firstPage) =>
-      firstPage.hasMore && firstPage.data.length > 0 ? firstPage.data[0].createdAt : undefined,
+
+  // Mensagens mais recentes — polling simples e independente, sem paginação
+  // envolvida, pra nunca correr risco de "perder" página no meio do caminho.
+  const { data: latestPage } = useQuery<MessagesPage>({
+    queryKey: ['messages-latest', id],
+    queryFn: () => api.get(`/conversations/${id}/messages?limit=${LIMIT}`).then((r) => r.data),
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
   })
 
-  const messages = { data: messagePages?.pages.flatMap((p) => p.data) ?? [] }
+  // Mensagens mais antigas, carregadas manualmente ao rolar pra cima — mantidas
+  // em estado local, completamente à parte do polling acima.
+  const [olderMessages, setOlderMessages] = useState<Message[]>([])
+  const [hasMoreOlder, setHasMoreOlder] = useState(true)
+  const [isFetchingOlder, setIsFetchingOlder] = useState(false)
+
+  useEffect(() => {
+    setOlderMessages([])
+    setHasMoreOlder(true)
+  }, [id])
+
+  const messages = {
+    data: [...olderMessages, ...(latestPage?.data ?? [])].filter(
+      (msg, i, arr) => arr.findIndex((m) => m.id === msg.id) === i,
+    ),
+  }
+
+  async function loadOlderMessages() {
+    if (isFetchingOlder || !hasMoreOlder) return
+    const oldest = olderMessages[0] ?? latestPage?.data[0]
+    if (!oldest) return
+
+    const container = messagesContainerRef.current
+    if (container) prevScrollHeightRef.current = container.scrollHeight
+
+    setIsFetchingOlder(true)
+    try {
+      const res = await api
+        .get(`/conversations/${id}/messages?limit=${LIMIT}&before=${oldest.createdAt}`)
+        .then((r) => r.data as MessagesPage)
+      setHasMoreOlder(res.hasMore)
+      setOlderMessages((prev) => [...res.data, ...prev])
+    } finally {
+      setIsFetchingOlder(false)
+    }
+  }
 
   // Mantém o scroll perto do fim só se o usuário já estava lá — evita puxar de volta
   // pra baixo quando o poll de 5s traz mensagens novas enquanto ele lê o histórico.
@@ -173,7 +199,7 @@ export default function ConversationPage() {
     const prevHeight = prevScrollHeightRef.current
     container.scrollTop += container.scrollHeight - prevHeight
     prevScrollHeightRef.current = null
-  }, [messagePages?.pages.length])
+  }, [olderMessages.length])
 
   useEffect(() => {
     const container = messagesContainerRef.current
@@ -182,16 +208,13 @@ export default function ConversationPage() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting && hasPreviousPage && !isFetchingPreviousPage) {
-          prevScrollHeightRef.current = container.scrollHeight
-          fetchPreviousPage()
-        }
+        if (entries[0]?.isIntersecting) loadOlderMessages()
       },
       { root: container, threshold: 0 },
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage])
+  }, [id, latestPage?.data[0]?.id, hasMoreOlder, isFetchingOlder])
 
   function handleMessagesScroll() {
     const container = messagesContainerRef.current
@@ -288,7 +311,7 @@ export default function ConversationPage() {
       }),
     onSuccess: () => {
       setMessage('')
-      qc.invalidateQueries({ queryKey: ['messages', id] })
+      qc.invalidateQueries({ queryKey: ['messages-latest', id] })
     },
     onError: () => {
       toast({ title: 'Erro', description: 'Não foi possível enviar a mensagem', variant: 'destructive' })
@@ -310,7 +333,7 @@ export default function ConversationPage() {
     onSuccess: () => {
       setSelectedTemplateKey('')
       setTemplateVars([])
-      qc.invalidateQueries({ queryKey: ['messages', id] })
+      qc.invalidateQueries({ queryKey: ['messages-latest', id] })
       qc.invalidateQueries({ queryKey: ['conversation', id] })
     },
     onError: () => {
@@ -669,7 +692,7 @@ export default function ConversationPage() {
         className="flex-1 overflow-auto bg-gray-100 p-4 space-y-2"
       >
         <div ref={topSentinelRef} />
-        {isFetchingPreviousPage && (
+        {isFetchingOlder && (
           <p className="py-1 text-center text-xs text-muted-foreground">Carregando mensagens antigas...</p>
         )}
         {messages?.data?.map((msg) => (

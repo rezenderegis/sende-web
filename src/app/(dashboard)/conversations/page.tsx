@@ -59,6 +59,7 @@ export default function ConversationsPage() {
   const router = useRouter()
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [activeTagId, setActiveTagId] = useState<string | null>(null)
   const [activeUserId, setActiveUserId] = useState<string | null>(null)
   const [windowFilter, setWindowFilter] = useState<WindowFilter>('all')
@@ -78,6 +79,11 @@ export default function ConversationsPage() {
   }, [])
   const userFilterRef = useRef<HTMLDivElement>(null)
   const listContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400)
+    return () => clearTimeout(t)
+  }, [search])
 
   function toggleView(v: 'list' | 'kanban') {
     setView(v)
@@ -121,12 +127,13 @@ export default function ConversationsPage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['conversations', activeTagId, waitingReply, waitingCustomerReply],
+    queryKey: ['conversations', activeTagId, waitingReply, waitingCustomerReply, debouncedSearch],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({ page: String(pageParam), limit: String(CONVERSATIONS_LIMIT) })
       if (activeTagId) params.set('tagId', activeTagId)
       if (waitingReply) params.set('waitingReply', 'true')
       if (waitingCustomerReply) params.set('waitingCustomerReply', 'true')
+      if (debouncedSearch) params.set('search', debouncedSearch)
       return api.get(`/conversations?${params}`).then((r) => r.data as { data: Conversation[]; total: number; page: number; limit: number })
     },
     initialPageParam: 1,
@@ -208,7 +215,6 @@ export default function ConversationsPage() {
   )
 
   let conversations = data?.data?.filter((c) => {
-    if (search && !c.contact?.name?.toLowerCase().includes(search.toLowerCase()) && !c.contact?.phone?.includes(search)) return false
     if (activeUserId && c.assignedUserId !== activeUserId) return false
     if (windowFilter !== 'all') {
       const ws = getWindowStatus(c.lastInboundAt)
@@ -606,10 +612,11 @@ export default function ConversationsPage() {
                 </div>
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <span className="truncate text-sm text-muted-foreground">
-                    {conv.whatsappNumber?.phoneNumber}
-                    {conv.whatsappNumber?.id && (
-                      <span className="ml-1 font-mono text-xs opacity-60">
-                        #{conv.whatsappNumber.id.slice(0, 4)}
+                    {formatPhone(conv.contact?.phone || '')}
+                    {conv.whatsappNumber?.phoneNumber && (
+                      <span className="ml-1.5 text-xs opacity-60">
+                        via {conv.whatsappNumber.phoneNumber}
+                        {conv.whatsappNumber?.id && ` #${conv.whatsappNumber.id.slice(0, 4)}`}
                       </span>
                     )}
                   </span>

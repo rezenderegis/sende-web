@@ -29,6 +29,11 @@ function CreateTemplateModal({ numberId, onClose }: { numberId: string; onClose:
   const [headerText, setHeaderText] = useState('')
   const [bodyText, setBodyText] = useState('')
   const [footerText, setFooterText] = useState('')
+  const [bodyExamples, setBodyExamples] = useState<string[]>([])
+  const [headerExample, setHeaderExample] = useState('')
+
+  const bodyVarCount = new Set(bodyText.match(/\{\{\d+\}\}/g) ?? []).size
+  const headerHasVar = /\{\{\d+\}\}/.test(headerText)
 
   const createMutation = useMutation({
     mutationFn: () => api.post(`/whatsapp/numbers/${numberId}/templates`, {
@@ -38,6 +43,8 @@ function CreateTemplateModal({ numberId, onClose }: { numberId: string; onClose:
       headerText: headerText.trim() || undefined,
       bodyText: bodyText.trim(),
       footerText: footerText.trim() || undefined,
+      bodyExamples: bodyVarCount > 0 ? bodyExamples.slice(0, bodyVarCount) : undefined,
+      headerExample: headerHasVar ? headerExample.trim() || undefined : undefined,
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['whatsapp-templates', numberId] })
@@ -54,7 +61,9 @@ function CreateTemplateModal({ numberId, onClose }: { numberId: string; onClose:
   })
 
   const hasEmptyPlaceholder = [bodyText, headerText, footerText].some((t) => t.includes('{{}}'))
-  const isValid = /^[a-z0-9_]+$/.test(name) && bodyText.trim().length > 0 && !hasEmptyPlaceholder
+  const bodyExamplesFilled = bodyVarCount === 0 || bodyExamples.slice(0, bodyVarCount).every((v) => v?.trim())
+  const headerExampleFilled = !headerHasVar || headerExample.trim().length > 0
+  const isValid = /^[a-z0-9_]+$/.test(name) && bodyText.trim().length > 0 && !hasEmptyPlaceholder && bodyExamplesFilled && headerExampleFilled
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -97,6 +106,12 @@ function CreateTemplateModal({ numberId, onClose }: { numberId: string; onClose:
           <div>
             <label className="mb-1.5 block text-xs font-medium text-gray-700">Cabeçalho <span className="text-gray-400">(opcional)</span></label>
             <Input value={headerText} onChange={(e) => setHeaderText(e.target.value)} placeholder="Lembrete de reunião" />
+            {headerHasVar && (
+              <div className="mt-2">
+                <label className="mb-1 block text-[11px] text-gray-500">Exemplo pra variável do cabeçalho</label>
+                <Input value={headerExample} onChange={(e) => setHeaderExample(e.target.value)} placeholder="João" className="h-8 text-xs" />
+              </div>
+            )}
           </div>
 
           <div>
@@ -112,6 +127,24 @@ function CreateTemplateModal({ numberId, onClose }: { numberId: string; onClose:
               <p className="mt-1 text-[11px] text-red-600">
                 Variável vazia encontrada ({'{{}}'}) — a Meta rejeita isso. Use {'{{1}}'}, {'{{2}}'} etc.
               </p>
+            )}
+            {bodyVarCount > 0 && (
+              <div className="mt-2 space-y-1.5 rounded-md bg-gray-50 p-2.5">
+                <p className="text-[11px] font-medium text-gray-600">
+                  A Meta exige um valor de exemplo pra cada variável:
+                </p>
+                {Array.from({ length: bodyVarCount }, (_, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="w-9 shrink-0 text-[11px] text-gray-500">{`{{${i + 1}}}`}</span>
+                    <Input
+                      value={bodyExamples[i] ?? ''}
+                      onChange={(e) => setBodyExamples((v) => { const next = [...v]; next[i] = e.target.value; return next })}
+                      placeholder={`Exemplo pra {{${i + 1}}}`}
+                      className="h-8 flex-1 text-xs"
+                    />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 

@@ -9,7 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn, formatPhone } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import type { Conversation, Contact, WhatsappNumber, User, FollowOn } from '@/types'
+import type { Conversation, Contact, WhatsappNumber, User, FollowOn, UsageSummary } from '@/types'
+
+function centsToReais(cents: number): string {
+  return (cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 
 function getWindowStatus(lastInboundAt: string | null): 'open' | 'closing' | 'closed' {
   if (!lastInboundAt) return 'closed'
@@ -43,6 +47,63 @@ function groupFollowOnsForSummary(all: FollowOn[]) {
     else if (d <= todayEnd) today.push(fo)
   }
   return { overdue, today }
+}
+
+function UsageCard() {
+  const { data: usage } = useQuery<UsageSummary>({
+    queryKey: ['company-usage'],
+    queryFn: () => api.get('/companies/me/usage').then((r) => r.data),
+  })
+
+  if (!usage) return null
+
+  const today = usage.numbers.reduce(
+    (acc, n) => ({
+      outboundCostCents: acc.outboundCostCents + n.today.outboundCostCents,
+      botCostCents: acc.botCostCents + n.today.botCostCents,
+    }),
+    { outboundCostCents: 0, botCostCents: 0 },
+  )
+  const month = usage.numbers.reduce(
+    (acc, n) => ({
+      outboundCostCents: acc.outboundCostCents + n.month.outboundCostCents,
+      botCostCents: acc.botCostCents + n.month.botCostCents,
+    }),
+    { outboundCostCents: 0, botCostCents: 0 },
+  )
+
+  return (
+    <Card className="mt-6">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-sm font-medium text-muted-foreground">Uso e gastos</CardTitle>
+        <Link href="/usage" className="text-xs font-medium text-teal-600 hover:text-teal-700">
+          Ver extrato →
+        </Link>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Saldo disponível</p>
+            <p className="text-lg font-bold text-teal-700">R$ {centsToReais(usage.balanceCents)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Gasto hoje</p>
+            <p className="text-lg font-bold">R$ {centsToReais(today.outboundCostCents + today.botCostCents)}</p>
+            <p className="text-xs text-muted-foreground">
+              saída R$ {centsToReais(today.outboundCostCents)} · bot R$ {centsToReais(today.botCostCents)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Gasto no mês</p>
+            <p className="text-lg font-bold">R$ {centsToReais(month.outboundCostCents + month.botCostCents)}</p>
+            <p className="text-xs text-muted-foreground">
+              saída R$ {centsToReais(month.outboundCostCents)} · bot R$ {centsToReais(month.botCostCents)}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 function StatCard({ title, value, icon: Icon, description }: {
@@ -149,6 +210,8 @@ export default function DashboardPage() {
           icon={TrendingUp}
         />
       </div>
+
+      <UsageCard />
 
       {isManager && (
         <div className="mt-8">

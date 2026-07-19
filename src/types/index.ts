@@ -12,6 +12,7 @@ export interface Company {
   email: string
   plan: CompanyPlan
   isActive: boolean
+  balanceCents: number
   createdAt: string
   updatedAt: string
 }
@@ -27,6 +28,7 @@ export interface User {
   allowedNumberIds: string[] | null
   canConfigureBot: boolean
   canSendBroadcast: boolean
+  isPlatformAdmin: boolean
   createdAt: string
   updatedAt: string
 }
@@ -42,6 +44,8 @@ export interface WhatsappNumber {
   webhookVerifyToken: string
   systemPrompt: string | null
   botHistoryLimit: number
+  dailySpendLimitCents: number | null
+  monthlySpendLimitCents: number | null
   createdAt: string
   updatedAt: string
 }
@@ -445,4 +449,92 @@ export interface AuthResponse {
   accessToken: string
   user: User
   company?: Company
+}
+
+export interface SpendBreakdown {
+  outboundCount: number
+  outboundCostCents: number
+  botCount: number
+  botCostCents: number
+  totalCostCents: number
+}
+
+export interface NumberUsage {
+  whatsappNumberId: string
+  displayName: string
+  dailySpendLimitCents: number | null
+  monthlySpendLimitCents: number | null
+  today: SpendBreakdown
+  month: SpendBreakdown
+}
+
+export interface UsageSummary {
+  balanceCents: number
+  numbers: NumberUsage[]
+}
+
+export interface AdminCompanySummary extends UsageSummary {
+  id: string
+  name: string
+  email: string
+  plan: CompanyPlan
+  isActive: boolean
+}
+
+export interface PlatformSettings {
+  id: string
+  costPerOutboundMessageCents: number
+  costPerBotMessageCents: number
+  costPerFreeTextMessageCents: number
+  costPerMarketingMessageCents: number
+  costPerUtilityMessageCents: number
+  costPerAuthenticationMessageCents: number
+  updatedAt: string
+}
+
+export interface ReconciliationResult {
+  whatsappNumberId: string
+  displayName: string
+  since: string
+  until: string
+  meta: {
+    byCategory: { category: string; costCents: number }[]
+    byCountry: { country: string; costCents: number }[]
+    totalCostCents: number
+  }
+  internal: {
+    costCents: number
+    outboundCount: number
+    botCount: number
+  }
+  deltaCents: number
+}
+
+export type BalanceTransactionType = 'credit' | 'adjustment'
+
+export interface BalanceTransaction {
+  id: string
+  companyId: string
+  amountCents: number
+  type: BalanceTransactionType
+  reason: string | null
+  createdByUserId: string | null
+  createdAt: string
+}
+
+export interface DailySpend extends SpendBreakdown {
+  date: string
+}
+
+export interface TypeSpend {
+  type: string
+  count: number
+  costCents: number
+}
+
+export interface ExtractEntry {
+  date: string
+  description: string
+  amountCents: number
+  balanceAfterCents: number
 }

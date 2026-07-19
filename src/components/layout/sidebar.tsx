@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck } from 'lucide-react'
+import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -131,6 +131,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </Link>
           ))}
         </div>
+
+        {user?.isPlatformAdmin && (
+          <div className="pt-4">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+              Plataforma
+            </p>
+            <Link
+              href="/admin"
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-teal-50 hover:text-teal-700"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Admin Sendi
+            </Link>
+          </div>
+        )}
       </nav>
 
       <div className="border-t p-4">

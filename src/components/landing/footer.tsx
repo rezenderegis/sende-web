@@ -11,6 +11,7 @@ const company = [
   { href: '/login', label: 'Entrar' },
   { href: '/register', label: 'Criar conta' },
   { href: '/politica-privacidade', label: 'Política de Privacidade' },
+  { href: '/termos-de-uso', label: 'Termos de Uso' },
   { href: '/delete-account', label: 'Excluir minha conta' },
 ]
 

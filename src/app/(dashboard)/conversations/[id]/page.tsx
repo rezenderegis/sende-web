@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -103,6 +103,10 @@ export default function ConversationPage() {
   const assignRef = useRef<HTMLDivElement>(null)
   const savedRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const topSentinelRef = useRef<HTMLDivElement>(null)
+  const isNearBottomRef = useRef(true)
+  const prevScrollHeightRef = useRef<number | null>(null)
 
   // Follow-on form state
   const defaultScheduledAt = toLocalDatetimeValue(new Date(Date.now() + 60 * 60000))
@@ -130,40 +134,71 @@ export default function ConversationPage() {
     queryFn: () => api.get(`/conversations/${id}`).then((r) => r.data),
   })
 
-  const { data: messages } = useQuery<{ data: Message[] }>({
+  const LIMIT = 50
+  type MessagesPage = { data: Message[]; hasMore: boolean }
+  const {
+    data: messagePages,
+    fetchPreviousPage,
+    hasPreviousPage,
+    isFetchingPreviousPage,
+  } = useInfiniteQuery<MessagesPage, Error, InfiniteData<MessagesPage, string | undefined>, [string, string], string | undefined>({
     queryKey: ['messages', id],
-    queryFn: async () => {
-      const LIMIT = 50
-      const first = await api
-        .get(`/conversations/${id}/messages?page=1&limit=${LIMIT}`)
-        .then((r) => r.data)
-
-      const totalPages = Math.ceil(first.total / LIMIT)
-
-      if (totalPages <= 1) return { data: first.data }
-
-      const rest = await Promise.all(
-        Array.from({ length: totalPages - 1 }, (_, i) =>
-          api
-            .get(`/conversations/${id}/messages?page=${i + 2}&limit=${LIMIT}`)
-            .then((r) => r.data.data as Message[]),
-        ),
-      )
-
-      const seen = new Set<string>()
-      const all = [...first.data, ...rest.flat()]
-        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        .filter((msg) => { if (seen.has(msg.id)) return false; seen.add(msg.id); return true })
-
-      return { data: all }
-    },
+    queryFn: ({ pageParam }) =>
+      api
+        .get(`/conversations/${id}/messages?limit=${LIMIT}${pageParam ? `&before=${pageParam}` : ''}`)
+        .then((r) => r.data),
+    initialPageParam: undefined,
+    getNextPageParam: () => undefined,
+    getPreviousPageParam: (firstPage) =>
+      firstPage.hasMore && firstPage.data.length > 0 ? firstPage.data[0].createdAt : undefined,
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
   })
 
+  const messages = { data: messagePages?.pages.flatMap((p) => p.data) ?? [] }
+
+  // Mantém o scroll perto do fim só se o usuário já estava lá — evita puxar de volta
+  // pra baixo quando o poll de 5s traz mensagens novas enquanto ele lê o histórico.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (isNearBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages.data.length])
+
+  // Restaura a posição de leitura depois de carregar mensagens mais antigas no topo
+  // (senão o conteúdo novo empurra a rolagem e o usuário perde o lugar).
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container || prevScrollHeightRef.current === null) return
+    const prevHeight = prevScrollHeightRef.current
+    container.scrollTop += container.scrollHeight - prevHeight
+    prevScrollHeightRef.current = null
+  }, [messagePages?.pages.length])
+
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    const sentinel = topSentinelRef.current
+    if (!container || !sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasPreviousPage && !isFetchingPreviousPage) {
+          prevScrollHeightRef.current = container.scrollHeight
+          fetchPreviousPage()
+        }
+      },
+      { root: container, threshold: 0 },
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage])
+
+  function handleMessagesScroll() {
+    const container = messagesContainerRef.current
+    if (!container) return
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+    isNearBottomRef.current = distanceFromBottom < 150
+  }
 
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ['users'],
@@ -628,7 +663,15 @@ export default function ConversationPage() {
         </div>
       )}
 
-      <div className="flex-1 overflow-auto bg-gray-100 p-4 space-y-2">
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleMessagesScroll}
+        className="flex-1 overflow-auto bg-gray-100 p-4 space-y-2"
+      >
+        <div ref={topSentinelRef} />
+        {isFetchingPreviousPage && (
+          <p className="py-1 text-center text-xs text-muted-foreground">Carregando mensagens antigas...</p>
+        )}
         {messages?.data?.map((msg) => (
           <div
             key={msg.id}

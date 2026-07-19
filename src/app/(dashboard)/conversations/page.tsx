@@ -100,6 +100,7 @@ export default function ConversationsPage() {
     templateName: 'hello_world',
     templateLanguage: 'pt_BR',
   })
+  const [templateVars, setTemplateVars] = useState<string[]>([])
 
   const { data: tagsData = [] } = useQuery<Tag[]>({
     queryKey: ['tags'],
@@ -151,11 +152,13 @@ export default function ConversationsPage() {
         type: 'template',
         templateName: form.templateName,
         templateLanguage: form.templateLanguage,
+        ...(templateVars.length > 0 ? { templateVariables: templateVars } : {}),
       }),
     onSuccess: () => {
       toast({ title: 'Mensagem enviada!', description: 'A conversa aparecerá em instantes.', variant: 'success' })
       setShowNew(false)
       setForm({ whatsappNumberId: '', to: '', templateName: '', templateLanguage: '' })
+      setTemplateVars([])
       setTimeout(() => qc.invalidateQueries({ queryKey: ['conversations'] }), 2000)
     },
     onError: (err: any) => {
@@ -380,7 +383,10 @@ export default function ConversationsPage() {
               <Label className="text-xs">Número de envio</Label>
               <Select
                 value={form.whatsappNumberId}
-                onValueChange={(v) => setForm((f) => ({ ...f, whatsappNumberId: v, templateName: '', templateLanguage: '' }))}
+                onValueChange={(v) => {
+                  setForm((f) => ({ ...f, whatsappNumberId: v, templateName: '', templateLanguage: '' }))
+                  setTemplateVars([])
+                }}
               >
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Selecione o número" />
@@ -418,6 +424,8 @@ export default function ConversationsPage() {
                     onValueChange={(v) => {
                       const [name, language] = v.split('|')
                       setForm((f) => ({ ...f, templateName: name, templateLanguage: language }))
+                      const tpl = approvedTemplates.find((t) => t.name === name && t.language === language)
+                      setTemplateVars(Array(tpl?.variablesCount ?? 0).fill(''))
                     }}
                   >
                     <SelectTrigger className="bg-white">
@@ -434,8 +442,33 @@ export default function ConversationsPage() {
                   </Select>
                   {selectedTemplate?.bodyText && (
                     <p className="mt-1 rounded border bg-white px-3 py-2 text-xs text-gray-600 whitespace-pre-wrap">
-                      {selectedTemplate.bodyText}
+                      {(() => {
+                        let preview = selectedTemplate.bodyText
+                        templateVars.forEach((val, i) => {
+                          preview = preview!.replace(new RegExp(`\\{\\{${i + 1}\\}\\}`, 'g'), val || `{{${i + 1}}}`)
+                        })
+                        return preview
+                      })()}
                     </p>
+                  )}
+                  {selectedTemplate && (selectedTemplate.variablesCount ?? 0) > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {Array.from({ length: selectedTemplate.variablesCount! }, (_, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="shrink-0 rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-500">{`{{${i + 1}}}`}</span>
+                          <Input
+                            className="flex-1 bg-white"
+                            placeholder={`Valor para {{${i + 1}}}`}
+                            value={templateVars[i] ?? ''}
+                            onChange={(e) => setTemplateVars((v) => {
+                              const next = [...v]
+                              next[i] = e.target.value
+                              return next
+                            })}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </>
               )}
@@ -448,7 +481,7 @@ export default function ConversationsPage() {
             className="mt-3"
             size="sm"
             onClick={() => sendMutation.mutate()}
-            disabled={!form.whatsappNumberId || !form.to || !form.templateName || sendMutation.isPending}
+            disabled={!form.whatsappNumberId || !form.to || !form.templateName || sendMutation.isPending || templateVars.some((v) => !v.trim())}
           >
             {sendMutation.isPending ? 'Enviando...' : 'Enviar template e iniciar conversa'}
           </Button>

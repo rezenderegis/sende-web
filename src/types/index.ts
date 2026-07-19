@@ -265,6 +265,7 @@ export interface WhatsappTemplate {
   language: string
   status: string
   category: string | null
+  rejectedReason: string | null
   bodyText: string | null
   variablesCount: number
   syncedAt: string | null

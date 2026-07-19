@@ -140,6 +140,15 @@ const templateStatusConfig: Record<string, { label: string; icon: any; color: st
   REJECTED:  { label: 'Rejeitado', icon: XCircle,      color: 'text-red-500'   },
 }
 
+const rejectedReasonLabels: Record<string, string> = {
+  ABUSIVE_CONTENT: 'Conteúdo considerado abusivo/spam',
+  INVALID_FORMAT: 'Formato inválido (variáveis ou estrutura incorreta)',
+  PROMOTIONAL: 'Conteúdo promocional não permitido pra essa categoria',
+  TAG_CONTENT_MISMATCH: 'Categoria não bate com o conteúdo (ex: marcado como Utility mas é Marketing)',
+  INCORRECT_CATEGORY: 'Categoria incorreta',
+  SCAM: 'Identificado como possível golpe',
+}
+
 export default function NumberConfigPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -359,6 +368,11 @@ export default function NumberConfigPage() {
                     </div>
                     {tpl.bodyText && (
                       <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{tpl.bodyText}</p>
+                    )}
+                    {tpl.status === 'REJECTED' && tpl.rejectedReason && (
+                      <p className="rounded bg-red-50 px-2 py-1.5 text-xs text-red-600 leading-relaxed">
+                        Motivo: {rejectedReasonLabels[tpl.rejectedReason] ?? tpl.rejectedReason}
+                      </p>
                     )}
                   </div>
                 )

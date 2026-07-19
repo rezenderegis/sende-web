@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap, Clock, MessageCircleWarning, LayoutList, Kanban } from 'lucide-react'
 import api from '@/lib/api'
@@ -77,6 +77,7 @@ export default function ConversationsPage() {
     if (savedNext) setNextId(savedNext)
   }, [])
   const userFilterRef = useRef<HTMLDivElement>(null)
+  const listContainerRef = useRef<HTMLDivElement>(null)
 
   function toggleView(v: 'list' | 'kanban') {
     setView(v)
@@ -112,17 +113,48 @@ export default function ConversationsPage() {
     queryFn: () => api.get('/users').then((r) => r.data),
   })
 
-  const { data, isLoading } = useQuery<{ data: Conversation[]; total: number }>({
+  const CONVERSATIONS_LIMIT = 50
+  const {
+    data: conversationPages,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['conversations', activeTagId, waitingReply, waitingCustomerReply],
-    queryFn: () => {
-      const params = new URLSearchParams({ limit: '50' })
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams({ page: String(pageParam), limit: String(CONVERSATIONS_LIMIT) })
       if (activeTagId) params.set('tagId', activeTagId)
       if (waitingReply) params.set('waitingReply', 'true')
       if (waitingCustomerReply) params.set('waitingCustomerReply', 'true')
-      return api.get(`/conversations?${params}`).then((r) => r.data)
+      return api.get(`/conversations?${params}`).then((r) => r.data as { data: Conversation[]; total: number; page: number; limit: number })
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const totalPages = Math.ceil(lastPage.total / lastPage.limit)
+      return lastPage.page < totalPages ? lastPage.page + 1 : undefined
     },
     refetchInterval: 10000,
   })
+
+  const data = { data: conversationPages?.pages.flatMap((p) => p.data) ?? [] }
+  const bottomSentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const container = listContainerRef.current
+    const sentinel = bottomSentinelRef.current
+    if (!container || !sentinel) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { root: container, threshold: 0 },
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const { data: kanbanColumns = [] } = useQuery<KanbanColumn[]>({
     queryKey: ['kanban-columns'],
@@ -498,7 +530,7 @@ export default function ConversationsPage() {
         />
       )}
 
-      {view === 'list' && <div className="flex-1 overflow-auto">
+      {view === 'list' && <div ref={listContainerRef} className="flex-1 overflow-auto">
         {isLoading && (
           <div className="flex h-32 items-center justify-center text-muted-foreground">
             Carregando...
@@ -614,6 +646,12 @@ export default function ConversationsPage() {
             </button>
           )
         })}
+        <div ref={bottomSentinelRef} />
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center py-4 text-xs text-muted-foreground">
+            Carregando mais conversas...
+          </div>
+        )}
       </div>}
     </div>
   )

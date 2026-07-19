@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso — Sende',
+  title: 'Termos de Serviço — Sende',
   description: 'Termos e condições de uso da plataforma Sende.',
 }
 
@@ -23,7 +23,7 @@ function Item({ title, children }: { title: string; children: React.ReactNode })
   )
 }
 
-export default function TermosDeUsoPage() {
+export default function TermosDeServicoPage() {
   const updated = '19 de julho de 2026'
 
   return (
@@ -34,13 +34,13 @@ export default function TermosDeUsoPage() {
           Documento legal
         </p>
         <h1 className="mb-4 font-display text-4xl font-bold text-teal-900">
-          Termos de Uso
+          Termos de Serviço
         </h1>
         <p className="text-sm text-ink-soft">
           Última atualização: <span className="font-medium text-ink">{updated}</span>
         </p>
         <div className="mt-6 rounded-2xl border border-teal-100 bg-teal-50 px-5 py-4 text-sm text-teal-800">
-          Estes Termos de Uso regem a utilização da plataforma <strong>Sende</strong>, operada pela{' '}
+          Estes Termos de Serviço regem a utilização da plataforma <strong>Sende</strong>, operada pela{' '}
           <strong>GlobalSix Technology LTDA</strong>. Ao criar uma conta ou utilizar o serviço, você
           concorda integralmente com estes Termos e com nossa{' '}
           <a href="/politica-privacidade" className="underline">Política de Privacidade</a>.
@@ -50,7 +50,7 @@ export default function TermosDeUsoPage() {
       <Section title="1. Aceitação dos Termos">
         <p>
           Ao acessar ou usar a plataforma Sende, você declara ter capacidade legal para contratar em
-          nome próprio ou da empresa que representa, e aceita se vincular a estes Termos de Uso. Se
+          nome próprio ou da empresa que representa, e aceita se vincular a estes Termos de Serviço. Se
           você não concorda com algum destes termos, não deve utilizar a plataforma.
         </p>
       </Section>
@@ -248,7 +248,7 @@ export default function TermosDeUsoPage() {
         Sende · GlobalSix Technology LTDA · CNPJ 53.843.384/0001-70
         <br />
         Este documento está disponível permanentemente em{' '}
-        <span className="text-teal-600">sende.app.br/termos-de-uso</span>
+        <span className="text-teal-600">sende.app.br/termos-de-servico</span>
       </div>
     </div>
   )

@@ -534,10 +534,17 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => router.push('/conversations')}>
-              <MessageSquare className="h-3.5 w-3.5" />
-              Conversa
-            </Button>
+            {contact.conversationId && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => router.push(`/conversations/${contact.conversationId}`)}
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                Conversa
+              </Button>
+            )}
             <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
               <X className="h-4 w-4" />
             </button>
@@ -1301,15 +1308,17 @@ export default function ContactsPage() {
                 <div className="text-xs text-muted-foreground hidden sm:block">
                   {formatDate(contact.createdAt)}
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => router.push('/conversations')}
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Ver conversa
-                </Button>
+                {contact.conversationId && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => router.push(`/conversations/${contact.conversationId}`)}
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Ver conversa
+                  </Button>
+                )}
               </div>
             </div>
           ))}

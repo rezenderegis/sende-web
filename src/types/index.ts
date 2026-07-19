@@ -63,6 +63,7 @@ export interface Contact {
   tags?: Tag[]
   metadata?: Record<string, any>
   automationOptOut?: boolean
+  conversationId?: string | null
   createdAt: string
   updatedAt: string
 }

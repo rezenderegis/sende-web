@@ -412,7 +412,14 @@ export default function ConversationsPage() {
         <div className="border-b bg-teal-50 px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <p className="font-medium text-gray-900">Nova conversa via template</p>
-            <button onClick={() => setShowNew(false)}>
+            <button
+              onClick={() => {
+                setShowNew(false)
+                setForm({ whatsappNumberId: '', to: '', templateName: '', templateLanguage: '' })
+                setTemplateVars([])
+              }}
+              className="rounded p-1 hover:bg-black/5"
+            >
               <X className="h-4 w-4 text-gray-400 hover:text-gray-600" />
             </button>
           </div>
@@ -515,14 +522,26 @@ export default function ConversationsPage() {
           <p className="mt-2 text-xs text-muted-foreground">
             O destinatário deve estar no formato internacional sem + (ex: 5561984402868)
           </p>
-          <Button
-            className="mt-3"
-            size="sm"
-            onClick={() => sendMutation.mutate()}
-            disabled={!form.whatsappNumberId || !form.to || !form.templateName || sendMutation.isPending || templateVars.some((v) => !v.trim())}
-          >
-            {sendMutation.isPending ? 'Enviando...' : 'Enviar template e iniciar conversa'}
-          </Button>
+          <div className="mt-3 flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => sendMutation.mutate()}
+              disabled={!form.whatsappNumberId || !form.to || !form.templateName || sendMutation.isPending || templateVars.some((v) => !v.trim())}
+            >
+              {sendMutation.isPending ? 'Enviando...' : 'Enviar template e iniciar conversa'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setShowNew(false)
+                setForm({ whatsappNumberId: '', to: '', templateName: '', templateLanguage: '' })
+                setTemplateVars([])
+              }}
+            >
+              Cancelar
+            </Button>
+          </div>
         </div>
       )}
 

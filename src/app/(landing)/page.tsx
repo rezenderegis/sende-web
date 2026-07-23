@@ -8,13 +8,13 @@ import {
   Inbox,
   Megaphone,
   MessageCircleMore,
+  Smartphone,
   Sparkles,
   Users,
   Zap,
 } from "lucide-react";
 import TrialForm from "@/components/landing/trial-form";
 
-/* ─── Header ────────────────────────────────────────────── */
 /* ─── Hero ──────────────────────────────────────────────── */
 function Hero() {
   return (
@@ -36,7 +36,7 @@ function Hero() {
 
         <p className="mx-auto mt-6 max-w-2xl text-lg text-ink-soft">
           O Sende responde clientes com IA, dispara campanhas e organiza seus
-          leads 24 horas por dia. Você configura uma vez; ele vende enquanto
+          leads 24 horas por dia. Você configura uma vez; ele atende enquanto
           você dorme.
         </p>
 
@@ -45,7 +45,7 @@ function Hero() {
             href="#cta"
             className="inline-flex items-center gap-2 rounded-pill bg-coral px-7 py-3.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-coral-hover"
           >
-            TESTE GRÁTIS POR 7 DIAS
+            AGENDAR DEMONSTRAÇÃO
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
@@ -55,6 +55,10 @@ function Hero() {
             Ver como funciona
           </Link>
         </div>
+
+        <p className="mt-5 text-xs font-medium text-ink-faint">
+          Configuração em 1 dia útil · Cobrança em real, via Pix
+        </p>
       </div>
 
       <div className="mx-auto mt-16 max-w-xl px-6">
@@ -185,8 +189,14 @@ const features = [
   {
     icon: Bot,
     title: "Bot com IA",
-    desc: "Responde automaticamente no tom da sua empresa, com regras e contexto configurados por você.",
+    desc: "Responde automaticamente no tom da sua empresa. Você escreve as instruções em português — sem montar fluxograma.",
     stat: "Atendimento 24h",
+  },
+  {
+    icon: Smartphone,
+    title: "App para iOS e Android",
+    desc: "Seu time atende do celular e você acompanha a operação de onde estiver. Sem depender de computador ligado.",
+    stat: "Operação no bolso",
   },
   {
     icon: Megaphone,
@@ -217,7 +227,7 @@ function Features() {
             Tudo que sua equipe faria no WhatsApp — no automático
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-ink-soft">
-            Cinco pilares que transformam seu WhatsApp em um canal de vendas que
+            Seis pilares que transformam seu WhatsApp em um canal de vendas que
             trabalha sozinho.
           </p>
         </div>
@@ -298,6 +308,7 @@ function HowItWorks() {
               "O bot responde de madrugada, no domingo e no feriado.",
               "Você assume qualquer conversa com um clique e recebe todo o histórico.",
               "A IA identifica lead quente, suporte e quem apenas perguntou o preço.",
+              "Tudo isso também pelo app, no celular do seu time.",
             ].map((item) => (
               <li
                 key={item}
@@ -344,51 +355,71 @@ function HowItWorks() {
 /* ─── Planos ────────────────────────────────────────────── */
 const plans = [
   {
-    name: "Início",
-    price: "R$ 200",
+    name: "Starter",
+    price: "R$ 298",
     period: "/mês",
-    desc: "Pra sair do improviso e centralizar o atendimento.",
-    cta: "Assinar o Início",
+    desc: "Para organizar o atendimento e começar a usar IA, sem processo de implantação.",
+    seats: "1 atendente incluso · adicionais R$ 90/mês",
+    cta: "Assinar o Starter",
+    ctaHref: "#cta",
     highlight: false,
-    credits: "R$ 30/mês em créditos inclusos",
     features: [
       "1 número de WhatsApp",
-      "2 atendentes no painel",
-      "Bot com IA",
-      "Até 500 contatos",
-      "Tags e histórico de conversas",
+      "App para iOS e Android",
+      "Inbox compartilhado, tags e histórico",
+      "1 agente de IA",
+      "Campanhas e automações essenciais",
     ],
   },
   {
-    name: "Profissional",
-    price: "R$ 400",
+    name: "Pro",
+    price: "R$ 598",
     period: "/mês",
-    desc: "Pra quem vende todo dia e precisa de campanha e automação.",
-    cta: "Assinar o Profissional",
+    desc: "Para quem precisa integrar o Sende aos próprios sistemas e dividir o time por área.",
+    seats: "2 atendentes inclusos · adicionais R$ 90/mês",
+    cta: "Assinar o Pro",
+    ctaHref: "#cta",
     highlight: true,
-    credits: "R$ 80/mês em créditos inclusos",
     features: [
-      "Tudo do Início",
-      "5 atendentes no painel",
-      "Broadcasts com classificação por IA",
-      "Automações de aniversário, cobrança e recompra",
-      "Até 5.000 contatos",
+      "Tudo do Starter",
+      "API e webhooks",
+      "Departamentos e filas",
+      "Agentes de IA por departamento",
+      "Automações avançadas e campanhas segmentadas",
     ],
   },
   {
-    name: "Escala",
-    price: "R$ 800",
+    name: "Business",
+    price: "R$ 1.690",
     period: "/mês",
-    desc: "Pra operações com equipe e múltiplos números.",
-    cta: "Falar com vendas",
+    desc: "Para equipes maiores, com mais de um número e acompanhamento gerencial.",
+    seats: "Até 15 atendentes",
+    cta: "Assinar o Business",
+    ctaHref: "#cta",
     highlight: false,
-    credits: "R$ 200/mês em créditos inclusos",
     features: [
-      "Tudo do Profissional",
-      "Atendentes ilimitados",
-      "Múltiplos números de WhatsApp",
-      "Contatos ilimitados",
-      "Suporte prioritário e onboarding assistido",
+      "Tudo do Pro",
+      "Até 3 números de WhatsApp",
+      "Relatórios gerenciais e produtividade",
+      "Perfis de acesso e permissões",
+      "Onboarding assistido e suporte prioritário",
+    ],
+  },
+  {
+    name: "Enterprise",
+    price: "Sob consulta",
+    period: "",
+    desc: "Para operações com múltiplas unidades, exigência de governança e órgãos públicos.",
+    seats: "Usuários e números conforme contrato",
+    cta: "Falar com vendas",
+    ctaHref: "#cta",
+    highlight: false,
+    features: [
+      "Tudo do Business",
+      "SSO e trilhas de auditoria",
+      "SLA contratual e gerente de conta",
+      "Integrações corporativas e ambiente dedicado",
+      "Implantação estruturada por projeto",
     ],
   },
 ];
@@ -402,22 +433,23 @@ function Pricing() {
             Planos que crescem com o seu atendimento
           </h2>
           <p className="mt-4 text-base text-ink-soft">
-            Comece pequeno e escale quando suas conversas escalarem.
+            A mensalidade dá acesso à plataforma. As mensagens e as respostas da
+            IA são pagas à parte, por consumo.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex flex-col rounded-card border p-8 ${
+              className={`relative flex flex-col rounded-card border p-6 ${
                 plan.highlight
                   ? "border-teal-600 bg-white shadow-sende ring-1 ring-teal-600"
                   : "border-[#EEF2F6] bg-white shadow-sende-sm"
               }`}
             >
               {plan.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-pill bg-teal-600 px-4 py-1 text-[11px] font-bold tracking-wide text-white">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-pill bg-teal-600 px-4 py-1 text-[11px] font-bold tracking-wide text-white">
                   MAIS ESCOLHIDO
                 </span>
               )}
@@ -425,22 +457,32 @@ function Pricing() {
               <p className="text-xs font-semibold uppercase tracking-wider text-teal-600">
                 {plan.name}
               </p>
-              <div className="mt-3 flex items-end gap-1">
-                <span className="font-display text-3xl font-extrabold text-teal-900">
+
+              <div className="mt-3 flex min-h-[44px] items-end gap-1">
+                <span className="font-display text-3xl font-extrabold leading-none text-teal-900">
                   {plan.price}
                 </span>
-                <span className="mb-1 text-sm text-ink-faint">
-                  {plan.period}
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-ink-soft">{plan.desc}</p>
-
-              <div className="mt-5 flex items-start gap-2 rounded-xl bg-teal-50 p-3 text-sm font-semibold text-teal-800">
-                <Zap className="mt-0.5 h-4 w-4 shrink-0" />
-                {plan.credits}
+                {plan.period && (
+                  <span className="mb-0.5 text-sm text-ink-faint">
+                    {plan.period}
+                  </span>
+                )}
               </div>
 
-              <ul className="my-6 flex-1 space-y-3">
+              <p className="mt-1 text-[11px] font-medium text-ink-faint">
+                + créditos de consumo
+              </p>
+
+              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                {plan.desc}
+              </p>
+
+              <div className="mt-4 flex items-start gap-2 rounded-xl bg-teal-50 p-3 text-xs font-semibold text-teal-800">
+                <Users className="mt-0.5 h-4 w-4 shrink-0" />
+                {plan.seats}
+              </div>
+
+              <ul className="my-6 flex-1 space-y-2.5">
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
@@ -453,7 +495,7 @@ function Pricing() {
               </ul>
 
               <Link
-                href="#cta"
+                href={plan.ctaHref}
                 className={`block w-full rounded-pill py-3 text-center text-sm font-semibold transition-colors ${
                   plan.highlight
                     ? "bg-coral text-white hover:bg-coral-hover"
@@ -467,7 +509,8 @@ function Pricing() {
         </div>
 
         <p className="mt-6 text-center text-xs text-ink-faint">
-          Sem fidelidade — cancele quando quiser.
+          Sem fidelidade — cancele quando quiser. Número adicional de WhatsApp a
+          partir de R$ 149/mês.
         </p>
 
         <Credits />
@@ -476,77 +519,85 @@ function Pricing() {
   );
 }
 
-const creditRows = [
+/* ─── Créditos ──────────────────────────────────────────── */
+const creditPackages = [
   {
-    type: "Campanha",
-    category: "Marketing",
-    when: "Você dispara oferta, promoção ou recompra para sua base",
-    price: "R$ 0,50 /msg",
+    name: "Inicial",
+    messages: "~1.000",
+    ai: "~500",
+    price: "R$ 100",
   },
   {
-    type: "Campanha - Resposta",
-    category: "Marketing",
-    when: "Cliente responde a uma mensagem de marketing",
-    price: "R$ 0,05 /msg",
+    name: "Essencial",
+    messages: "~3.500",
+    ai: "~2.000",
+    price: "R$ 300",
   },
   {
-    type: "Aviso",
-    category: "Utilidade",
-    when: "Cobrança, confirmação de pedido ou lembrete de entrega",
-    price: "R$ 0,05 /msg",
+    name: "Avançado",
+    messages: "~10.000",
+    ai: "~6.000",
+    price: "R$ 800",
   },
   {
-    type: "Resposta",
-    category: "Atendimento",
-    when: "O cliente chamou ou respondeu sua campanha",
-    price: "GRÁTIS",
+    name: "Alto volume",
+    messages: "~28.000",
+    ai: "~18.000",
+    price: "R$ 2.000",
   },
 ];
 
 function Credits() {
   return (
     <div className="mt-14 rounded-card border border-teal-100 bg-teal-50 p-6 md:p-8">
-      <h3 className="text-xl font-bold text-teal-900">
-        Como funcionam os créditos
-      </h3>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <h3 className="text-xl font-bold text-teal-900">
+          Como funcionam os créditos
+        </h3>
+        <span className="inline-flex w-fit items-center gap-2 rounded-pill bg-white px-3.5 py-1.5 text-xs font-semibold text-teal-700">
+          <Zap className="h-3.5 w-3.5" />
+          Recarga via Pix · créditos não expiram
+        </span>
+      </div>
+
       <p className="mt-3 max-w-4xl text-sm leading-relaxed text-ink-soft">
-        A assinatura cobre inbox, bot com IA, automações e CRM. Os disparos usam
-        créditos para pagar as tarifas da Meta por mensagem entregue. Você pode
-        recarregar via Pix, sem cadastrar cartão na Meta. Receber mensagens e
-        atender quem procura sua empresa não consome créditos.
+        A assinatura cobre inbox, agentes de IA, automações e CRM. As mensagens
+        do WhatsApp são tarifadas pela Meta e as respostas da IA são
+        contabilizadas por resposta gerada — ambas pagas com créditos. Você
+        recarrega via Pix, sem cadastrar cartão na Meta, e acompanha cada débito
+        no painel, em reais.
       </p>
 
       <div className="mt-6 overflow-x-auto rounded-xl border border-[#EEF2F6] bg-white">
-        <table className="w-full min-w-[720px] border-collapse text-left">
+        <table className="w-full min-w-[600px] border-collapse text-left">
           <thead className="bg-teal-100">
             <tr>
               <th className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-teal-700">
-                Tipo de mensagem
+                Pacote
               </th>
               <th className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-teal-700">
-                Quando acontece
+                Mensagens
               </th>
               <th className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-teal-700">
-                Custo
+                Respostas de IA
+              </th>
+              <th className="px-5 py-3 text-xs font-bold uppercase tracking-wide text-teal-700">
+                Valor
               </th>
             </tr>
           </thead>
           <tbody>
-            {creditRows.map((row) => (
-              <tr key={row.type} className="border-t border-[#EEF2F6]">
-                <td className="px-5 py-4 text-sm text-ink">
-                  <strong className="block">{row.type}</strong>
-                  <span className="text-xs text-ink-faint">{row.category}</span>
+            {creditPackages.map((pack) => (
+              <tr key={pack.name} className="border-t border-[#EEF2F6]">
+                <td className="px-5 py-4 text-sm font-semibold text-ink">
+                  {pack.name}
                 </td>
-                <td className="px-5 py-4 text-sm text-ink-soft">{row.when}</td>
-                <td className="px-5 py-4 text-sm font-bold text-teal-900">
-                  {row.price === "GRÁTIS" ? (
-                    <span className="rounded-pill bg-green-100 px-3 py-1 text-xs text-green-700">
-                      GRÁTIS
-                    </span>
-                  ) : (
-                    row.price
-                  )}
+                <td className="px-5 py-4 text-sm text-ink-soft">
+                  {pack.messages}
+                </td>
+                <td className="px-5 py-4 text-sm text-ink-soft">{pack.ai}</td>
+                <td className="px-5 py-4 font-display text-base font-extrabold text-teal-900">
+                  {pack.price}
                 </td>
               </tr>
             ))}
@@ -554,9 +605,14 @@ function Credits() {
         </table>
       </div>
 
-      <p className="mt-4 text-xs leading-relaxed text-ink-faint">
-        Créditos inclusos renovam mensalmente e não acumulam. Recargas avulsas
-        via Pix não expiram. Valores sujeitos à tabela vigente da Meta.
+      <p className="mt-4 max-w-4xl text-xs leading-relaxed text-ink-faint">
+        <strong className="text-ink-soft">Os volumes são estimativas.</strong>{" "}
+        O WhatsApp cobra valores diferentes conforme o tipo de mensagem —
+        promocionais custam significativamente mais que notificações e
+        confirmações. O pacote Essencial, por exemplo, rende cerca de 6.000
+        notificações ou 800 disparos promocionais. Recargas via Pix não expiram.
+        Tabela de consumo sujeita a revisão conforme alterações de tarifa da
+        Meta, com aviso prévio de 30 dias.
       </p>
     </div>
   );
@@ -570,10 +626,11 @@ function CtaFinal() {
         <div className="text-center">
           <MessageCircleMore className="mx-auto mb-4 h-10 w-10 text-teal-500" />
           <h2 className="text-3xl font-bold tracking-tight text-teal-900 md:text-4xl">
-            Comece seu teste gratuito
+            Veja o Sende funcionando
           </h2>
           <p className="mt-4 text-base text-ink-soft">
-            Preencha o formulário e nossa equipe configura tudo para você em até 1 dia útil.
+            Preencha o formulário e nossa equipe monta uma demonstração com as
+            conversas do seu negócio. Configuração em até 1 dia útil.
           </p>
         </div>
         <TrialForm />
@@ -582,7 +639,6 @@ function CtaFinal() {
   );
 }
 
-/* ─── Footer ────────────────────────────────────────────── */
 /* ─── Page ──────────────────────────────────────────────── */
 export default function LandingPage() {
   return (

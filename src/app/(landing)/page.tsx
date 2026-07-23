@@ -45,7 +45,7 @@ function Hero() {
             href="#cta"
             className="inline-flex items-center gap-2 rounded-pill bg-coral px-7 py-3.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-coral-hover"
           >
-            AGENDAR DEMONSTRAÇÃO
+            COMEÇAR TESTE DE 7 DIAS
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
@@ -57,7 +57,7 @@ function Hero() {
         </div>
 
         <p className="mt-5 text-xs font-medium text-ink-faint">
-          Configuração em 1 dia útil · Cobrança em real, via Pix
+          Sem cartão de crédito · Configuramos seu número em até 1 dia útil
         </p>
       </div>
 
@@ -360,7 +360,7 @@ const plans = [
     period: "/mês",
     desc: "Para organizar o atendimento e começar a usar IA, sem processo de implantação.",
     seats: "1 atendente incluso · adicionais R$ 90/mês",
-    cta: "Assinar o Starter",
+    cta: "Testar 7 dias grátis",
     ctaHref: "#cta",
     highlight: false,
     features: [
@@ -377,7 +377,7 @@ const plans = [
     period: "/mês",
     desc: "Para quem precisa integrar o Sende aos próprios sistemas e dividir o time por área.",
     seats: "2 atendentes inclusos · adicionais R$ 90/mês",
-    cta: "Assinar o Pro",
+    cta: "Testar 7 dias grátis",
     ctaHref: "#cta",
     highlight: true,
     features: [
@@ -394,7 +394,7 @@ const plans = [
     period: "/mês",
     desc: "Para equipes maiores, com mais de um número e acompanhamento gerencial.",
     seats: "Até 15 atendentes",
-    cta: "Assinar o Business",
+    cta: "Falar com vendas",
     ctaHref: "#cta",
     highlight: false,
     features: [
@@ -509,8 +509,9 @@ function Pricing() {
         </div>
 
         <p className="mt-6 text-center text-xs text-ink-faint">
-          Sem fidelidade — cancele quando quiser. Número adicional de WhatsApp a
-          partir de R$ 149/mês.
+          Teste de 7 dias sem cartão nos planos Starter e Pro — créditos de
+          consumo à parte. Sem fidelidade, cancele quando quiser. Número
+          adicional de WhatsApp a partir de R$ 149/mês.
         </p>
 
         <Credits />
@@ -626,11 +627,12 @@ function CtaFinal() {
         <div className="text-center">
           <MessageCircleMore className="mx-auto mb-4 h-10 w-10 text-teal-500" />
           <h2 className="text-3xl font-bold tracking-tight text-teal-900 md:text-4xl">
-            Veja o Sende funcionando
+            Comece seu teste de 7 dias
           </h2>
           <p className="mt-4 text-base text-ink-soft">
-            Preencha o formulário e nossa equipe monta uma demonstração com as
-            conversas do seu negócio. Configuração em até 1 dia útil.
+            Preencha o formulário e nossa equipe conecta seu número e configura o
+            primeiro agente de IA com você — em até 1 dia útil. Os 7 dias começam
+            a contar quando seu número estiver no ar.
           </p>
         </div>
         <TrialForm />

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare, Play, Pause, Loader2, ImageIcon, FileText, Video } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,6 +21,102 @@ function renderContent(content: string, contactName?: string): string {
   if (contactName) out = out.replace(/\{\{1\}\}/g, contactName.split(' ')[0])
   out = out.replace(/\{\{\d+\}\}/g, '_____')
   return out
+}
+
+function AudioMessage({ messageId, isOut }: { messageId: string; isOut: boolean }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  async function load() {
+    if (blobUrl) { toggle(); return }
+    setLoading(true)
+    try {
+      const res = await api.get(`/whatsapp/messages/${messageId}/media`, { responseType: 'blob' })
+      const url = URL.createObjectURL(res.data)
+      setBlobUrl(url)
+      setTimeout(() => { audioRef.current?.play() }, 50)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function toggle() {
+    const a = audioRef.current
+    if (!a) return
+    if (a.paused) { a.play(); setPlaying(true) } else { a.pause(); setPlaying(false) }
+  }
+
+  return (
+    <div className="flex items-center gap-2 min-w-[180px]">
+      <button
+        onClick={load}
+        disabled={loading}
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${isOut ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+      </button>
+      {blobUrl ? (
+        <audio
+          ref={audioRef}
+          src={blobUrl}
+          controls
+          className="h-8 w-full"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+        />
+      ) : (
+        <span className={`text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>Mensagem de voz</span>
+      )}
+    </div>
+  )
+}
+
+function MediaMessage({ messageId, type, content, isOut }: { messageId: string; type: string; content: string; isOut: boolean }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function load() {
+    if (blobUrl) return
+    setLoading(true)
+    try {
+      const res = await api.get(`/whatsapp/messages/${messageId}/media`, { responseType: 'blob' })
+      setBlobUrl(URL.createObjectURL(res.data))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (type === 'image') {
+    return blobUrl ? (
+      <img src={blobUrl} alt="imagem" className="max-w-full rounded max-h-64 object-contain" />
+    ) : (
+      <button onClick={load} disabled={loading} className={`flex items-center gap-2 text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+        {loading ? 'Carregando...' : 'Ver imagem'}
+      </button>
+    )
+  }
+
+  if (type === 'video') {
+    return blobUrl ? (
+      <video src={blobUrl} controls className="max-w-full rounded max-h-48" />
+    ) : (
+      <button onClick={load} disabled={loading} className={`flex items-center gap-2 text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+        {loading ? 'Carregando...' : 'Ver vídeo'}
+      </button>
+    )
+  }
+
+  return (
+    <div className={`flex items-center gap-2 text-xs ${isOut ? 'text-teal-100' : 'text-gray-600'}`}>
+      <FileText className="h-4 w-4 shrink-0" />
+      <span className="truncate max-w-[160px]">{content || 'Documento'}</span>
+    </div>
+  )
 }
 
 function getWindowStatus(lastInboundAt: string | null): 'open' | 'closing' | 'closed' {
@@ -707,7 +803,13 @@ export default function ConversationPage() {
                   : 'bg-white text-gray-900 rounded-bl-none'
               }`}
             >
-              <p className="whitespace-pre-wrap break-words">{renderContent(msg.content, contact?.name)}</p>
+              {msg.type === 'audio' ? (
+                <AudioMessage messageId={msg.id} isOut={msg.direction === 'outbound'} />
+              ) : msg.type === 'image' || msg.type === 'video' || msg.type === 'document' ? (
+                <MediaMessage messageId={msg.id} type={msg.type} content={msg.content} isOut={msg.direction === 'outbound'} />
+              ) : (
+                <p className="whitespace-pre-wrap break-words">{renderContent(msg.content, contact?.name)}</p>
+              )}
               <div className={`flex items-center justify-end gap-1 mt-1 ${
                 msg.direction === 'outbound' ? 'text-teal-100' : 'text-gray-400'
               }`}>

@@ -23,7 +23,7 @@ function renderContent(content: string, contactName?: string): string {
   return out
 }
 
-function AudioMessage({ messageId, isOut }: { messageId: string; isOut: boolean }) {
+function AudioMessage({ messageId, isOut, transcription }: { messageId: string; isOut: boolean; transcription?: string }) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [playing, setPlaying] = useState(false)
@@ -49,26 +49,33 @@ function AudioMessage({ messageId, isOut }: { messageId: string; isOut: boolean 
   }
 
   return (
-    <div className="flex items-center gap-2 min-w-[180px]">
-      <button
-        onClick={load}
-        disabled={loading}
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${isOut ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
-      </button>
-      {blobUrl ? (
-        <audio
-          ref={audioRef}
-          src={blobUrl}
-          controls
-          className="h-8 w-full"
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onEnded={() => setPlaying(false)}
-        />
-      ) : (
-        <span className={`text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>Mensagem de voz</span>
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2 min-w-[180px]">
+        <button
+          onClick={load}
+          disabled={loading}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${isOut ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-teal-600 hover:bg-teal-700 text-white'}`}
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+        </button>
+        {blobUrl ? (
+          <audio
+            ref={audioRef}
+            src={blobUrl}
+            controls
+            className="h-8 w-full"
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
+          />
+        ) : (
+          <span className={`text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>Mensagem de voz</span>
+        )}
+      </div>
+      {transcription && (
+        <p className={`text-xs italic leading-snug max-w-[240px] ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>
+          &ldquo;{transcription}&rdquo;
+        </p>
       )}
     </div>
   )
@@ -843,7 +850,7 @@ export default function ConversationPage() {
               }`}
             >
               {msg.type === 'audio' ? (
-                <AudioMessage messageId={msg.id} isOut={msg.direction === 'outbound'} />
+                <AudioMessage messageId={msg.id} isOut={msg.direction === 'outbound'} transcription={msg.metadata?.transcription} />
               ) : msg.type === 'image' || msg.type === 'video' || msg.type === 'document' ? (
                 <MediaMessage messageId={msg.id} type={msg.type} content={msg.content} isOut={msg.direction === 'outbound'} />
               ) : (

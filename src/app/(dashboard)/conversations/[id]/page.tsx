@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare, Play, Pause, Loader2, ImageIcon, FileText, Video } from 'lucide-react'
+import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare, Play, Pause, Loader2, ImageIcon, FileText, Video, Download } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -78,44 +78,83 @@ function MediaMessage({ messageId, type, content, isOut }: { messageId: string; 
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  async function load() {
-    if (blobUrl) return
+  async function fetchBlob(): Promise<string> {
+    if (blobUrl) return blobUrl
     setLoading(true)
     try {
       const res = await api.get(`/whatsapp/messages/${messageId}/media`, { responseType: 'blob' })
-      setBlobUrl(URL.createObjectURL(res.data))
+      const url = URL.createObjectURL(res.data)
+      setBlobUrl(url)
+      return url
     } finally {
       setLoading(false)
     }
   }
 
+  async function triggerDownload(filename: string) {
+    const url = await fetchBlob()
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+  }
+
   if (type === 'image') {
-    return blobUrl ? (
-      <img src={blobUrl} alt="imagem" className="max-w-full rounded max-h-64 object-contain" />
-    ) : (
-      <button onClick={load} disabled={loading} className={`flex items-center gap-2 text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-        {loading ? 'Carregando...' : 'Ver imagem'}
-      </button>
+    return (
+      <div className="space-y-1">
+        {blobUrl ? (
+          <img src={blobUrl} alt="imagem" className="max-w-full rounded max-h-64 object-contain cursor-pointer" onClick={() => window.open(blobUrl)} />
+        ) : (
+          <button onClick={() => fetchBlob()} disabled={loading} className={`flex items-center gap-2 text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+            {loading ? 'Carregando...' : 'Ver imagem'}
+          </button>
+        )}
+        <button
+          onClick={() => triggerDownload('imagem.jpg')}
+          disabled={loading}
+          className={`flex items-center gap-1 text-xs ${isOut ? 'text-teal-100 hover:text-white' : 'text-gray-400 hover:text-gray-700'}`}
+        >
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+          Baixar
+        </button>
+      </div>
     )
   }
 
   if (type === 'video') {
-    return blobUrl ? (
-      <video src={blobUrl} controls className="max-w-full rounded max-h-48" />
-    ) : (
-      <button onClick={load} disabled={loading} className={`flex items-center gap-2 text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-        {loading ? 'Carregando...' : 'Ver vídeo'}
-      </button>
+    return (
+      <div className="space-y-1">
+        {blobUrl ? (
+          <video src={blobUrl} controls className="max-w-full rounded max-h-48" />
+        ) : (
+          <button onClick={() => fetchBlob()} disabled={loading} className={`flex items-center gap-2 text-xs ${isOut ? 'text-teal-100' : 'text-gray-500'}`}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+            {loading ? 'Carregando...' : 'Carregar vídeo'}
+          </button>
+        )}
+        {blobUrl && (
+          <button
+            onClick={() => triggerDownload('video.mp4')}
+            className={`flex items-center gap-1 text-xs ${isOut ? 'text-teal-100 hover:text-white' : 'text-gray-400 hover:text-gray-700'}`}
+          >
+            <Download className="h-3 w-3" /> Baixar
+          </button>
+        )}
+      </div>
     )
   }
 
+  // documento / pdf
   return (
-    <div className={`flex items-center gap-2 text-xs ${isOut ? 'text-teal-100' : 'text-gray-600'}`}>
-      <FileText className="h-4 w-4 shrink-0" />
-      <span className="truncate max-w-[160px]">{content || 'Documento'}</span>
-    </div>
+    <button
+      onClick={() => triggerDownload(content || 'documento')}
+      disabled={loading}
+      className={`flex items-center gap-2 text-xs rounded px-2 py-1 ${isOut ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 shrink-0" />}
+      <span className="truncate max-w-[160px]">{content || 'Baixar documento'}</span>
+    </button>
   )
 }
 

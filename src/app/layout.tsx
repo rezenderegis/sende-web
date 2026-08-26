@@ -25,6 +25,9 @@ const sora = Sora({
 export const metadata: Metadata = {
   title: 'Sende — CRM Conversacional para WhatsApp',
   description: 'Gerencie conversas, broadcasts e automações de WhatsApp em um único lugar.',
+  verification: {
+    google: '3YcmUPfJEUMjK7zmJRGjfYrWtzXU8BgSPJ3CDp8mjn0',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

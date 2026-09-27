@@ -44,10 +44,25 @@ export interface WhatsappNumber {
   webhookVerifyToken: string
   systemPrompt: string | null
   botHistoryLimit: number
+  enabledToolNames: string[] | null
+  enabledFlowNames: string[] | null
   dailySpendLimitCents: number | null
   monthlySpendLimitCents: number | null
   createdAt: string
   updatedAt: string
+}
+
+export interface WebhookTriggerEvent {
+  id: string
+  whatsappNumberId: string
+  companyId: string
+  phone: string
+  promptName: string | null
+  flowName: string | null
+  idempotencyKey: string | null
+  status: 'success' | 'error'
+  errorMessage: string | null
+  createdAt: string
 }
 
 export interface Contact {
@@ -279,6 +294,128 @@ export interface CampaignPrompt {
   companyId: string
   name: string
   content: string
+  enabledToolNames: string[] | null
+  enabledFlowNames: string[] | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type ExternalActionMethod = 'GET' | 'POST' | 'PUT'
+
+export interface ExternalActionParameter {
+  name: string
+  type: 'string' | 'number' | 'boolean'
+  description: string
+  required: boolean
+}
+
+export interface ExternalAction {
+  id: string
+  companyId: string
+  name: string
+  description: string
+  method: ExternalActionMethod
+  url: string
+  headersTemplate: Record<string, string> | null
+  bodyTemplate: Record<string, any> | null
+  parametersSchema: Record<string, any>
+  hasAccessToken: boolean
+  isActive: boolean
+  timeoutMs: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TestExternalActionResult {
+  success: boolean
+  responseData?: any
+  error?: string
+  latencyMs: number
+}
+
+export type SaveAsVariable = { name: string; scope: 'contact' | 'conversation' }
+
+export interface FlowStepOption {
+  id: string
+  label: string
+  value: string
+  nextStepId: string | null
+  endMessage: string | null
+  saveAsVariable: SaveAsVariable | null
+}
+
+export type FlowStepType = 'choice' | 'text' | 'content' | 'condition' | 'action'
+
+export type FlowConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'is_empty' | 'is_filled'
+
+export interface FlowConditionBranch {
+  id: string
+  operator: FlowConditionOperator
+  value?: string
+  nextStepId: string | null
+}
+
+export type FlowActionType = 'add_tag' | 'remove_tag' | 'update_contact' | 'assign_user' | 'close_conversation' | 'start_flow'
+
+export interface ChoiceConfig {
+  questionText: string
+  options: FlowStepOption[]
+  onAnswerActionName?: string | null
+}
+
+export interface TextConfig {
+  questionText: string
+  endMessage: string | null
+  saveAsVariable: SaveAsVariable | null
+  onAnswerActionName?: string | null
+}
+
+export interface ContentConfig {
+  contentType: 'text' | 'image'
+  text?: string
+  imageUrl?: string
+  caption?: string
+}
+
+export interface ConditionConfig {
+  expression: string
+  branches: FlowConditionBranch[]
+  elseStepId: string | null
+}
+
+export interface ActionConfig {
+  actionType: FlowActionType
+  tagId?: string
+  contactField?: string
+  contactValue?: string
+  userId?: string
+  closeReason?: string
+  flowName?: string
+}
+
+export type FlowStepConfig = ChoiceConfig | TextConfig | ContentConfig | ConditionConfig | ActionConfig
+
+export interface FlowStep {
+  id: string
+  companyId: string
+  flowId: string
+  stepType: FlowStepType
+  config: FlowStepConfig
+  // Só usado quando stepType é text | content | action (blocos lineares).
+  // choice usa config.options[].nextStepId; condition usa config.branches[].nextStepId + config.elseStepId.
+  nextStepId: string | null
+  positionX: number
+  positionY: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Flow {
+  id: string
+  companyId: string
+  name: string
+  description: string
+  startStepId: string | null
   createdAt: string
   updatedAt: string
 }
@@ -491,6 +628,8 @@ export interface PlatformSettings {
   costPerMarketingMessageCents: number
   costPerUtilityMessageCents: number
   costPerAuthenticationMessageCents: number
+  defaultDailySpendLimitCents: number | null
+  defaultMonthlySpendLimitCents: number | null
   updatedAt: string
 }
 

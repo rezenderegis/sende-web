@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck } from 'lucide-react'
+import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -32,6 +32,9 @@ const settingsItems = [
   { href: '/settings/tags', icon: Tag, label: 'Tags' },
   { href: '/settings/saved-messages', icon: BookMarked, label: 'Msgs Salvas' },
   { href: '/settings/prompts', icon: BotMessageSquare, label: 'Prompts IA' },
+  { href: '/settings/actions', icon: Webhook, label: 'Bot Tools' },
+  { href: '/settings/flows', icon: Workflow, label: 'Fluxo Guiado' },
+  { href: '/settings/webhooks', icon: Radio, label: 'Webhooks' },
 ]
 
 interface SidebarProps {

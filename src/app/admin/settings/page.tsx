@@ -28,6 +28,11 @@ const FIELDS: { key: keyof PlatformSettings; label: string; hint: string; placeh
   { key: 'costPerOutboundMessageCents', label: 'Fallback (categoria desconhecida)', hint: 'Usado quando o template ainda não foi sincronizado / categoria não identificada', placeholder: '0,05' },
 ]
 
+const LIMIT_FIELDS: { key: keyof PlatformSettings; label: string; hint: string }[] = [
+  { key: 'defaultDailySpendLimitCents', label: 'Limite diário padrão', hint: 'Vale pra todo número que não tiver um limite próprio definido' },
+  { key: 'defaultMonthlySpendLimitCents', label: 'Limite mensal padrão', hint: 'Vale pra todo número que não tiver um limite próprio definido' },
+]
+
 export default function AdminSettingsPage() {
   const qc = useQueryClient()
   const [values, setValues] = useState<Record<string, string>>({})
@@ -39,18 +44,26 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     if (settings) {
-      setValues(Object.fromEntries(FIELDS.map((f) => [f.key, centsToReais(settings[f.key] as number)])))
+      setValues({
+        ...Object.fromEntries(FIELDS.map((f) => [f.key, centsToReais(settings[f.key] as number)])),
+        ...Object.fromEntries(
+          LIMIT_FIELDS.map((f) => [f.key, settings[f.key] != null ? centsToReais(settings[f.key] as number) : '']),
+        ),
+      })
     }
   }, [settings])
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      api.patch('/admin/settings', Object.fromEntries(
-        FIELDS.map((f) => [f.key, reaisToCents(values[f.key] ?? '0,00')]),
-      )),
+      api.patch('/admin/settings', {
+        ...Object.fromEntries(FIELDS.map((f) => [f.key, reaisToCents(values[f.key] ?? '0,00')])),
+        ...Object.fromEntries(
+          LIMIT_FIELDS.map((f) => [f.key, values[f.key]?.trim() ? reaisToCents(values[f.key]) : null]),
+        ),
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-settings'] })
-      toast({ title: 'Taxas atualizadas', variant: 'success' })
+      toast({ title: 'Configurações atualizadas', variant: 'success' })
     },
     onError: () => toast({ title: 'Erro ao salvar', variant: 'destructive' }),
   })
@@ -74,6 +87,26 @@ export default function AdminSettingsPage() {
             />
           </div>
         ))}
+      </div>
+
+      <h1 className="mb-1 mt-8 text-xl font-semibold text-teal-900">Guardrail de gasto</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
+        Proteção sua contra gasto excessivo — não é visível pro cliente. Se um número não tiver limite próprio configurado, esses valores valem como padrão e bloqueiam o envio quando estourados, além de te avisar (1x por dia por número).
+      </p>
+
+      <div className="space-y-4 rounded-lg border bg-white p-5">
+        {LIMIT_FIELDS.map((f) => (
+          <div key={f.key}>
+            <label className="mb-1 block text-xs font-medium text-gray-700">{f.label} (R$)</label>
+            <p className="mb-1.5 text-[11px] text-muted-foreground">{f.hint}</p>
+            <Input
+              value={values[f.key] ?? ''}
+              onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+              placeholder="Sem limite"
+            />
+          </div>
+        ))}
+
         <Button
           className="w-full bg-teal-600 hover:bg-teal-700 text-white"
           disabled={saveMutation.isPending}

@@ -9,9 +9,10 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { PromptEditor } from '@/components/bot/prompt-editor'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
+import { ToolFlowSelector } from '@/components/bot/tool-flow-selector'
 import type { WhatsappNumber, WhatsappTemplate, CampaignPrompt } from '@/types'
 
 export default function NumberConfigPage() {
@@ -22,6 +23,8 @@ export default function NumberConfigPage() {
   const [promptDraft, setPromptDraft] = useState('')
   const [historyLimit, setHistoryLimit] = useState(20)
   const [selectedPromptId, setSelectedPromptId] = useState('')
+  const [enabledToolNames, setEnabledToolNames] = useState<string[] | null>(null)
+  const [enabledFlowNames, setEnabledFlowNames] = useState<string[] | null>(null)
 
   const { data: numbers } = useQuery<WhatsappNumber[]>({
     queryKey: ['whatsapp-numbers'],
@@ -39,11 +42,13 @@ export default function NumberConfigPage() {
     if (num) {
       setPromptDraft(num.systemPrompt ?? '')
       setHistoryLimit(num.botHistoryLimit ?? 20)
+      setEnabledToolNames(num.enabledToolNames ?? null)
+      setEnabledFlowNames(num.enabledFlowNames ?? null)
     }
   }, [num])
 
   const updateMutation = useMutation({
-    mutationFn: (data: { systemPrompt?: string | null; botHistoryLimit?: number }) =>
+    mutationFn: (data: { systemPrompt?: string | null; botHistoryLimit?: number; enabledToolNames?: string[] | null; enabledFlowNames?: string[] | null }) =>
       api.patch(`/whatsapp/numbers/${id}`, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['whatsapp-numbers'] })
@@ -141,10 +146,11 @@ export default function NumberConfigPage() {
               </p>
             </div>
           )}
-          <Textarea
+          <PromptEditor
+            wrapperClassName="flex-1 flex flex-col min-h-0"
             placeholder="Usando prompt padrão do servidor"
             value={promptDraft}
-            onChange={(e) => setPromptDraft(e.target.value)}
+            onChange={setPromptDraft}
             className="flex-1 resize-none font-mono text-sm leading-relaxed"
           />
           <div className="shrink-0">
@@ -187,6 +193,31 @@ export default function NumberConfigPage() {
               disabled={updateMutation.isPending}
             >
               {updateMutation.isPending ? 'Salvando...' : 'Salvar limite'}
+            </Button>
+          </div>
+
+          {/* Bot Tools e Fluxos */}
+          <div className="rounded-xl border bg-white p-5 space-y-4">
+            <div>
+              <h2 className="font-semibold text-teal-900">Tools e Fluxos</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Quais Bot Tools e Fluxos Guiados esse número pode usar.
+              </p>
+            </div>
+            <ToolFlowSelector
+              enabledToolNames={enabledToolNames}
+              enabledFlowNames={enabledFlowNames}
+              onChange={(patch) => {
+                if ('enabledToolNames' in patch) setEnabledToolNames(patch.enabledToolNames ?? null)
+                if ('enabledFlowNames' in patch) setEnabledFlowNames(patch.enabledFlowNames ?? null)
+              }}
+            />
+            <Button
+              className="w-full"
+              onClick={() => updateMutation.mutate({ enabledToolNames, enabledFlowNames })}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? 'Salvando...' : 'Salvar seleção'}
             </Button>
           </div>
 

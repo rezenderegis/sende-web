@@ -1,0 +1,71 @@
+---
+title: "Templates de WhatsApp: como escrever mensagens que a Meta aprova de primeira"
+description: "Categorias, variáveis, botões e os erros que mais causam reprovação. Um guia prático com exemplos para criar templates de marketing, utilidade e autenticação."
+date: 2026-09-10
+author: equipe
+category: Guia prático
+tags: ["Templates", "Boas práticas", "Campanhas"]
+---
+
+Para iniciar uma conversa com o cliente pela API oficial, a empresa precisa usar um **template**: um modelo de mensagem aprovado previamente pela Meta. É assim que o WhatsApp evita spam e mantém a confiança no canal.
+
+A aprovação costuma sair em minutos, mas uma reprovação atrasa campanhas e avisos importantes. Veja como acertar de primeira.
+
+## As três categorias
+
+Escolher a categoria certa é o primeiro passo, e a Meta pode recategorizar se achar que você errou.
+
+| Categoria | Para quê | Exemplo |
+|---|---|---|
+| **Marketing** | Promoções, novidades, reengajamento | "Semana do cliente: 20% em toda a loja" |
+| **Utilidade** | Atualizações de algo que o cliente pediu ou contratou | "Seu pedido #1234 saiu para entrega" |
+| **Autenticação** | Códigos de verificação | "Seu código de acesso é 482913" |
+
+<Callout type="tip" title="Regra de bolso">
+Se a mensagem tenta vender ou promover algo, é marketing, mesmo que traga também uma informação útil. Misturar promoção num template de utilidade é um dos motivos mais comuns de recategorização.
+</Callout>
+
+## Anatomia de um bom template
+
+Um template pode ter cabeçalho (texto, imagem, vídeo ou documento), corpo, rodapé e botões. Veja um exemplo de utilidade bem estruturado:
+
+```text
+Olá, {{1}}! Sua consulta com {{2}} está confirmada
+para {{3}} às {{4}}.
+
+Endereço: {{5}}
+
+Precisa remarcar? Toque no botão abaixo.
+
+[ Confirmar presença ]   [ Remarcar ]
+```
+
+O que ele faz bem:
+
+- **Variáveis com contexto**: o texto ao redor deixa claro o que cada `{{n}}` significa.
+- **Objetivo único**: confirmar a consulta, sem mensagens paralelas.
+- **Ação clara**: botões de resposta rápida, em vez de pedir para o cliente digitar.
+
+## Os erros que mais causam reprovação
+
+1. **Variáveis soltas**: template que começa ou termina com variável, ou com duas variáveis seguidas sem texto entre elas.
+2. **Conteúdo vago**: `Olá {{1}}, {{2}}` não diz nada à Meta sobre o que será enviado.
+3. **Categoria errada**: promoção disfarçada de utilidade.
+4. **Exemplos ausentes ou ruins**: ao enviar para aprovação, preencha exemplos realistas para cada variável.
+5. **Erros de gramática e excesso de emojis ou maiúsculas**, que passam cara de spam.
+6. **Links encurtados** de serviços genéricos. Prefira o domínio da sua empresa.
+7. **Pedidos de dados sensíveis**, como senha completa ou número de cartão.
+
+## Dicas para templates que performam
+
+- **Personalize logo no início**: o nome do cliente na primeira linha aumenta a leitura.
+- **Seja breve**: mensagens curtas, com uma ideia principal, convertem mais.
+- **Use mídia no cabeçalho** em campanhas de marketing. Imagem do produto chama atenção.
+- **Inclua botão de descadastro** nas mensagens de marketing.
+- **Teste variações**: crie duas versões e compare taxas de clique.
+
+<CTA title="Crie e aprove templates sem sair da plataforma" text="Na Sende você escreve, envia para aprovação e acompanha o status de cada template em um só lugar." label="Conhecer a Sende" />
+
+## Conclusão
+
+Template bem feito é mensagem clara, com objetivo único, categoria correta e variáveis que fazem sentido. Seguindo essas regras, a aprovação vira rotina e você ganha tempo para o que importa: o resultado das suas campanhas.

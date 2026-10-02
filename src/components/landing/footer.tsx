@@ -2,9 +2,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 const product = [
-  { href: '#funcionalidades', label: 'Funcionalidades' },
-  { href: '#como-funciona', label: 'Como funciona' },
-  { href: '#planos', label: 'Planos' },
+  { href: '/#funcionalidades', label: 'Funcionalidades' },
+  { href: '/#como-funciona', label: 'Como funciona' },
+  { href: '/#planos', label: 'Planos' },
+  { href: '/blog', label: 'Blog' },
 ]
 
 const company = [

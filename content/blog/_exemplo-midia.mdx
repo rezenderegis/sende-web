@@ -1,0 +1,64 @@
+---
+title: "Exemplo: todos os recursos de mídia do blog"
+description: "Post de referência (rascunho) mostrando como usar imagem, vídeo, galeria, avisos e chamadas. Só aparece no ambiente de desenvolvimento."
+date: 2026-01-01
+author: equipe
+category: Exemplo
+tags: ["Exemplo"]
+cover: "https://picsum.photos/seed/sende/1600/900"
+coverAlt: "Imagem de capa de exemplo"
+draft: true
+---
+
+Este é um **rascunho de referência**: como tem `draft: true`, ele aparece em `npm run dev` mas nunca vai para produção. Copie os blocos abaixo para os seus posts.
+
+## Imagem com legenda
+
+Em Markdown puro:
+
+![Descrição da imagem](https://picsum.photos/seed/a/1200/700 "Legenda opcional")
+
+Ou com o componente (use `wide` para ficar mais larga que o texto):
+
+<Figure src="https://picsum.photos/seed/b/1400/800" alt="Exemplo" caption="Legenda da imagem" wide />
+
+## Galeria
+
+<Gallery images={["https://picsum.photos/seed/c/800/600", "https://picsum.photos/seed/d/800/600", "https://picsum.photos/seed/e/800/600"]} caption="Várias imagens lado a lado" />
+
+## Vídeo do YouTube
+
+Aceita o ID ou o link completo (inclusive Shorts):
+
+<YouTube url="https://www.youtube.com/watch?v=ScMzIvxBSi4" caption="Vídeo incorporado do YouTube" />
+
+## Vídeo próprio (mp4)
+
+<Video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" caption="Arquivo de vídeo hospedado" />
+
+## Outros embeds (Vimeo, Loom, Google Slides...)
+
+<Embed src="https://player.vimeo.com/video/76979871" title="Vimeo" />
+
+## Avisos
+
+<Callout type="tip" title="Dica">Texto da dica.</Callout>
+<Callout type="info" title="Informação">Texto informativo.</Callout>
+<Callout type="warn" title="Atenção">Texto de alerta.</Callout>
+
+## Números em destaque
+
+<Stats>
+  <Stat value="98%" label="taxa de abertura" />
+  <Stat value="3x" label="mais respostas que e-mail" />
+</Stats>
+
+## Chamada para ação no meio do texto
+
+<CTA />
+
+> Citação em destaque fica assim.
+
+---
+
+Fim do exemplo.

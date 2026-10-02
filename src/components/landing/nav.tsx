@@ -6,9 +6,10 @@ import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
 const links = [
-  { href: '#funcionalidades', label: 'Funcionalidades' },
-  { href: '#como-funciona', label: 'Como funciona' },
-  { href: '#planos', label: 'Planos' },
+  { href: '/#funcionalidades', label: 'Funcionalidades' },
+  { href: '/#como-funciona', label: 'Como funciona' },
+  { href: '/#planos', label: 'Planos' },
+  { href: '/blog', label: 'Blog' },
 ]
 
 export default function LandingNav() {

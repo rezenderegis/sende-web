@@ -2,22 +2,36 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
-const links = [
-  { href: '#servicos', label: 'Serviços' },
-  { href: '#produtos', label: 'Produtos' },
-  { href: '#sobre', label: 'Sobre' },
-  { href: '#contato', label: 'Contato' },
+const sections = [
+  { id: 'servicos', label: 'Serviços' },
+  { id: 'produtos', label: 'Produtos' },
+  { id: 'sobre', label: 'Sobre' },
 ]
 
 export default function GlobalSixNav() {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
+
+  // Esse nav é reaproveitado tanto na home da GlobalSix quanto no blog. O caminho real
+  // muda conforme o acesso: direto (/globalsix) ou via domínio próprio (rewrite pra "/").
+  const onDirectPath = pathname.startsWith('/globalsix')
+  const homeHref = onDirectPath ? '/globalsix' : '/'
+  const blogHref = onDirectPath ? '/globalsix/blog' : '/blog'
+  const sectionHref = (id: string) => `${homeHref === '/' ? '' : homeHref}/#${id}`.replace('//', '/')
+  const contatoHref = sectionHref('contato')
+
+  const links = [
+    ...sections.map((s) => ({ href: sectionHref(s.id), label: s.label })),
+    { href: blogHref, label: 'Blog' },
+  ]
 
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-[#F5F4F2]/90 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 sm:px-10">
-        <Link href="#" className="font-display text-lg font-extrabold text-black">
+        <Link href={homeHref} className="font-display text-lg font-extrabold text-black">
           GlobalSix
         </Link>
 
@@ -34,7 +48,7 @@ export default function GlobalSixNav() {
         </nav>
 
         <Link
-          href="#contato"
+          href={contatoHref}
           className="hidden rounded-full bg-[#8257E5] px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-[#6f45cc] md:inline-flex"
         >
           Contato
@@ -63,7 +77,7 @@ export default function GlobalSixNav() {
               </Link>
             ))}
             <Link
-              href="#contato"
+              href={contatoHref}
               onClick={() => setOpen(false)}
               className="mt-2 rounded-full bg-[#8257E5] px-4 py-2.5 text-center text-sm font-bold text-white"
             >

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import LandingNav from "@/components/landing/nav";
 import LandingFooter from "@/components/landing/footer";
+import WhatsAppFloat from "@/components/landing/whatsapp-float";
 import { blogConfig, absoluteUrl } from "@/lib/blog/config";
 import "./blog.css";
 
@@ -38,6 +39,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       </section>
 
       <LandingFooter />
+      <WhatsAppFloat />
     </div>
   );
 }

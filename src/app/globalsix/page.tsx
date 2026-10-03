@@ -3,10 +3,10 @@ import Link from 'next/link'
 import {
   ArrowRight,
   ArrowDown,
+  BadgeCheck,
   Code2,
   Sparkles,
   Compass,
-  ExternalLink,
   Search,
   Target,
   Activity,
@@ -36,10 +36,16 @@ function Hero() {
 
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-6 sm:px-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-semibold text-black/60">
-            <Sparkles className="h-3.5 w-3.5 text-[#8257E5]" />
-            Tecnologia · Automação · Inteligência Artificial
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-1.5 text-xs font-semibold text-black/60">
+              <Sparkles className="h-3.5 w-3.5 text-[#8257E5]" />
+              Tecnologia · Automação · Inteligência Artificial
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-1.5 text-xs font-semibold text-white">
+              <BadgeCheck className="h-3.5 w-3.5 text-[#B399F0]" />
+              Meta Business Partner — Tech Provider
+            </span>
+          </div>
 
           <h1 className="mt-6 font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
             <span className="text-black">GlobalSix</span>
@@ -88,14 +94,13 @@ function Hero() {
         <div className="flex justify-center lg:justify-end">
           <Link
             href="#produtos"
-            className="group flex h-56 w-56 shrink-0 flex-col items-center justify-center gap-2 rounded-full bg-[#8257E5] text-center text-white shadow-xl shadow-[#8257E5]/25 transition-transform hover:scale-[1.03] sm:h-64 sm:w-64"
+            className="group flex h-56 w-56 shrink-0 flex-col items-center justify-center gap-2 rounded-full bg-[#8257E5] px-7 text-center text-white shadow-xl shadow-[#8257E5]/25 transition-transform hover:scale-[1.03] sm:h-64 sm:w-64"
           >
-            <span className="text-xl font-bold leading-tight sm:text-2xl">
-              Nossos
-              <br />
-              Produtos
+            <span className="text-lg font-bold leading-tight sm:text-xl">Conheça o Sende</span>
+            <span className="text-[11px] font-medium leading-snug text-white/80 sm:text-xs">
+              Nossa plataforma de atendimento conectada à API da Meta
             </span>
-            <ArrowDown className="mt-2 h-5 w-5 transition-transform group-hover:translate-y-1" />
+            <ArrowDown className="mt-1 h-5 w-5 transition-transform group-hover:translate-y-1" />
           </Link>
         </div>
       </div>
@@ -161,9 +166,9 @@ function Products() {
     <section id="produtos" className="bg-[#F5F4F2] py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="mb-14 max-w-xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8257E5]">Produtos</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8257E5]">Produto</p>
           <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
-            Nossos produtos
+            Nosso produto
           </h2>
         </div>
 
@@ -173,54 +178,25 @@ function Products() {
           <span className="relative inline-flex items-center gap-2 rounded-full bg-[#8257E5] px-3.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
             Principal produto
           </span>
-          <h3 className="relative mt-4 font-display text-2xl font-extrabold sm:text-3xl">Sende</h3>
+          <h3 className="relative mt-4 font-display text-2xl font-extrabold text-white sm:text-3xl">Sende</h3>
           <p className="relative mt-3 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
             O Sende é o nosso CRM conversacional para WhatsApp: atende clientes com inteligência
             artificial, organiza conversas em um inbox único, dispara campanhas segmentadas e
             automatiza cobrança, recompra e lembretes — tudo isso 24 horas por dia, mesmo quando
             sua equipe não está online.
           </p>
-          <Link
-            href="/"
+          <a
+            href="https://sende.app.br"
+            target="_blank"
+            rel="noopener noreferrer"
             className="relative mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-black transition-colors hover:bg-white/90"
           >
             Conhecer o Sende
             <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <ProductCard
-            name="ExpressBot"
-            href="https://www.expressbot.com.br"
-            desc="Ferramenta de automação para WhatsApp com inteligência artificial que aprende a partir dos materiais da sua empresa para realizar vendas e oferecer atendimento ao cliente, com conversas personalizadas que podem aumentar as conversões em até 70%."
-          />
-          <ProductCard
-            name="Posteter"
-            href="https://www.posteter.com.br"
-            desc="Aplicativo fácil de usar que permite a empresas locais criar panfletos e posts profissionais em poucos segundos — com modelos prontos, QR Codes e compartilhamento integrado no WhatsApp e Instagram, ajudando a aumentar as vendas em até 30%."
-          />
+          </a>
         </div>
       </div>
     </section>
-  )
-}
-
-function ProductCard({ name, href, desc }: { name: string; href: string; desc: string }) {
-  return (
-    <div className="rounded-3xl border border-black/5 bg-white p-8">
-      <h3 className="font-display text-lg font-bold text-black">{name}</h3>
-      <p className="mt-3 text-sm leading-relaxed text-black/60">{desc}</p>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#8257E5] hover:text-[#6f45cc]"
-      >
-        {href.replace('https://www.', '')}
-        <ExternalLink className="h-3.5 w-3.5" />
-      </a>
-    </div>
   )
 }
 
@@ -239,7 +215,7 @@ function Stats() {
         <p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-[#B399F0]">
           Sobre nós
         </p>
-        <h2 className="mt-3 text-center font-display text-2xl font-extrabold sm:text-3xl">
+        <h2 className="mt-3 text-center font-display text-2xl font-extrabold text-white sm:text-3xl">
           Alguns dos nossos números
         </h2>
 
@@ -330,7 +306,7 @@ function Contact() {
             </p>
             <p className="flex items-center gap-3 text-sm text-black/70">
               <Phone className="h-4 w-4 text-[#8257E5]" />
-              +55 61 99276-6811
+              +55 61 99379-6669
             </p>
             <p className="flex items-center gap-3 text-sm text-black/70">
               <MapPin className="h-4 w-4 text-[#8257E5]" />

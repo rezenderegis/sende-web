@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BadgeCheck } from "lucide-react";
 import { getAllPosts, getAllTags } from "@/lib/globalsix-blog/posts";
 import { PostCard } from "@/components/globalsix-blog/PostCard";
 import { blogConfig } from "@/lib/globalsix-blog/config";
@@ -16,6 +17,10 @@ export default function GlobalSixBlogIndex() {
       <section className="gsb-hero">
         <div className="gsb-container">
           <span className="gsb-kicker">Blog GlobalSix</span>
+          <span className="gsb-partner-badge">
+            <BadgeCheck className="h-3.5 w-3.5" />
+            Meta Business Partner — Tech Provider
+          </span>
           <h1 className="gsb-hero__title">
             Tecnologia sob medida. <em>Explicada sem enrolação.</em>
           </h1>

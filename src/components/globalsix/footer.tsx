@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Mail, Phone, MapPin } from 'lucide-react'
 
 export default function GlobalSixFooter() {
@@ -10,9 +9,14 @@ export default function GlobalSixFooter() {
             <span className="font-display text-lg font-extrabold text-white">GlobalSix</span>
             <p className="max-w-xs text-sm leading-relaxed text-white/50">
               Sistemas sob medida, inteligência artificial e o{' '}
-              <Link href="/" className="text-[#B399F0] hover:text-white transition-colors">
+              <a
+                href="https://sende.app.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#B399F0] hover:text-white transition-colors"
+              >
                 Sende
-              </Link>
+              </a>
               , nosso CRM conversacional para WhatsApp.
             </p>
           </div>
@@ -24,7 +28,7 @@ export default function GlobalSixFooter() {
             </p>
             <p className="flex items-start gap-2">
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#8257E5]" />
-              +55 61 99276-6811 · +1 408 675-9015
+              +55 61 99379-6669 · +1 408 675-9015
             </p>
             <p className="flex items-start gap-2">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#8257E5]" />

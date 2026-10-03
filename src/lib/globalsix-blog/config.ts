@@ -4,8 +4,8 @@ export const blogConfig = {
   blogTitle: "Blog GlobalSix",
   description:
     "Sistemas sob medida, inteligência artificial e automação: guias práticos pra quem quer tirar um projeto de tecnologia do papel.",
-  // Defina NEXT_PUBLIC_GLOBALSIX_SITE_URL na Vercel (ex.: https://globalsix.com.br)
-  siteUrl: (process.env.NEXT_PUBLIC_GLOBALSIX_SITE_URL || "https://globalsix.com.br").replace(/\/$/, ""),
+  // Defina NEXT_PUBLIC_GLOBALSIX_SITE_URL na Vercel (ex.: https://www.globalsix.com.br)
+  siteUrl: (process.env.NEXT_PUBLIC_GLOBALSIX_SITE_URL || "https://www.globalsix.com.br").replace(/\/$/, ""),
   basePath: "/blog",
   locale: "pt_BR",
   cta: {

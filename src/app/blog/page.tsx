@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BadgeCheck } from "lucide-react";
 import { getAllPosts, getAllTags } from "@/lib/blog/posts";
 import { PostCard } from "@/components/blog/PostCard";
 import { blogConfig } from "@/lib/blog/config";
@@ -16,6 +17,10 @@ export default function BlogIndex() {
       <section className="sb-hero">
         <div className="sb-container">
           <span className="sb-kicker">Blog Sende</span>
+          <span className="sb-partner-badge">
+            <BadgeCheck className="h-3.5 w-3.5" />
+            Meta Business Partner — Tech Provider
+          </span>
           <h1 className="sb-hero__title">
             O WhatsApp é onde seu cliente está. <em>Aqui é onde você aprende a atendê-lo bem.</em>
           </h1>

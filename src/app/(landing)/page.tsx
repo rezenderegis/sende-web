@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BadgeCheck,
   Bot,
   CheckCircle2,
   Clock3,
@@ -24,10 +25,16 @@ function Hero() {
       </div>
 
       <div className="mx-auto max-w-6xl px-6 text-center">
-        <span className="mb-5 inline-flex items-center gap-2 rounded-pill border border-teal-100 bg-teal-50 px-4 py-1.5 text-xs font-semibold text-teal-700">
-          <Sparkles className="h-3.5 w-3.5" />
-          CRM conversacional para WhatsApp
-        </span>
+        <div className="mb-5 flex flex-wrap items-center justify-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-pill border border-teal-100 bg-teal-50 px-4 py-1.5 text-xs font-semibold text-teal-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            CRM conversacional para WhatsApp
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-pill border border-teal-900/15 bg-teal-900 px-4 py-1.5 text-xs font-semibold text-white">
+            <BadgeCheck className="h-3.5 w-3.5" />
+            Meta Business Partner — Tech Provider
+          </span>
+        </div>
 
         <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-tight tracking-tight text-teal-900 md:text-5xl lg:text-6xl">
           Seu <span className="text-teal-500">time de vendas</span> no WhatsApp,

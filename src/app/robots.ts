@@ -24,6 +24,6 @@ export default function robots(): MetadataRoute.Robots {
         '/register',
       ],
     },
-    sitemap: ['https://sende.app.br/sitemap.xml', 'https://globalsix.com.br/sitemap.xml'],
+    sitemap: ['https://sende.app.br/sitemap.xml', 'https://www.globalsix.com.br/sitemap.xml'],
   }
 }

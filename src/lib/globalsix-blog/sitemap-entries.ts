@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getAllPosts, getAllTags } from "./posts";
 import { absoluteUrl } from "./config";
 
-// Use dentro de um app/sitemap.ts específico do domínio globalsix.com.br, se criado.
+// Use dentro de um app/sitemap.ts específico do domínio www.globalsix.com.br, se criado.
 export function globalsixBlogSitemapEntries(): MetadataRoute.Sitemap {
   const posts = getAllPosts();
   return [

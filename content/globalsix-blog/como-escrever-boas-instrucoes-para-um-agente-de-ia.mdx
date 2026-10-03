@@ -1,0 +1,22 @@
+---
+title: "Como escrever boas instruções para um agente de IA não sair do script"
+description: "A diferença entre um agente de IA que funciona bem e um que inventa coisa está, na maior parte das vezes, nas instruções que ele recebeu. Veja o que entra numa boa instrução."
+date: 2026-01-19
+author: fabricio
+category: Inteligência Artificial
+tags: ["Inteligência Artificial", "Boas práticas"]
+---
+
+Quase todo problema que a empresa atribui a "a IA é ruim" na verdade é instrução mal escrita. O modelo por trás do agente é o mesmo pra todo mundo — o que muda o resultado é o conjunto de instruções que ele recebeu.
+
+## O que precisa estar na instrução
+
+Três coisas fazem a maior diferença: o que o agente **pode** prometer (prazo, preço, condição), o que ele **nunca** deve fazer sem confirmação humana (cancelar, dar desconto fora da política) e o tom que ele deve manter mesmo sob pressão do cliente. Instrução vaga tipo "seja útil e simpático" não dá pro modelo nenhum limite real — ele vai improvisar, e improviso em atendimento vira promessa que a empresa não consegue cumprir.
+
+<Callout type="tip" title="Regra de bolso">
+Escreva a instrução como se fosse treinar um funcionário novo no primeiro dia: o que ele pode decidir sozinho, o que precisa perguntar antes, e exemplos concretos de conversa — não só regras abstratas.
+</Callout>
+
+## Teste antes de colocar no ar
+
+Rode a instrução contra perguntas difíceis de propósito: pedido de desconto absurdo, reclamação grosseira, pergunta ambígua. Se o agente escapa do script nessas situações, a instrução tem buraco. Esse ajuste fino, feito antes do lançamento, evita boa parte dos problemas que só apareceriam com cliente real na conversa.

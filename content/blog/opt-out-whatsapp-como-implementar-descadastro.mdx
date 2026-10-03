@@ -1,0 +1,18 @@
+---
+title: "Opt-out no WhatsApp: como implementar o descadastro sem perder o controle da base"
+description: "Dar um jeito simples e confiável de o cliente sair da lista de mensagens é exigência da LGPD e condição de qualidade da conta. Veja como fazer certo."
+date: 2026-08-12
+author: equipe
+category: Boas práticas
+tags: ["Opt-out", "LGPD", "Boas práticas"]
+---
+
+Toda mensagem de marketing enviada pelo WhatsApp precisa oferecer uma forma clara de o cliente parar de receber. Não é apenas boa prática: é exigência da LGPD, que garante ao titular do dado o direito de revogar o consentimento a qualquer momento, e também afeta diretamente a qualidade da conta na Meta.
+
+A forma mais simples é um botão de resposta rápida no próprio template, do tipo "Não quero mais receber", junto da opção de continuar. Quando o cliente toca nesse botão, a automação deve marcar o contato como descadastrado e impedir qualquer novo disparo de marketing para aquele número, sem depender de alguém lembrar de fazer isso manualmente depois.
+
+<Callout type="warn" title="Diferencie marketing de atendimento">
+Descadastro vale para campanhas e promoções. Mensagens de utilidade ligadas a um pedido em andamento (confirmação, entrega, cobrança do que já foi comprado) continuam valendo, porque fazem parte do serviço contratado, não de uma campanha.
+</Callout>
+
+Manter esse processo automatizado, em vez de depender de alguém revisar planilha, evita o erro mais comum: continuar mandando campanha para quem já pediu para sair, o que aumenta bloqueio e pode rebaixar a qualidade do número.

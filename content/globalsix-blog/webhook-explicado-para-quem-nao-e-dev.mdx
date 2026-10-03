@@ -1,0 +1,20 @@
+---
+title: "Webhook explicado para quem não é dev"
+description: "Sem código e sem jargão: entenda o que é um webhook, pra que ele serve e por que ele aparece tanto em projetos de integração."
+date: 2026-07-06
+author: fabricio
+category: API oficial
+tags: ["Webhook", "Integrações"]
+---
+
+Em algum momento, numa conversa sobre integrar sistemas, alguém vai falar "isso aí é um webhook". E a conversa pode parar ali, porque a palavra parece mais complicada do que é.
+
+Um webhook é, na prática, um aviso automático. Em vez de um sistema ficar perguntando o tempo todo "aconteceu alguma coisa nova? e agora? e agora?", ele combina com o outro sistema: "quando acontecer algo relevante, me avisa". Esse aviso chega sozinho, no instante em que o evento ocorre — um pagamento foi confirmado, uma mensagem chegou no WhatsApp, um formulário foi preenchido.
+
+É a diferença entre ficar checando o celular a cada minuto esperando uma resposta e simplesmente receber uma notificação quando ela chegar. O webhook é essa notificação, só que entre sistemas.
+
+<Callout type="tip" title="Onde isso aparece no seu dia a dia">
+Se sua empresa usa WhatsApp integrado a um CRM, é um webhook que avisa o sistema, em tempo real, que uma nova mensagem chegou — sem isso, o CRM teria que ficar verificando o WhatsApp de minuto em minuto.
+</Callout>
+
+Entender esse conceito ajuda a conversar melhor com quem vai implementar uma integração pra sua empresa. Quando um fornecedor diz que algo "depende do webhook estar configurado certo", agora você sabe que ele está falando do mecanismo que faz a informação chegar na hora certa, sem atraso e sem a equipe precisar ficar checando manualmente.

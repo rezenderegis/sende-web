@@ -1,0 +1,20 @@
+---
+title: "Autenticação e chaves de API: por que esse detalhe técnico é um risco de negócio"
+description: "Entenda o que são chaves de API e tokens de autenticação, e por que tratá-los como senha é uma questão de segurança, não só de TI."
+date: 2026-07-13
+author: fabricio
+category: Segurança
+tags: ["Segurança", "API"]
+---
+
+Quando um sistema se conecta a outro por API, ele precisa provar que tem permissão para aquilo. Essa prova normalmente vem na forma de uma chave de API, ou token: uma sequência de letras e números que funciona exatamente como uma senha — só que, em vez de abrir o e-mail de uma pessoa, ela abre a porta de um sistema inteiro.
+
+O problema é que, por ser "só um código técnico", essa chave costuma ser tratada com menos cuidado do que uma senha comum. Ela aparece colada num e-mail, salva num documento compartilhado, ou esquecida num código que qualquer desenvolvedor novo consegue ver. Cada uma dessas situações é uma porta destrancada.
+
+<Callout type="warn" title="O risco não é hipotético">
+Uma chave de API vazada pode permitir que alguém de fora leia dados de clientes, envie mensagens em nome da empresa ou altere informações dentro do sistema — sem precisar invadir nada, só usando a chave como se fosse autorizado.
+</Callout>
+
+## O que fazer na prática
+
+Chaves de API devem ser guardadas em local específico para isso, nunca em planilha ou chat. Devem ter prazo de validade quando o sistema permitir, e devem ser trocadas sempre que alguém que tinha acesso a elas deixa a empresa. É um cuidado simples, mas que exige disciplina — e é justamente a disciplina que costuma faltar quando a integração foi feita às pressas.

@@ -1,0 +1,18 @@
+---
+title: "Vários atendentes, um número só: como a API do WhatsApp permite isso sem aplicativo de celular"
+description: "Diferente do WhatsApp comum, que só funciona em um aparelho por vez, a API oficial permite que toda a equipe atenda pelo mesmo número ao mesmo tempo."
+date: 2026-09-23
+author: equipe
+category: Boas práticas
+tags: ["Multiatendimento", "Boas práticas", "API oficial"]
+---
+
+No WhatsApp comum, mesmo com o WhatsApp Business e o recurso de dispositivos vinculados, existe um limite prático de quantas pessoas conseguem atender ao mesmo tempo pelo mesmo número, e geralmente alguém fica responsável por um celular físico que concentra toda a conversa.
+
+A API oficial funciona de forma diferente: as mensagens chegam por uma integração (webhook) para o sistema de atendimento que a empresa escolher, sem depender de nenhum aparelho ligado ou aplicativo aberto. Isso permite que vários atendentes, em computadores diferentes, acessem o mesmo número e respondam conversas diferentes ao mesmo tempo.
+
+## Como evitar que dois atendentes respondam o mesmo cliente
+
+A parte técnica permite o acesso simultâneo, mas a organização de quem atende qual conversa ainda precisa de uma regra: atribuir cada conversa a um atendente responsável, com visibilidade de quem já está respondendo, evita duas pessoas escrevendo para o mesmo cliente em paralelo, o que confunde e parece desorganização.
+
+Esse modelo também não depende de bateria de celular, conexão de wifi do aparelho ou de alguém lembrar de deixar o telefone ligado. A conversa fica disponível no sistema, acessível de qualquer computador da equipe, o que é a diferença real entre atender pelo aplicativo e atender pela API oficial.

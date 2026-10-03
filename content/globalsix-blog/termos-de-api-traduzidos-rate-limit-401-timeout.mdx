@@ -1,0 +1,22 @@
+---
+title: "Rate limit, erro 401, timeout: termos de API traduzidos para quem usa o sistema"
+description: "Um glossário direto dos termos de API que mais aparecem no dia a dia, explicados sem precisar entender de programação."
+date: 2026-08-05
+author: equipe
+category: API oficial
+tags: ["API", "Boas Práticas"]
+---
+
+Quem não trabalha com tecnologia, mas acompanha um projeto de integração, vai ouvir alguns termos repetidas vezes sem necessariamente entender o que significam. Vale traduzir os mais comuns.
+
+**Rate limit** é um limite de quantas vezes um sistema pode "perguntar" ao outro em um período de tempo — como um limite de ligações por minuto. Quando esse limite é atingido, o sistema precisa esperar um pouco antes de tentar de novo.
+
+**Erro 401** significa, basicamente, "você não está autorizado a fazer isso". Normalmente aponta para um token ou chave de acesso errado, expirado ou ausente — não é um problema do sistema em si, é um problema de autenticação.
+
+**Timeout** é quando um sistema pergunta algo ao outro e a resposta não chega no tempo esperado. Pode ser uma instabilidade momentânea, ou pode indicar que o outro sistema está sobrecarregado.
+
+<Callout type="info" title="Por que vale saber isso">
+Entender esses termos não torna ninguém desenvolvedor, mas ajuda a fazer a pergunta certa pro time técnico quando algo dá errado — em vez de "não está funcionando", é possível dizer "está dando erro 401" ou "está demorando e dando timeout", o que acelera a solução.
+</Callout>
+
+Esse vocabulário básico também ajuda a avaliar propostas de fornecedores de integração: quem explica esses conceitos com clareza, sem complicar de propósito, tende a ser quem realmente domina o assunto.

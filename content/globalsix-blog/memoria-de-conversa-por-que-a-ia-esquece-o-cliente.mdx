@@ -1,0 +1,22 @@
+---
+title: "Memória de conversa: por que sua IA 'esquece' o cliente no meio do atendimento"
+description: "Um agente de IA que pergunta de novo algo que o cliente já respondeu não tem bug — tem um problema de memória mal configurada. Entenda o que causa isso e como resolver."
+date: 2026-02-25
+author: equipe
+category: Automação
+tags: ["Inteligência Artificial", "Automação"]
+---
+
+Cliente conta o problema, a IA responde, e três mensagens depois ela pergunta de novo algo que já foi dito. Isso não é a IA "sendo burra" — é um problema comum de como a memória da conversa foi (ou não foi) configurada.
+
+## Por que isso acontece
+
+Todo modelo de IA tem um limite de quanto texto consegue considerar por vez. Se a conversa fica longa, ou se o sistema não está passando o histórico completo pra cada nova mensagem, parte do contexto se perde — e a IA volta a perguntar o que já sabia. Isso é mais comum em implementações feitas rápido demais, sem cuidado com como o histórico é armazenado e recuperado entre mensagens.
+
+<Callout type="tip" title="Regra de bolso">
+Teste o agente numa conversa longa de propósito, com uns vinte minutos de ida e volta, antes de colocar no ar. É nesse ponto que problemas de memória aparecem — numa conversa curta de demonstração, eles ficam escondidos.
+</Callout>
+
+## Como resolver
+
+A solução passa por guardar um resumo estruturado da conversa (não só o texto bruto) e por decidir o que realmente precisa ser lembrado — nome, pedido, problema relatado — versus o que pode ser descartado. Um agente bem construído carrega esse resumo em cada nova mensagem, então o cliente não precisa repetir nada, mesmo numa conversa que durou muito tempo ou voltou depois de um tempo parada.

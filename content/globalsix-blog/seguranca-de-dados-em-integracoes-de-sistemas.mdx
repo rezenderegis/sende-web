@@ -1,0 +1,18 @@
+---
+title: "Segurança de dados quando dois sistemas trocam informação"
+description: "O que observar sobre segurança quando sua empresa conecta sistemas diferentes por API, e onde normalmente moram os riscos."
+date: 2026-07-08
+author: equipe
+category: Segurança
+tags: ["Segurança", "Integrações"]
+---
+
+Toda vez que dois sistemas passam a trocar dados automaticamente, abre-se um novo caminho por onde informação sensível pode circular — e precisa circular com cuidado. Dado de cliente, número de telefone, histórico de compra, às vezes informação financeira: tudo isso passa a trafegar entre sistemas sem ninguém olhando mensagem por mensagem.
+
+Isso não é motivo pra evitar integração, mas é motivo pra fazer a pergunta certa antes de implementar: essa conexão usa criptografia? quem tem acesso às chaves que permitem essa troca de dados? o que acontece se um dos dois sistemas for comprometido — o problema fica isolado ali, ou se espalha pro outro lado também?
+
+## Os pontos que mais importam
+
+Na prática, os riscos mais comuns não vêm de ataques sofisticados. Vêm de coisas simples: uma chave de acesso configurada sem expiração, um log de erro que grava dado sensível em texto puro, ou uma integração antiga que ninguém desativou depois que o sistema parceiro mudou de fornecedor.
+
+Antes de conectar dois sistemas, vale perguntar ao fornecedor responsável como os dados são protegidos em trânsito e quem, de fato, consegue acessar essa conexão. Uma integração bem feita não é só a que funciona — é a que continua segura mesmo um ano depois, quando ninguém mais lembra os detalhes de como ela foi montada.

@@ -1,0 +1,16 @@
+---
+title: "Token de acesso: a 'senha invisível' que sua empresa talvez esteja expondo"
+description: "O que é um token de acesso de API, por que ele funciona como uma senha e os erros mais comuns que fazem ele vazar."
+date: 2026-07-29
+author: equipe
+category: Segurança
+tags: ["Segurança", "API"]
+---
+
+Token de acesso é um nome técnico para algo simples de entender: é um código que diz "quem apresenta isso aqui tem permissão para usar este sistema". Ele existe pra que sistemas se identifiquem entre si sem precisar de uma pessoa digitando usuário e senha a cada conexão.
+
+O problema é que, justamente por ser automático e invisível no dia a dia, o token acaba recebendo menos cuidado do que uma senha normal. Ele é gerado uma vez, colado em algum lugar pra configurar a integração, e depois esquecido — inclusive por quem configurou. Com o tempo, ninguém mais sabe exatamente onde esse código está salvo, nem quem mais teve acesso a ele.
+
+Os vazamentos mais comuns não são ataques sofisticados. São tokens deixados em arquivos de configuração compartilhados sem necessidade, em conversas de chat da equipe, ou em sistemas que trocaram de fornecedor sem que o token antigo fosse revogado.
+
+A boa prática é tratar todo token como se fosse a senha mais sensível que a empresa tem, porque, na prática, é exatamente isso. Isso significa: guardar em local protegido e específico pra isso, revogar o que não está mais em uso, e nunca compartilhar em canais informais — mesmo que pareça "só um código técnico" entre pessoas de confiança.

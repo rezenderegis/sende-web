@@ -27,6 +27,9 @@ export const metadata: Metadata = {
   description: 'Gerencie conversas, broadcasts e automações de WhatsApp em um único lugar.',
   verification: {
     google: '3YcmUPfJEUMjK7zmJRGjfYrWtzXU8BgSPJ3CDp8mjn0',
+    other: {
+      'msvalidate.01': '26A4610878C073C6344B5E972B548DCD',
+    },
   },
 }
 

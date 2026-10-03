@@ -25,6 +25,11 @@ export const metadata: Metadata = {
   title: 'GlobalSix Technology — Sistemas, IA e o Sende',
   description:
     'GlobalSix é uma empresa de tecnologia especializada em sistemas sob medida, inteligência artificial e consultoria em projetos. Conheça também o Sende, nosso CRM conversacional para WhatsApp.',
+  verification: {
+    other: {
+      'msvalidate.01': '26A4610878C073C6344B5E972B548DCD',
+    },
+  },
 }
 
 /* ─── Hero ──────────────────────────────────────────────── */

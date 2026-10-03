@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Mail, Phone, MapPin } from 'lucide-react'
 
 export default function GlobalSixFooter() {
@@ -6,7 +7,10 @@ export default function GlobalSixFooter() {
       <div className="mx-auto max-w-6xl px-6 py-14 sm:px-10">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
           <div className="space-y-3">
-            <span className="font-display text-lg font-extrabold text-white">GlobalSix</span>
+            <div className="flex items-center gap-2">
+              <Image src="/brand/globalsix-icon-white.png" alt="" width={24} height={24} />
+              <span className="font-display text-lg font-extrabold text-white">GlobalSix</span>
+            </div>
             <p className="max-w-xs text-sm leading-relaxed text-white/50">
               Sistemas sob medida, inteligência artificial e o{' '}
               <a

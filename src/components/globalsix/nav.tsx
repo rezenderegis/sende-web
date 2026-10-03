@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
@@ -31,8 +32,9 @@ export default function GlobalSixNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-[#F5F4F2]/90 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6 sm:px-10">
-        <Link href={homeHref} className="font-display text-lg font-extrabold text-black">
-          GlobalSix
+        <Link href={homeHref} className="flex items-center gap-2">
+          <Image src="/brand/globalsix-icon-black.png" alt="" width={26} height={26} priority />
+          <span className="font-display text-lg font-extrabold text-black">GlobalSix</span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

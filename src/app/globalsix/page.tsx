@@ -8,8 +8,10 @@ import {
   Sparkles,
   Compass,
   Search,
-  Target,
-  Activity,
+  PenTool,
+  Workflow,
+  Rocket,
+  TrendingUp,
   Mail,
   Phone,
   MapPin,
@@ -202,9 +204,9 @@ function Products() {
 
 /* ─── Números ───────────────────────────────────────────── */
 const stats = [
-  { label: 'Clientes', value: '+20' },
-  { label: 'Projetos', value: '+200' },
-  { label: 'Experiência', value: '7 anos' },
+  { label: 'Clientes atendidos', value: '+1.000' },
+  { label: 'Projetos', value: '+50' },
+  { label: 'Experiência', value: '+10 anos' },
   { label: 'Satisfação', value: '100%' },
 ]
 
@@ -238,18 +240,33 @@ function Stats() {
 const process = [
   {
     icon: Search,
-    title: 'Levantamento de Informações',
-    desc: 'Entendemos seu negócio, seus objetivos e os desafios atuais antes de propor qualquer solução.',
+    title: 'Descoberta',
+    desc: 'Entendemos seu negócio, objetivos e desafios reais antes de propor qualquer solução.',
+    deliverable: 'Diagnóstico do problema',
   },
   {
-    icon: Target,
-    title: 'Definição de Indicadores',
-    desc: 'Estabelecemos metas claras e mensuráveis para acompanhar o sucesso do projeto desde o início.',
+    icon: PenTool,
+    title: 'Plano e Validação',
+    desc: 'Desenhamos o caminho certo e validamos com você antes de construir — com plano, protótipo ou prova de conceito.',
+    deliverable: 'Plano de execução validado',
   },
   {
-    icon: Activity,
-    title: 'Execução e Monitoramento',
-    desc: 'Colocamos a solução em prática e acompanhamos os resultados de perto, ajustando o que for preciso.',
+    icon: Workflow,
+    title: 'Execução',
+    desc: 'Colocamos a solução em prática com entregas incrementais e comunicação constante — sem surpresa no final.',
+    deliverable: 'Entregas parciais acompanhadas',
+  },
+  {
+    icon: Rocket,
+    title: 'Entrega',
+    desc: 'Lançamos a solução no ar, testada e documentada, pronta pra gerar resultado de verdade.',
+    deliverable: 'Solução em produção',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Evolução Contínua',
+    desc: 'Acompanhamos os resultados reais de perto e ajustamos com base no uso — o trabalho não termina na entrega.',
+    deliverable: 'Acompanhamento pós-entrega',
   },
 ]
 
@@ -258,23 +275,33 @@ function Process() {
     <section className="bg-white py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="mb-14 max-w-xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8257E5]">Execução</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8257E5]">Metodologia</p>
           <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
             Nosso processo
           </h2>
+          <p className="mt-4 text-sm leading-relaxed text-black/60">
+            O mesmo método vale pra sistemas sob medida, projetos de IA ou consultoria — o que muda é o entregável, não a forma de trabalhar.
+          </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="relative grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-0 right-0 top-5 hidden h-px bg-black/10 lg:block"
+          />
           {process.map((step, i) => {
             const Icon = step.icon
             return (
-              <div key={step.title} className="relative pl-14">
-                <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-[#8257E5] text-sm font-bold text-white">
+              <div key={step.title} className="relative">
+                <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#8257E5] text-sm font-bold text-white">
                   {i + 1}
                 </div>
-                <Icon className="mb-3 h-5 w-5 text-[#8257E5]" />
+                <Icon className="mb-3 mt-4 h-5 w-5 text-[#8257E5]" />
                 <h3 className="font-display text-base font-bold text-black">{step.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-black/60">{step.desc}</p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#8257E5]">
+                  Você recebe: <span className="font-medium normal-case text-black/50">{step.deliverable}</span>
+                </p>
               </div>
             )
           })}

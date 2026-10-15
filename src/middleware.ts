@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 const GLOBALSIX_HOSTS = ['globalsix.com.br', 'www.globalsix.com.br']
+const SF_PINTURA_HOSTS = ['sfpinturaautomotivago.com.br', 'www.sfpinturaautomotivago.com.br']
 
 export function middleware(req: NextRequest) {
   const hostname = req.headers.get('host')?.split(':')[0] ?? ''
   const isGlobalSix = GLOBALSIX_HOSTS.includes(hostname)
+  const isSfPintura = SF_PINTURA_HOSTS.includes(hostname)
   const { pathname } = req.nextUrl
 
   // Arquivo de verificação do Bing: cada domínio tem o seu próprio, mas o Bing
@@ -14,6 +16,10 @@ export function middleware(req: NextRequest) {
   if (pathname === '/BingSiteAuth.xml') {
     const file = isGlobalSix ? '/bing-auth/globalsix.xml' : '/bing-auth/sende.xml'
     return NextResponse.rewrite(new URL(file, req.url))
+  }
+
+  if (isSfPintura && pathname === '/') {
+    return NextResponse.rewrite(new URL('/sf-pintura', req.url))
   }
 
   if (!isGlobalSix) return NextResponse.next()

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   SprayCan,
   Hammer,
@@ -20,12 +21,20 @@ const WA_LINK = (msg: string) => `https://wa.me/${WA_NUMBER}?text=${encodeURICom
 function Hero() {
   return (
     <section className="relative overflow-hidden pb-20 pt-16 sm:pt-24">
-      <div className="pointer-events-none absolute inset-0 -z-10">
+      <div className="pointer-events-none absolute inset-0">
+        <Image
+          src="/sf-pintura/hero-fachada.jpg"
+          alt="Fachada da SF Funilaria e Pintura Automotiva"
+          fill
+          priority
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/85" />
         <div className="absolute -right-32 -top-32 h-[480px] w-[480px] rounded-full bg-[#F5C451]/10 blur-3xl" />
         <div className="absolute -bottom-40 left-0 h-[380px] w-[380px] rounded-full bg-[#F5C451]/[0.06] blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-4xl px-6 text-center sm:px-10">
+      <div className="relative z-10 mx-auto max-w-4xl px-6 text-center sm:px-10">
         <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold text-white/70">
           <Car className="h-3.5 w-3.5 text-[#F5C451]" />
           Funilaria &amp; Pintura Automotiva
@@ -168,6 +177,33 @@ function Oficina() {
                 </div>
               )
             })}
+          </div>
+        </div>
+
+        <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="relative col-span-2 aspect-[16/10] overflow-hidden rounded-3xl sm:col-span-1 sm:aspect-[4/5]">
+            <Image
+              src="/sf-pintura/escritorio.jpg"
+              alt="Escritório da SF Funilaria e Pintura Automotiva"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="relative aspect-square overflow-hidden rounded-3xl">
+            <Image
+              src="/sf-pintura/cabine-entrada.jpg"
+              alt="Entrada da cabine de pintura da oficina"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="relative aspect-square overflow-hidden rounded-3xl">
+            <Image
+              src="/sf-pintura/fachada-noite.jpg"
+              alt="Fachada da oficina à noite"
+              fill
+              className="object-cover"
+            />
           </div>
         </div>
       </div>

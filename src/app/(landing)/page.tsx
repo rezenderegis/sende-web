@@ -361,6 +361,158 @@ function HowItWorks() {
 }
 
 /* ─── Planos ────────────────────────────────────────────── */
+const plans = [
+  {
+    name: "Starter",
+    price: "R$ 298",
+    period: "/mês",
+    desc: "Para organizar o atendimento e começar a usar IA, sem processo de implantação.",
+    seats: "1 atendente incluso · adicionais R$ 90/mês",
+    cta: "Testar 7 dias grátis",
+    ctaHref: "#cta",
+    highlight: false,
+    features: [
+      "1 número de WhatsApp",
+      "App para iOS e Android",
+      "Inbox compartilhado, tags e histórico",
+      "1 agente de IA",
+      "Campanhas e automações essenciais",
+    ],
+  },
+  {
+    name: "Pro",
+    price: "R$ 598",
+    period: "/mês",
+    desc: "Para quem precisa integrar o Sende aos próprios sistemas e dividir o time por área.",
+    seats: "2 atendentes inclusos · adicionais R$ 90/mês",
+    cta: "Testar 7 dias grátis",
+    ctaHref: "#cta",
+    highlight: true,
+    features: [
+      "Tudo do Starter",
+      "API e webhooks",
+      "Departamentos e filas",
+      "Agentes de IA por departamento",
+      "Automações avançadas e campanhas segmentadas",
+    ],
+  },
+  {
+    name: "Business",
+    price: "R$ 1.690",
+    period: "/mês",
+    desc: "Para equipes maiores, com mais de um número e acompanhamento gerencial.",
+    seats: "Até 15 atendentes",
+    cta: "Falar com vendas",
+    ctaHref: "#cta",
+    highlight: false,
+    features: [
+      "Tudo do Pro",
+      "Até 3 números de WhatsApp",
+      "Relatórios gerenciais e produtividade",
+      "Perfis de acesso e permissões",
+      "Onboarding assistido e suporte prioritário",
+    ],
+  },
+  {
+    name: "Enterprise",
+    price: "Sob consulta",
+    period: "",
+    desc: "Para operações com múltiplas unidades, exigência de governança e órgãos públicos.",
+    seats: "Usuários e números conforme contrato",
+    cta: "Falar com vendas",
+    ctaHref: "#cta",
+    highlight: false,
+    features: [
+      "Tudo do Business",
+      "SSO e trilhas de auditoria",
+      "SLA contratual e gerente de conta",
+      "Integrações corporativas e ambiente dedicado",
+      "Implantação estruturada por projeto",
+    ],
+  },
+];
+
+function PlanTiers() {
+  return (
+    <div className="mb-14">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        {plans.map((plan) => (
+          <div
+            key={plan.name}
+            className={`relative flex flex-col rounded-card border p-6 ${
+              plan.highlight
+                ? "border-teal-600 bg-white shadow-sende ring-1 ring-teal-600"
+                : "border-[#EEF2F6] bg-white shadow-sende-sm"
+            }`}
+          >
+            {plan.highlight && (
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-pill bg-teal-600 px-4 py-1 text-[11px] font-bold tracking-wide text-white">
+                MAIS ESCOLHIDO
+              </span>
+            )}
+
+            <p className="text-xs font-semibold uppercase tracking-wider text-teal-600">
+              {plan.name}
+            </p>
+
+            <div className="mt-3 flex min-h-[44px] items-end gap-1">
+              <span className="font-display text-3xl font-extrabold leading-none text-teal-900">
+                {plan.price}
+              </span>
+              {plan.period && (
+                <span className="mb-0.5 text-sm text-ink-faint">
+                  {plan.period}
+                </span>
+              )}
+            </div>
+
+            <p className="mt-1 text-[11px] font-medium text-ink-faint">
+              + créditos de consumo
+            </p>
+
+            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+              {plan.desc}
+            </p>
+
+            <div className="mt-4 flex items-start gap-2 rounded-xl bg-teal-50 p-3 text-xs font-semibold text-teal-800">
+              <Users className="mt-0.5 h-4 w-4 shrink-0" />
+              {plan.seats}
+            </div>
+
+            <ul className="my-6 flex-1 space-y-2.5">
+              {plan.features.map((feature) => (
+                <li
+                  key={feature}
+                  className="flex items-start gap-2 text-sm text-ink-soft"
+                >
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href={plan.ctaHref}
+              className={`block w-full rounded-pill py-3 text-center text-sm font-semibold transition-colors ${
+                plan.highlight
+                  ? "bg-coral text-white hover:bg-coral-hover"
+                  : "border border-teal-600 text-teal-700 hover:bg-teal-50"
+              }`}
+            >
+              {plan.cta}
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-6 text-center text-xs text-ink-faint">
+        Teste de 7 dias sem cartão nos planos Starter e Pro — créditos de
+        consumo à parte. Sem fidelidade, cancele quando quiser.
+      </p>
+    </div>
+  );
+}
+
 const platform = {
   price: "R$ 298",
   period: "/mês",
@@ -387,6 +539,14 @@ function Pricing() {
             A mensalidade dá acesso à plataforma. As respostas da IA e as
             mensagens do WhatsApp são pagas à parte, por consumo.
           </p>
+        </div>
+
+        <PlanTiers />
+
+        <div className="mb-8 text-center">
+          <h3 className="text-xl font-bold text-teal-900">
+            Ou um plano único, com tudo incluso na mensalidade
+          </h3>
         </div>
 
         <div className="overflow-hidden rounded-card border border-teal-600 bg-white shadow-sende ring-1 ring-teal-600 md:grid md:grid-cols-[1fr_1.2fr]">

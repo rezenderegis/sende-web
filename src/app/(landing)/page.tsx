@@ -10,7 +10,6 @@ import {
   Inbox,
   Megaphone,
   MessageCircleMore,
-  Percent,
   Smartphone,
   Sparkles,
   Users,
@@ -447,7 +446,6 @@ function Pricing() {
         <AiResponses />
         <Credits />
         <AdditionalServices />
-        <ReferralProgram />
       </div>
     </section>
   );
@@ -651,62 +649,6 @@ function AdditionalServices() {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-/* ─── Programa de indicação ─────────────────────────────── */
-const referralTiers = [
-  { label: "1º mês", value: "R$ 100", note: "por cliente indicado" },
-  {
-    label: "A partir do 2º mês",
-    value: "20%",
-    note: "da mensalidade — R$ 60/mês",
-  },
-  { label: "Implantação", value: "20%", note: "R$ 160 por implantação" },
-  {
-    label: "Serviços adicionais",
-    value: "20%",
-    note: "R$ 400 no site + campanha · R$ 300 por fluxo",
-  },
-];
-
-function ReferralProgram() {
-  return (
-    <div className="mt-6 rounded-card bg-teal-900 p-6 text-white md:p-8">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <h3 className="flex items-center gap-2 text-xl font-bold text-white">
-          <ContactRound className="h-5 w-5 text-teal-200" />
-          Programa de indicação
-        </h3>
-        <span className="inline-flex w-fit items-center gap-2 rounded-pill bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-teal-50">
-          <Percent className="h-3.5 w-3.5" />
-          Comissão recorrente
-        </span>
-      </div>
-
-      <p className="mt-3 max-w-4xl text-sm leading-relaxed text-teal-50">
-        Indique o Sende para outro negócio e ganhe comissão enquanto o
-        cliente indicado continuar ativo.
-      </p>
-
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {referralTiers.map((tier) => (
-          <div key={tier.label} className="rounded-xl bg-white/10 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-200">
-              {tier.label}
-            </p>
-            <p className="mt-2 font-display text-2xl font-extrabold text-white">
-              {tier.value}
-            </p>
-            <p className="mt-1 text-xs text-teal-100">{tier.note}</p>
-          </div>
-        ))}
-      </div>
-
-      <p className="mt-5 text-xs leading-relaxed text-teal-200">
-        Não há comissão sobre créditos de WhatsApp nem sobre respostas de IA.
-      </p>
     </div>
   );
 }

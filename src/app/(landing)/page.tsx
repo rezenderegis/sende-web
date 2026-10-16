@@ -513,27 +513,13 @@ function PlanTiers() {
   );
 }
 
-const platform = {
-  price: "R$ 298",
-  period: "/mês",
-  desc: "Acesso completo à plataforma: inbox compartilhado, CRM, automações e agente de IA conectado à API oficial do WhatsApp.",
-  features: [
-    "API oficial do WhatsApp (Meta Business Partner)",
-    "App iOS e Android grátis — oferta de lançamento",
-    "Inbox compartilhado, CRM e histórico completo",
-    "Automações e fluxos guiados com IA",
-  ],
-  seats: "2 usuários inclusos · adicional R$ 100/mês",
-  setup: "Implantação: R$ 800 (opcional, pagamento único)",
-};
-
 function Pricing() {
   return (
     <section id="planos" className="bg-white py-20 md:py-24">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-12 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-teal-900 md:text-4xl">
-            Um plano simples, pago por consumo
+            Planos que crescem com o seu atendimento
           </h2>
           <p className="mt-4 text-base text-ink-soft">
             A mensalidade dá acesso à plataforma. As respostas da IA e as
@@ -542,66 +528,6 @@ function Pricing() {
         </div>
 
         <PlanTiers />
-
-        <div className="mb-8 text-center">
-          <h3 className="text-xl font-bold text-teal-900">
-            Ou um plano único, com tudo incluso na mensalidade
-          </h3>
-        </div>
-
-        <div className="overflow-hidden rounded-card border border-teal-600 bg-white shadow-sende ring-1 ring-teal-600 md:grid md:grid-cols-[1fr_1.2fr]">
-          <div className="flex flex-col justify-center bg-teal-900 p-8 text-white md:p-10">
-            <p className="text-xs font-semibold uppercase tracking-wider text-teal-200">
-              Plataforma
-            </p>
-            <div className="mt-3 flex items-end gap-1">
-              <span className="font-display text-4xl font-extrabold leading-none">
-                {platform.price}
-              </span>
-              <span className="mb-0.5 text-sm text-teal-200">
-                {platform.period}
-              </span>
-            </div>
-            <p className="mt-1 text-[11px] font-medium text-teal-200">
-              + respostas de IA e créditos de WhatsApp
-            </p>
-            <p className="mt-4 text-sm leading-relaxed text-teal-50">
-              {platform.desc}
-            </p>
-            <div className="mt-5 flex items-start gap-2 rounded-xl bg-white/10 p-3 text-xs font-semibold text-white">
-              <Users className="mt-0.5 h-4 w-4 shrink-0" />
-              {platform.seats}
-            </div>
-            <Link
-              href="#cta"
-              className="mt-6 block w-full rounded-pill bg-coral py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-coral-hover"
-            >
-              Testar 7 dias grátis
-            </Link>
-          </div>
-
-          <div className="flex flex-col justify-center p-8 md:p-10">
-            <ul className="space-y-3">
-              {platform.features.map((feature) => (
-                <li
-                  key={feature}
-                  className="flex items-start gap-2 text-sm text-ink-soft"
-                >
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-5 flex items-start gap-2 rounded-xl bg-teal-50 p-3 text-xs font-semibold text-teal-800">
-              <Smartphone className="mt-0.5 h-4 w-4 shrink-0" />
-              {platform.setup}
-            </div>
-          </div>
-        </div>
-
-        <p className="mt-6 text-center text-xs text-ink-faint">
-          Teste de 7 dias sem cartão. Sem fidelidade, cancele quando quiser.
-        </p>
 
         <AiResponses />
         <Credits />
@@ -763,6 +689,13 @@ function Credits() {
 /* ─── Serviços adicionais ───────────────────────────────── */
 const additionalServices = [
   {
+    icon: Users,
+    name: "Implantação assistida",
+    price: "R$ 800",
+    period: "opcional, pagamento único",
+    desc: "Nossa equipe conecta seu número, configura o primeiro agente de IA e treina seu time.",
+  },
+  {
     icon: Megaphone,
     name: "Site + campanha",
     price: "R$ 2.000",
@@ -782,7 +715,7 @@ function AdditionalServices() {
   return (
     <div className="mt-6 rounded-card border border-[#EEF2F6] bg-white p-6 shadow-sende-sm md:p-8">
       <h3 className="text-xl font-bold text-teal-900">Serviços adicionais</h3>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {additionalServices.map((service) => {
           const Icon = service.icon;
           return (

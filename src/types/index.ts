@@ -79,8 +79,14 @@ export interface Contact {
   metadata?: Record<string, any>
   automationOptOut?: boolean
   conversationId?: string | null
+  kanbanColumnId?: string | null
   createdAt: string
   updatedAt: string
+}
+
+// Contato pronto pro board do Kanban: inclui a conversa mais recente (se houver).
+export interface KanbanLead extends Contact {
+  conversation: Conversation | null
 }
 
 export interface Tag {
@@ -120,8 +126,6 @@ export interface Conversation {
   campaignBroadcastId: string | null
   campaignExpiresAt: string | null
   waitingReply: boolean
-  kanbanColumnId: string | null
-  kanbanColumn: KanbanColumn | null
   createdAt: string
   updatedAt: string
 }
@@ -554,7 +558,11 @@ export type FollowOnStatus = 'pending' | 'done' | 'cancelled'
 export interface FollowOn {
   id: string
   companyId: string
-  conversationId: string
+  contactId: string
+  contact?: Contact
+  // calculado no backend: conversa mais recente desse contato (se houver)
+  conversationId?: string | null
+  whatsappNumberId: string | null
   assignedUserId: string | null
   assignedUser?: User | null
   type: FollowOnType
@@ -568,8 +576,6 @@ export interface FollowOn {
   sentAt: string | null
   createdAt: string
   updatedAt: string
-  // joined on frontend
-  conversation?: Conversation
 }
 
 export interface AppNotification {
@@ -579,6 +585,7 @@ export interface AppNotification {
   title: string
   body: string | null
   conversationId: string | null
+  contactId: string | null
   followOnId: string | null
   readAt: string | null
   createdAt: string

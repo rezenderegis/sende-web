@@ -120,18 +120,24 @@ function FollowOnCard({ fo, onDelete, onEdit }: {
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
-          <button
-            onClick={() => router.push(`/conversations/${fo.conversationId}`)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gray-900"
-            title="Abrir conversa"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </button>
+          {fo.conversationId && (
+            <button
+              onClick={() => router.push(`/conversations/${fo.conversationId}`)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-gray-900"
+              title="Abrir conversa"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </button>
+          )}
           <button onClick={() => onDelete(fo.id)} className="text-xs text-muted-foreground hover:text-red-500" title="Excluir">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
+
+      {fo.contact && (
+        <p className="truncate text-sm font-semibold text-gray-900">{fo.contact.name}</p>
+      )}
 
       <div className="flex items-center gap-1.5 text-sm font-medium text-gray-900">
         <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

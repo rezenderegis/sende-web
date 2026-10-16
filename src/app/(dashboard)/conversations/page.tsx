@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { timeAgo, formatPhone, cn } from '@/lib/utils'
-import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User, KanbanColumn } from '@/types'
+import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User, KanbanColumn, KanbanLead } from '@/types'
 import KanbanBoard from '@/components/conversations/kanban-board'
 
 type WindowFilter = 'all' | 'open' | 'closing' | 'closed'
@@ -166,6 +166,12 @@ export default function ConversationsPage() {
   const { data: kanbanColumns = [] } = useQuery<KanbanColumn[]>({
     queryKey: ['kanban-columns'],
     queryFn: () => api.get('/kanban-columns').then((r) => r.data),
+  })
+
+  const { data: kanbanLeads = [] } = useQuery<KanbanLead[]>({
+    queryKey: ['kanban-leads'],
+    queryFn: () => api.get('/contacts/kanban').then((r) => r.data),
+    enabled: view === 'kanban',
   })
 
   const { data: numbers } = useQuery<WhatsappNumber[]>({
@@ -547,10 +553,10 @@ export default function ConversationsPage() {
 
       {view === 'kanban' && (
         <KanbanBoard
-          conversations={data?.data ?? []}
+          leads={kanbanLeads}
           columns={kanbanColumns}
           onColumnsChange={() => qc.invalidateQueries({ queryKey: ['kanban-columns'] })}
-          onConversationMove={() => qc.invalidateQueries({ queryKey: ['conversations'] })}
+          onLeadMove={() => qc.invalidateQueries({ queryKey: ['kanban-leads'] })}
           onOpenConversation={(id) => router.push(`/conversations/${id}`)}
         />
       )}

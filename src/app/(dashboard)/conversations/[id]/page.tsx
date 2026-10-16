@@ -391,8 +391,9 @@ export default function ConversationPage() {
   })
 
   const { data: followOns = [] } = useQuery<FollowOn[]>({
-    queryKey: ['follow-ons-conv', id],
-    queryFn: () => api.get(`/follow-ons/conversation/${id}`).then((r) => r.data),
+    queryKey: ['follow-ons-contact', conversation?.contactId],
+    queryFn: () => api.get(`/follow-ons/contact/${conversation!.contactId}`).then((r) => r.data),
+    enabled: !!conversation?.contactId,
     refetchInterval: 30000,
   })
   const activeFollowOns = followOns.filter((fo) => fo.status === 'pending')
@@ -486,7 +487,7 @@ export default function ConversationPage() {
   const cancelFollowOnMutation = useMutation({
     mutationFn: (foId: string) => api.patch(`/follow-ons/${foId}/cancel`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['follow-ons-conv', id] })
+      qc.invalidateQueries({ queryKey: ['follow-ons-contact', conversation?.contactId] })
       toast({ title: 'Follow-on cancelado', variant: 'success' })
     },
   })
@@ -494,7 +495,7 @@ export default function ConversationPage() {
   const createFollowOnMutation = useMutation({
     mutationFn: (dto: any) => api.post('/follow-ons', dto),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['follow-ons-conv', id] })
+      qc.invalidateQueries({ queryKey: ['follow-ons-contact', conversation?.contactId] })
       qc.invalidateQueries({ queryKey: ['follow-ons'] })
       setFollowOnModal(false)
       resetFollowOnForm()
@@ -517,13 +518,14 @@ export default function ConversationPage() {
     const scheduledDate = new Date(foScheduledAt)
     const isBeyond24h = scheduledDate.getTime() - Date.now() > 24 * 3600000
     const dto: any = {
-      conversationId: id,
+      contactId: conversation?.contactId,
       type: foType,
       scheduledAt: scheduledDate.toISOString(),
       ...(foNote.trim() ? { note: foNote.trim() } : {}),
       ...(foAssignedUserId ? { assignedUserId: foAssignedUserId } : {}),
     }
     if (foType === 'message') {
+      dto.whatsappNumberId = conversation?.whatsappNumberId
       if (isBeyond24h) {
         const [templateName, templateLanguage] = foTemplateKey.split('|')
         dto.templateName = templateName

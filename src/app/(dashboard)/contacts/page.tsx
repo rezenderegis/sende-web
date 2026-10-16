@@ -12,7 +12,7 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { formatPhone, formatDate, cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { ProductPicker } from '@/components/sales/product-picker'
-import type { Broadcast, Contact, ContactProductSetting, Product, Sale, Tag } from '@/types'
+import type { Broadcast, Contact, ContactProductSetting, KanbanColumn, Product, Sale, Tag } from '@/types'
 
 const COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
@@ -387,6 +387,29 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
   })
   const [dirty, setDirty] = useState(false)
   const [automationOptOut, setAutomationOptOut] = useState(contact.automationOptOut ?? false)
+  const [kanbanColumnId, setKanbanColumnId] = useState(contact.kanbanColumnId ?? '')
+  const [showStartConversation, setShowStartConversation] = useState(false)
+  const [convForm, setConvForm] = useState({ whatsappNumberId: '', templateName: '', templateLanguage: '' })
+  const [convTemplateVars, setConvTemplateVars] = useState<string[]>([])
+
+  const { data: kanbanColumns = [] } = useQuery<KanbanColumn[]>({
+    queryKey: ['kanban-columns'],
+    queryFn: () => api.get('/kanban-columns').then((r) => r.data),
+  })
+
+  const { data: whatsappNumbers = [] } = useQuery<any[]>({
+    queryKey: ['whatsapp-numbers'],
+    queryFn: () => api.get('/whatsapp/numbers').then((r) => r.data),
+    enabled: showStartConversation,
+  })
+
+  const { data: convTemplates = [] } = useQuery<any[]>({
+    queryKey: ['whatsapp-templates', convForm.whatsappNumberId],
+    queryFn: () => api.get(`/whatsapp/numbers/${convForm.whatsappNumberId}/templates`).then((r) => r.data),
+    enabled: !!convForm.whatsappNumberId,
+  })
+  const convApprovedTemplates = convTemplates.filter((t) => t.status === 'APPROVED')
+  const convSelectedTemplate = convApprovedTemplates.find((t) => t.name === convForm.templateName && t.language === convForm.templateLanguage)
 
   function setField(field: string, value: string) {
     setEditForm((f) => ({ ...f, [field]: value }))
@@ -463,6 +486,36 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
       description: err.response?.data?.message,
       variant: 'destructive',
     }),
+  })
+
+  const kanbanMutation = useMutation({
+    mutationFn: (value: string) => api.patch(`/contacts/${contact.id}`, { kanbanColumnId: value || null }),
+    onSuccess: (_, value) => {
+      setKanbanColumnId(value)
+      qc.invalidateQueries({ queryKey: ['contacts'] })
+      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
+      toast({ title: value ? 'Contato colocado no quadro' : 'Contato removido do quadro', variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: 'Erro ao mover no quadro', description: err.response?.data?.message, variant: 'destructive' }),
+  })
+
+  const startConversationMutation = useMutation({
+    mutationFn: () => api.post('/whatsapp/messages/send', {
+      whatsappNumberId: convForm.whatsappNumberId,
+      to: contact.phone,
+      type: 'template',
+      templateName: convForm.templateName,
+      templateLanguage: convForm.templateLanguage,
+      ...(convTemplateVars.length > 0 ? { templateVariables: convTemplateVars } : {}),
+    }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['contacts'] })
+      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
+      const conversationId = res.data?.conversationId
+      toast({ title: 'Conversa iniciada', variant: 'success' })
+      if (conversationId) router.push(`/conversations/${conversationId}`)
+    },
+    onError: (err: any) => toast({ title: 'Erro ao iniciar conversa', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   const optOutMutation = useMutation({
@@ -604,6 +657,90 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                 <label className="mb-1 block text-xs font-medium text-gray-700">Empresa</label>
                 <Input value={editForm.companyName} onChange={(e) => setField('companyName', e.target.value)} placeholder="Nome da empresa" />
               </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-700">Raia do Kanban</label>
+                <select
+                  value={kanbanColumnId}
+                  onChange={(e) => kanbanMutation.mutate(e.target.value)}
+                  disabled={kanbanMutation.isPending}
+                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
+                >
+                  <option value="">Fora do quadro</option>
+                  {kanbanColumns.map((col) => (
+                    <option key={col.id} value={col.id}>{col.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {!contact.conversationId && (
+                <div className="rounded-xl border border-teal-100 bg-teal-50 p-3">
+                  {!showStartConversation ? (
+                    <Button size="sm" variant="outline" className="w-full gap-1.5 bg-white" onClick={() => setShowStartConversation(true)}>
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Iniciar conversa
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-teal-800">Iniciar conversa com template</p>
+                      <select
+                        value={convForm.whatsappNumberId}
+                        onChange={(e) => setConvForm((f) => ({ ...f, whatsappNumberId: e.target.value, templateName: '', templateLanguage: '' }))}
+                        className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
+                      >
+                        <option value="">Selecione o número...</option>
+                        {whatsappNumbers.map((n) => (
+                          <option key={n.id} value={n.id}>{n.displayName} · {n.phoneNumber}</option>
+                        ))}
+                      </select>
+                      {convForm.whatsappNumberId && (
+                        <select
+                          value={convForm.templateName ? `${convForm.templateName}|${convForm.templateLanguage}` : ''}
+                          onChange={(e) => {
+                            const [name, lang] = e.target.value.split('|')
+                            setConvForm((f) => ({ ...f, templateName: name, templateLanguage: lang }))
+                            const tpl = convApprovedTemplates.find((t) => t.name === name && t.language === lang)
+                            setConvTemplateVars(Array(tpl?.variablesCount ?? 0).fill(''))
+                          }}
+                          className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
+                        >
+                          <option value="">Selecione um template...</option>
+                          {convApprovedTemplates.map((t) => (
+                            <option key={t.id} value={`${t.name}|${t.language}`}>{t.name} ({t.language})</option>
+                          ))}
+                        </select>
+                      )}
+                      {convSelectedTemplate && (convSelectedTemplate.variablesCount ?? 0) > 0 && (
+                        <div className="space-y-1.5">
+                          {Array.from({ length: convSelectedTemplate.variablesCount }, (_, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <span className="shrink-0 rounded bg-white px-2 py-1 text-xs font-mono text-gray-500">{`{{${i + 1}}}`}</span>
+                              <input
+                                type="text"
+                                placeholder={`Valor para {{${i + 1}}}`}
+                                value={convTemplateVars[i] ?? ''}
+                                onChange={(e) => setConvTemplateVars((v) => { const next = [...v]; next[i] = e.target.value; return next })}
+                                className="flex-1 rounded-md border bg-white px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-teal-500"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="flex-1 bg-white" onClick={() => setShowStartConversation(false)}>Cancelar</Button>
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          disabled={!convForm.whatsappNumberId || !convForm.templateName || startConversationMutation.isPending}
+                          onClick={() => startConversationMutation.mutate()}
+                        >
+                          {startConversationMutation.isPending ? 'Enviando...' : 'Enviar e iniciar'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1">
@@ -938,6 +1075,12 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient()
   const [form, setForm] = useState({ name: '', phone: '', email: '', companyName: '', notes: '', birthDate: '' })
   const [tags, setTags] = useState<Tag[]>([])
+  const [kanbanColumnId, setKanbanColumnId] = useState('')
+
+  const { data: kanbanColumns = [] } = useQuery<KanbanColumn[]>({
+    queryKey: ['kanban-columns'],
+    queryFn: () => api.get('/kanban-columns').then((r) => r.data),
+  })
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -948,6 +1091,7 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
         companyName: form.companyName.trim() || undefined,
         notes: form.notes.trim() || undefined,
         birthDate: form.birthDate || undefined,
+        kanbanColumnId: kanbanColumnId || undefined,
       }).then((r) => r.data)
 
       if (tags.length > 0) {
@@ -960,6 +1104,7 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contacts'] })
+      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
       toast({ title: 'Contato criado', variant: 'success' })
       onClose()
     },
@@ -1037,6 +1182,22 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Tags</label>
             <TagMultiSelect selected={tags} onChange={setTags} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Raia do Kanban <span className="text-gray-400">(opcional)</span></label>
+            <select
+              value={kanbanColumnId}
+              onChange={(e) => setKanbanColumnId(e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
+            >
+              <option value="">Não colocar no quadro</option>
+              {kanbanColumns.map((col) => (
+                <option key={col.id} value={col.id}>{col.name}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Coloca o contato direto numa raia do quadro Kanban, mesmo sem conversa iniciada.
+            </p>
           </div>
         </div>
 

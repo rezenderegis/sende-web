@@ -691,7 +691,7 @@ const additionalServices = [
   {
     icon: Users,
     name: "Implantação assistida",
-    price: "R$ 800",
+    price: "R$ 1.000",
     period: "opcional, pagamento único",
     desc: "Nossa equipe conecta seu número, configura o primeiro agente de IA e treina seu time.",
   },

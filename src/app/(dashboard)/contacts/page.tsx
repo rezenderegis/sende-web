@@ -573,16 +573,16 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl border bg-white shadow-xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-3xl rounded-2xl border bg-white shadow-xl flex flex-col max-h-[88vh]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
+        <div className="flex items-center justify-between border-b px-8 py-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-semibold text-gray-600">
               {contact.name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div>
-              <h2 className="text-base font-semibold text-teal-900">{editForm.name || contact.name}</h2>
+              <h2 className="text-xl font-semibold text-teal-900">{editForm.name || contact.name}</h2>
               <p className="text-sm text-muted-foreground">{formatPhone(editForm.phone || contact.phone)}</p>
             </div>
           </div>
@@ -605,16 +605,16 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b">
+        <div className="flex border-b px-8">
           <button
             onClick={() => setTab('info')}
-            className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 ${tab === 'info' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
+            className={`px-5 py-3 text-sm font-medium transition-colors border-b-2 ${tab === 'info' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
           >
             Informações
           </button>
           <button
             onClick={() => setTab('sales')}
-            className={`flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors border-b-2 ${tab === 'sales' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
+            className={`flex items-center gap-1.5 px-5 py-3 text-sm font-medium transition-colors border-b-2 ${tab === 'sales' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700'}`}
           >
             <ShoppingBag className="h-3.5 w-3.5" />
             Vendas
@@ -623,58 +623,73 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-8">
           {tab === 'info' && (
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
-                <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} placeholder="Nome do contato" />
-              </div>
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
+                  <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} placeholder="Nome do contato" />
+                </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                  Telefone
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-normal text-amber-700">
-                    Alterar pode quebrar vínculo WhatsApp
-                  </span>
-                </label>
-                <Input
-                  value={editForm.phone}
-                  onChange={(e) => setField('phone', e.target.value)}
-                  placeholder="5561999999999"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  O telefone é usado para identificar mensagens do WhatsApp. Só altere se o número do cliente mudou.
-                </p>
-              </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">E-mail</label>
+                  <Input type="email" value={editForm.email} onChange={(e) => setField('email', e.target.value)} placeholder="email@exemplo.com" />
+                </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">E-mail</label>
-                <Input type="email" value={editForm.email} onChange={(e) => setField('email', e.target.value)} placeholder="email@exemplo.com" />
-              </div>
+                <div className="col-span-2">
+                  <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1.5">
+                    Telefone
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-normal text-amber-700">
+                      Alterar pode quebrar vínculo WhatsApp
+                    </span>
+                  </label>
+                  <Input
+                    value={editForm.phone}
+                    onChange={(e) => setField('phone', e.target.value)}
+                    placeholder="5561999999999"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    O telefone é usado para identificar mensagens do WhatsApp. Só altere se o número do cliente mudou.
+                  </p>
+                </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">Empresa</label>
-                <Input value={editForm.companyName} onChange={(e) => setField('companyName', e.target.value)} placeholder="Nome da empresa" />
-              </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">Empresa</label>
+                  <Input value={editForm.companyName} onChange={(e) => setField('companyName', e.target.value)} placeholder="Nome da empresa" />
+                </div>
 
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">Raia do Kanban</label>
-                <select
-                  value={kanbanColumnId}
-                  onChange={(e) => kanbanMutation.mutate(e.target.value)}
-                  disabled={kanbanMutation.isPending}
-                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
-                >
-                  <option value="">Fora do quadro</option>
-                  {kanbanColumns.map((col) => (
-                    <option key={col.id} value={col.id}>{col.name}</option>
-                  ))}
-                </select>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">Raia do Kanban</label>
+                  <select
+                    value={kanbanColumnId}
+                    onChange={(e) => kanbanMutation.mutate(e.target.value)}
+                    disabled={kanbanMutation.isPending}
+                    className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
+                  >
+                    <option value="">Fora do quadro</option>
+                    {kanbanColumns.map((col) => (
+                      <option key={col.id} value={col.id}>{col.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1">
+                    <Cake className="h-3.5 w-3.5" />
+                    Data de nascimento
+                  </label>
+                  <Input type="date" value={editForm.birthDate} onChange={(e) => setField('birthDate', e.target.value)} />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">ID externo</label>
+                  <Input value={editForm.externalId} onChange={(e) => setField('externalId', e.target.value)} placeholder="Código no seu sistema (CRM, ERP...)" />
+                </div>
               </div>
 
               {!contact.conversationId && (
-                <div className="rounded-xl border border-teal-100 bg-teal-50 p-3">
+                <div className="rounded-xl border border-teal-100 bg-teal-50 p-4">
                   {!showStartConversation ? (
                     <Button size="sm" variant="outline" className="w-full gap-1.5 bg-white" onClick={() => setShowStartConversation(true)}>
                       <MessageSquare className="h-3.5 w-3.5" />
@@ -743,14 +758,6 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
               )}
 
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700 flex items-center gap-1">
-                  <Cake className="h-3.5 w-3.5" />
-                  Data de nascimento
-                </label>
-                <Input type="date" value={editForm.birthDate} onChange={(e) => setField('birthDate', e.target.value)} />
-              </div>
-
-              <div>
                 <label className="mb-1 block text-xs font-medium text-gray-700">Notas</label>
                 <textarea
                   rows={3}
@@ -759,11 +766,6 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                   placeholder="Observações sobre o contato"
                   className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600 resize-none"
                 />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">ID externo</label>
-                <Input value={editForm.externalId} onChange={(e) => setField('externalId', e.target.value)} placeholder="Código no seu sistema (CRM, ERP...)" />
               </div>
 
               {(contact.tags ?? []).length > 0 && (

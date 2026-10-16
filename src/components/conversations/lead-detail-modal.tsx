@@ -200,16 +200,16 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
   const foIsValid = foType !== 'message' || (!!foNumberId && !!foTemplateKey)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl border bg-white shadow-xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-2xl rounded-2xl border bg-white shadow-xl flex flex-col max-h-[88vh]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600">
+        <div className="flex items-center justify-between border-b px-7 py-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-semibold text-gray-600">
               {lead.name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div>
-              <h2 className="text-base font-semibold text-teal-900">{lead.name}</h2>
+              <h2 className="text-xl font-semibold text-teal-900">{lead.name}</h2>
               <p className="text-sm text-muted-foreground">{formatPhone(lead.phone)}</p>
             </div>
           </div>
@@ -232,10 +232,10 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b">
+        <div className="flex border-b px-7">
           <button
             onClick={() => setTab('followups')}
-            className={cn('flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium transition-colors border-b-2',
+            className={cn('flex items-center gap-1.5 px-5 py-3 text-sm font-medium transition-colors border-b-2',
               tab === 'followups' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700')}
           >
             <Calendar className="h-3.5 w-3.5" />
@@ -244,23 +244,25 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
           </button>
           <button
             onClick={() => setTab('info')}
-            className={cn('px-5 py-2.5 text-sm font-medium transition-colors border-b-2',
+            className={cn('px-5 py-3 text-sm font-medium transition-colors border-b-2',
               tab === 'info' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700')}
           >
             Informações
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-7">
           {tab === 'info' && (
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
-                <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">E-mail</label>
-                <Input type="email" value={editForm.email} onChange={(e) => setField('email', e.target.value)} />
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
+                  <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-700">E-mail</label>
+                  <Input type="email" value={editForm.email} onChange={(e) => setField('email', e.target.value)} />
+                </div>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-700">Notas</label>
@@ -272,7 +274,7 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
                 />
               </div>
               {!lead.conversation && (
-                <div className="rounded-xl border border-teal-100 bg-teal-50 p-3">
+                <div className="rounded-xl border border-teal-100 bg-teal-50 p-4">
                   {!showStartConv ? (
                     <Button size="sm" variant="outline" className="w-full gap-1.5 bg-white" onClick={() => setShowStartConv(true)}>
                       <Send className="h-3.5 w-3.5" />

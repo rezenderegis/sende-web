@@ -45,7 +45,7 @@ export default function KanbanCard({ lead, onOpen }: Props) {
       {...attributes}
       {...listeners}
       className={cn(
-        'rounded-xl border border-gray-100 bg-white p-3 shadow-sm cursor-grab active:cursor-grabbing select-none',
+        'rounded-xl border border-gray-100 bg-white p-3.5 shadow-sm hover:shadow-md hover:border-gray-200 transition-shadow cursor-grab active:cursor-grabbing select-none',
         isDragging && 'opacity-40 ring-2 ring-teal-400',
       )}
       onClick={onOpen}

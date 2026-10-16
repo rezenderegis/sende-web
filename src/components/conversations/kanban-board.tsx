@@ -49,16 +49,17 @@ function DroppableColumn({
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
 
   return (
-    <div className="flex w-72 shrink-0 flex-col">
+    <div className="flex w-80 shrink-0 flex-col rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
       {/* Header da coluna */}
       <div
-        className="mb-3 flex items-center gap-2 rounded-lg px-3 py-2"
-        style={{ backgroundColor: tint(column.color, '17'), borderLeft: `3px solid ${column.color}` }}
+        className="flex items-center gap-2 rounded-t-2xl px-4 py-3"
+        style={{ backgroundColor: tint(column.color, '21') }}
       >
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: column.color }} />
         <span className="font-semibold text-sm text-gray-800 truncate flex-1">{column.name}</span>
         <button
           onClick={onAddLead}
-          className="rounded-full p-0.5 text-gray-400 transition-colors hover:bg-white/60 hover:text-gray-700"
+          className="rounded-full p-1 text-gray-500 transition-colors hover:bg-white/70 hover:text-gray-800"
           title="Adicionar lead nesta raia"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -74,11 +75,10 @@ function DroppableColumn({
       {/* Cards */}
       <div
         ref={setNodeRef}
-        className="flex flex-col gap-2 min-h-[120px] rounded-xl border-t-2 p-2 transition-colors"
-        style={{
-          borderTopColor: column.color,
-          backgroundColor: isOver ? tint(column.color, '26') : tint(column.color, '0A'),
-        }}
+        className={cn(
+          'flex flex-1 flex-col gap-2.5 rounded-b-2xl p-3 transition-colors min-h-[140px]',
+          isOver ? 'bg-black/[0.03]' : 'bg-transparent',
+        )}
       >
         <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map((lead) => (
@@ -104,8 +104,9 @@ function UnassignedColumn({
   const { setNodeRef, isOver } = useDroppable({ id: '__unassigned__' })
 
   return (
-    <div className="flex w-72 shrink-0 flex-col">
-      <div className="mb-3 flex items-center gap-2 rounded-lg border-l-[3px] border-gray-300 bg-gray-100 px-3 py-2">
+    <div className="flex w-80 shrink-0 flex-col rounded-2xl bg-white/70 shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center gap-2 rounded-t-2xl bg-gray-100 px-4 py-3">
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gray-300" />
         <span className="font-semibold text-sm text-gray-500 flex-1">Sem raia</span>
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-400 px-1 text-[11px] font-bold text-white">
           {leads.length}
@@ -114,8 +115,8 @@ function UnassignedColumn({
       <div
         ref={setNodeRef}
         className={cn(
-          'flex flex-col gap-2 min-h-[120px] rounded-xl border-t-2 border-gray-300 p-2 transition-colors',
-          isOver ? 'bg-gray-200' : 'bg-gray-50',
+          'flex flex-1 flex-col gap-2.5 rounded-b-2xl p-3 transition-colors min-h-[140px]',
+          isOver ? 'bg-black/[0.03]' : 'bg-transparent',
         )}
       >
         <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
@@ -217,7 +218,7 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
 
       {/* Board */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
-        <div className="flex flex-1 gap-4 overflow-x-auto p-6">
+        <div className="flex flex-1 items-start gap-5 overflow-x-auto bg-gradient-to-b from-slate-50 to-slate-100 p-6">
           <UnassignedColumn leads={unassigned} onOpenLead={openLead} />
 
           {columns.map((col) => (
@@ -231,10 +232,10 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
           ))}
 
           {/* Botão adicionar coluna */}
-          <div className="flex w-72 shrink-0 items-start pt-8">
+          <div className="flex w-80 shrink-0">
             <button
               onClick={() => setShowSettings(true)}
-              className="flex items-center gap-2 rounded-xl border-2 border-dashed border-gray-200 px-4 py-3 text-sm font-medium text-gray-400 hover:border-teal-300 hover:text-teal-600 transition-colors w-full justify-center"
+              className="flex items-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-white/40 px-4 py-3 text-sm font-medium text-gray-500 hover:border-teal-400 hover:bg-white hover:text-teal-700 transition-colors w-full justify-center"
             >
               <Plus className="h-4 w-4" />
               Nova raia

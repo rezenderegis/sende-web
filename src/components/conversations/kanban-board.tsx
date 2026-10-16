@@ -97,11 +97,9 @@ function DroppableColumn({
 function UnassignedColumn({
   leads,
   onOpenLead,
-  onAddLead,
 }: {
   leads: KanbanLead[]
   onOpenLead: (lead: KanbanLead) => void
-  onAddLead: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: '__unassigned__' })
 
@@ -109,13 +107,6 @@ function UnassignedColumn({
     <div className="flex w-72 shrink-0 flex-col">
       <div className="mb-3 flex items-center gap-2 rounded-lg border-l-[3px] border-gray-300 bg-gray-100 px-3 py-2">
         <span className="font-semibold text-sm text-gray-500 flex-1">Sem raia</span>
-        <button
-          onClick={onAddLead}
-          className="rounded-full p-0.5 text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
-          title="Adicionar lead sem raia"
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </button>
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-400 px-1 text-[11px] font-bold text-white">
           {leads.length}
         </span>
@@ -227,7 +218,7 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
       {/* Board */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
         <div className="flex flex-1 gap-4 overflow-x-auto p-6">
-          <UnassignedColumn leads={unassigned} onOpenLead={openLead} onAddLead={() => openQuickAdd(null)} />
+          <UnassignedColumn leads={unassigned} onOpenLead={openLead} />
 
           {columns.map((col) => (
             <DroppableColumn

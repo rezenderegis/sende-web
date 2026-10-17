@@ -573,7 +573,6 @@ function ConversationsPageInner() {
           columns={kanbanColumns}
           onColumnsChange={() => qc.invalidateQueries({ queryKey: ['kanban-columns'] })}
           onLeadMove={() => qc.invalidateQueries({ queryKey: ['kanban-leads'] })}
-          onOpenConversation={(id) => router.push(`/conversations/${id}`)}
         />
       )}
 

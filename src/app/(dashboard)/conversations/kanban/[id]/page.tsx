@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
@@ -20,12 +19,6 @@ export default function KanbanLeadPage() {
 
   const lead = leads.find((l) => l.id === id)
 
-  useEffect(() => {
-    if (lead?.conversation) {
-      router.replace(`/conversations/${lead.conversation.id}`)
-    }
-  }, [lead, router])
-
   function goBack() {
     router.push('/conversations?view=kanban')
   }
@@ -34,8 +27,8 @@ export default function KanbanLeadPage() {
     return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Carregando...</div>
   }
 
-  if (!lead || lead.conversation) {
-    return lead?.conversation ? null : (
+  if (!lead) {
+    return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
         <p className="text-sm">Lead não encontrado.</p>
         <button onClick={goBack} className="text-sm text-teal-700 hover:underline">Voltar pro Kanban</button>

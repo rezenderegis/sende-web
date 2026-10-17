@@ -28,7 +28,6 @@ interface Props {
   columns: KanbanColumn[]
   onColumnsChange: () => void
   onLeadMove: () => void
-  onOpenConversation: (id: string) => void
 }
 
 function tint(color: string, alphaHex: string) {
@@ -133,7 +132,7 @@ function UnassignedColumn({
   )
 }
 
-export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMove, onOpenConversation }: Props) {
+export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMove }: Props) {
   const router = useRouter()
   const qc = useQueryClient()
   const [activeLead, setActiveLead] = useState<KanbanLead | null>(null)
@@ -188,11 +187,9 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
   }
 
   function openLead(lead: KanbanLead) {
-    if (lead.conversation) {
-      onOpenConversation(lead.conversation.id)
-    } else {
-      router.push(`/conversations/kanban/${lead.id}`)
-    }
+    // Sempre abre a tela de detalhe (CRM) do contato — a conversa fica
+    // acessível a partir de lá, num botão, não substitui a tela toda.
+    router.push(`/conversations/kanban/${lead.id}`)
   }
 
   function openQuickAdd(columnId: string | null) {

@@ -84,7 +84,6 @@ interface Props {
 export default function LeadDetailScreen({ lead, onBack }: Props) {
   const router = useRouter()
   const qc = useQueryClient()
-  const [tab, setTab] = useState<'info' | 'followups'>(lead.conversation ? 'followups' : 'info')
   const [editForm, setEditForm] = useState({ name: lead.name || '', email: lead.email || '', notes: lead.notes || '' })
   const [dirty, setDirty] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -285,138 +284,123 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b px-7">
-        <button
-          onClick={() => setTab('followups')}
-          className={cn('flex items-center gap-1.5 px-5 py-3 text-sm font-medium transition-colors border-b-2',
-            tab === 'followups' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700')}
-        >
-          <Calendar className="h-3.5 w-3.5" />
-          Follow-ons
-          {followOns.length > 0 && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">{followOns.length}</span>}
-        </button>
-        <button
-          onClick={() => setTab('info')}
-          className={cn('px-5 py-3 text-sm font-medium transition-colors border-b-2',
-            tab === 'info' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700')}
-        >
-          Informações
-        </button>
-      </div>
+      {/* Corpo: coluna fixa de dados à esquerda + timeline de atividades à direita — */}
+      {/* padrão comum em CRM (HubSpot/Pipedrive), sem precisar trocar de aba pra ver o básico. */}
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="w-80 shrink-0 overflow-y-auto border-r bg-white p-6 space-y-5">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
+            <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">E-mail</label>
+            <Input type="email" value={editForm.email} onChange={(e) => setField('email', e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Notas</label>
+            <textarea
+              rows={4}
+              value={editForm.notes}
+              onChange={(e) => setField('notes', e.target.value)}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600 resize-none"
+            />
+          </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl p-7">
-          {tab === 'info' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
-                  <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-700">E-mail</label>
-                  <Input type="email" value={editForm.email} onChange={(e) => setField('email', e.target.value)} />
-                </div>
+          {(lead.tags ?? []).length > 0 && (
+            <div>
+              <p className="mb-1.5 text-xs font-medium text-gray-700">Tags</p>
+              <div className="flex flex-wrap gap-1.5">
+                {lead.tags!.map((tag) => (
+                  <span key={tag.id} className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: tag.color }}>
+                    {tag.name}
+                  </span>
+                ))}
               </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-700">Notas</label>
-                <textarea
-                  rows={3}
-                  value={editForm.notes}
-                  onChange={(e) => setField('notes', e.target.value)}
-                  className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600 resize-none"
-                />
-              </div>
-              {!lead.conversation && (
-                <div className="rounded-xl border border-teal-100 bg-teal-50 p-4">
-                  {!showStartConv ? (
-                    <Button size="sm" variant="outline" className="w-full gap-1.5 bg-white" onClick={() => setShowStartConv(true)}>
-                      <Send className="h-3.5 w-3.5" />
-                      Iniciar conversa
-                    </Button>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-teal-800">Iniciar conversa com template</p>
-                      <Select value={convNumberId} onValueChange={(v) => { setConvNumberId(v); setConvTemplateKey(''); setConvTemplateVars([]) }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o número..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {numbers.map((n) => (
-                            <SelectItem key={n.id} value={n.id}>{n.displayName} · {n.phoneNumber}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {convNumberId && (
-                        <Select value={convTemplateKey} onValueChange={(v) => {
-                          setConvTemplateKey(v)
-                          const tpl = convApprovedTemplates.find((t) => `${t.name}|${t.language}` === v)
-                          setConvTemplateVars(Array(tpl?.variablesCount ?? 0).fill(''))
-                        }}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um template..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {convApprovedTemplates.map((t) => (
-                              <SelectItem key={t.id} value={`${t.name}|${t.language}`}>{t.name} ({t.language})</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                      {convSelectedTpl && (convSelectedTpl.variablesCount ?? 0) > 0 && (
-                        <div className="space-y-1.5">
-                          {Array.from({ length: convSelectedTpl.variablesCount! }, (_, i) => (
-                            <div key={i} className="flex items-center gap-2">
-                              <span className="shrink-0 rounded bg-white px-2 py-1 text-xs font-mono text-gray-500">{`{{${i + 1}}}`}</span>
-                              <input
-                                type="text"
-                                placeholder={`Valor para {{${i + 1}}}`}
-                                value={convTemplateVars[i] ?? ''}
-                                onChange={(e) => setConvTemplateVars((v) => { const next = [...v]; next[i] = e.target.value; return next })}
-                                className="flex-1 rounded-md border bg-white px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-teal-500"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="flex-1 bg-white" onClick={() => setShowStartConv(false)}>Cancelar</Button>
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          disabled={!convNumberId || !convTemplateKey || startConversationMutation.isPending}
-                          onClick={() => startConversationMutation.mutate()}
-                        >
-                          {startConversationMutation.isPending ? 'Enviando...' : 'Enviar e iniciar'}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {(lead.tags ?? []).length > 0 && (
-                <div>
-                  <p className="mb-1 text-xs font-medium text-gray-700">Tags</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {lead.tags!.map((tag) => (
-                      <span key={tag.id} className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: tag.color }}>
-                        {tag.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {dirty && (
-                <Button className="w-full" disabled={updateMutation.isPending} onClick={() => updateMutation.mutate()}>
-                  {updateMutation.isPending ? 'Salvando...' : 'Salvar alterações'}
-                </Button>
-              )}
             </div>
           )}
 
-          {tab === 'followups' && (
+          {dirty && (
+            <Button className="w-full" disabled={updateMutation.isPending} onClick={() => updateMutation.mutate()}>
+              {updateMutation.isPending ? 'Salvando...' : 'Salvar alterações'}
+            </Button>
+          )}
+
+          {!lead.conversation && (
+            <div className="rounded-xl border border-teal-100 bg-teal-50 p-4">
+              {!showStartConv ? (
+                <Button size="sm" variant="outline" className="w-full gap-1.5 bg-white" onClick={() => setShowStartConv(true)}>
+                  <Send className="h-3.5 w-3.5" />
+                  Iniciar conversa
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-teal-800">Iniciar conversa com template</p>
+                  <Select value={convNumberId} onValueChange={(v) => { setConvNumberId(v); setConvTemplateKey(''); setConvTemplateVars([]) }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o número..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {numbers.map((n) => (
+                        <SelectItem key={n.id} value={n.id}>{n.displayName} · {n.phoneNumber}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {convNumberId && (
+                    <Select value={convTemplateKey} onValueChange={(v) => {
+                      setConvTemplateKey(v)
+                      const tpl = convApprovedTemplates.find((t) => `${t.name}|${t.language}` === v)
+                      setConvTemplateVars(Array(tpl?.variablesCount ?? 0).fill(''))
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um template..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {convApprovedTemplates.map((t) => (
+                          <SelectItem key={t.id} value={`${t.name}|${t.language}`}>{t.name} ({t.language})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {convSelectedTpl && (convSelectedTpl.variablesCount ?? 0) > 0 && (
+                    <div className="space-y-1.5">
+                      {Array.from({ length: convSelectedTpl.variablesCount! }, (_, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="shrink-0 rounded bg-white px-2 py-1 text-xs font-mono text-gray-500">{`{{${i + 1}}}`}</span>
+                          <input
+                            type="text"
+                            placeholder={`Valor para {{${i + 1}}}`}
+                            value={convTemplateVars[i] ?? ''}
+                            onChange={(e) => setConvTemplateVars((v) => { const next = [...v]; next[i] = e.target.value; return next })}
+                            className="flex-1 rounded-md border bg-white px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-teal-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1 bg-white" onClick={() => setShowStartConv(false)}>Cancelar</Button>
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      disabled={!convNumberId || !convTemplateKey || startConversationMutation.isPending}
+                      onClick={() => startConversationMutation.mutate()}
+                    >
+                      {startConversationMutation.isPending ? 'Enviando...' : 'Enviar e iniciar'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </aside>
+
+        <main className="flex-1 overflow-y-auto bg-gray-50/60">
+          <div className="mx-auto max-w-2xl p-7">
+            <div className="mb-4 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <h3 className="text-sm font-semibold text-gray-700">Atividades</h3>
+              {followOns.length > 0 && <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600">{followOns.length}</span>}
+            </div>
             <div className="space-y-3">
               {!showForm && !showNoteForm && (
                 <div className="grid grid-cols-2 gap-2">
@@ -670,8 +654,8 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                 })}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        </main>
       </div>
 
       {editingFo && (

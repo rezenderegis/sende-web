@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import {
-  X, MessageSquare, Calendar, Plus, Phone, Users as UsersIcon,
-  Send, CheckCircle2, Ban,
+  ArrowLeft, MessageSquare, Calendar, Plus, Phone, Users as UsersIcon,
+  Send, CheckCircle2, Ban, Pencil, StickyNote,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import { formatPhone } from '@/lib/utils'
+import EditFollowOnModal from '@/components/follow-ons/edit-follow-on-modal'
 import type { KanbanLead, FollowOn, FollowOnType, User, WhatsappNumber, WhatsappTemplate } from '@/types'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -21,6 +22,7 @@ const TYPE_LABELS: Record<string, string> = {
   call: 'Ligação',
   message: 'Envio automático',
   message_manual: 'Mensagem',
+  note: 'Anotação',
 }
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -28,6 +30,32 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   call: <Phone className="h-3.5 w-3.5" />,
   message: <Send className="h-3.5 w-3.5" />,
   message_manual: <MessageSquare className="h-3.5 w-3.5" />,
+  note: <StickyNote className="h-3.5 w-3.5" />,
+}
+
+// Cada tipo tem sua própria cor de destaque — mesma paleta usada na Agenda —
+// pra dar pra identificar o tipo de atividade só pelo olhar, sem ler o texto.
+const TYPE_STYLES: Record<string, { badge: string; icon: string; border: string }> = {
+  meeting: { badge: 'bg-blue-50 text-blue-700', icon: 'bg-blue-100 text-blue-600', border: 'border-l-blue-400' },
+  call: { badge: 'bg-teal-50 text-teal-700', icon: 'bg-teal-100 text-teal-600', border: 'border-l-teal-400' },
+  message: { badge: 'bg-violet-50 text-violet-700', icon: 'bg-violet-100 text-violet-600', border: 'border-l-violet-400' },
+  message_manual: { badge: 'bg-teal-50 text-teal-700', icon: 'bg-teal-100 text-teal-600', border: 'border-l-teal-400' },
+  note: { badge: 'bg-amber-50 text-amber-700', icon: 'bg-amber-100 text-amber-600', border: 'border-l-amber-400' },
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-800 ring-1 ring-amber-200',
+  done: 'bg-teal-100 text-teal-800 ring-1 ring-teal-200',
+  cancelled: 'bg-gray-100 text-gray-500 ring-1 ring-gray-200',
+}
+
+// Estado "selecionado" do seletor de tipo no formulário de agendar — cada
+// tipo mantém a cor que já usa no resto da tela em vez de todo mundo ficar teal.
+const TYPE_SELECTED_STYLES: Record<string, string> = {
+  meeting: 'border-blue-400 bg-blue-50 text-blue-700',
+  call: 'border-teal-400 bg-teal-50 text-teal-700',
+  message: 'border-violet-400 bg-violet-50 text-violet-700',
+  message_manual: 'border-teal-400 bg-teal-50 text-teal-700',
 }
 
 function followOnLabel(fo: FollowOn): string {
@@ -46,16 +74,23 @@ function toLocalDatetimeValue(date: Date): string {
 
 interface Props {
   lead: KanbanLead
-  onClose: () => void
+  onBack: () => void
 }
 
-export default function LeadDetailModal({ lead, onClose }: Props) {
+/**
+ * Tela cheia de detalhe do lead — deixou de ser popup porque essa tela vai
+ * crescer com cada vez mais dados (histórico, notas, campos de CRM).
+ */
+export default function LeadDetailScreen({ lead, onBack }: Props) {
   const router = useRouter()
   const qc = useQueryClient()
   const [tab, setTab] = useState<'info' | 'followups'>(lead.conversation ? 'followups' : 'info')
   const [editForm, setEditForm] = useState({ name: lead.name || '', email: lead.email || '', notes: lead.notes || '' })
   const [dirty, setDirty] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [showNoteForm, setShowNoteForm] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const [editingFo, setEditingFo] = useState<FollowOn | null>(null)
 
   const defaultScheduledAt = toLocalDatetimeValue(new Date(Date.now() + 60 * 60000))
   const [foType, setFoType] = useState<FollowOnType>('call')
@@ -76,8 +111,11 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
     setDirty(true)
   }
 
+  const followOnsKey = ['follow-ons-contact', lead.id]
+  const invalidateFollowOns = () => qc.invalidateQueries({ queryKey: followOnsKey })
+
   const { data: followOns = [], isLoading } = useQuery<FollowOn[]>({
-    queryKey: ['follow-ons-contact', lead.id],
+    queryKey: followOnsKey,
     queryFn: () => api.get(`/follow-ons/contact/${lead.id}`).then((r) => r.data),
   })
 
@@ -145,7 +183,7 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
   const createFollowOnMutation = useMutation({
     mutationFn: (dto: any) => api.post('/follow-ons', dto),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['follow-ons-contact', lead.id] })
+      invalidateFollowOns()
       setShowForm(false)
       resetForm()
       toast({ title: 'Follow-on agendado', variant: 'success' })
@@ -153,10 +191,21 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
     onError: (err: any) => toast({ title: 'Erro ao agendar', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
+  const createNoteMutation = useMutation({
+    mutationFn: () => api.post('/follow-ons', { contactId: lead.id, type: 'note', note: noteText.trim() }),
+    onSuccess: () => {
+      invalidateFollowOns()
+      setShowNoteForm(false)
+      setNoteText('')
+      toast({ title: 'Anotação registrada', variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: 'Erro ao registrar anotação', description: err.response?.data?.message, variant: 'destructive' }),
+  })
+
   const cancelMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/follow-ons/${id}/cancel`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['follow-ons-contact', lead.id] })
+      invalidateFollowOns()
       toast({ title: 'Follow-on cancelado', variant: 'success' })
     },
   })
@@ -164,8 +213,16 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
   const completeMutation = useMutation({
     mutationFn: (id: string) => api.patch(`/follow-ons/${id}/complete`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['follow-ons-contact', lead.id] })
+      invalidateFollowOns()
       toast({ title: 'Marcado como concluído', variant: 'success' })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/follow-ons/${id}`),
+    onSuccess: () => {
+      invalidateFollowOns()
+      toast({ title: 'Follow-on removido', variant: 'success' })
     },
   })
 
@@ -200,58 +257,56 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
   const foIsValid = foType !== 'message' || (!!foNumberId && !!foTemplateKey)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-2xl border bg-white shadow-xl flex flex-col max-h-[88vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b px-7 py-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-semibold text-gray-600">
-              {lead.name?.charAt(0).toUpperCase() || '?'}
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-teal-900">{lead.name}</h2>
-              <p className="text-sm text-muted-foreground">{formatPhone(lead.phone)}</p>
-            </div>
+    <div className="flex h-full flex-col bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b px-7 py-5">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-semibold text-gray-600">
+            {lead.name?.charAt(0).toUpperCase() || '?'}
           </div>
-          <div className="flex items-center gap-2">
-            {lead.conversation && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1.5"
-                onClick={() => router.push(`/conversations/${lead.conversation!.id}`)}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                Conversa
-              </Button>
-            )}
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
-              <X className="h-4 w-4" />
-            </button>
+          <div>
+            <h2 className="text-xl font-semibold text-teal-900">{lead.name}</h2>
+            <p className="text-sm text-muted-foreground">{formatPhone(lead.phone)}</p>
           </div>
         </div>
-
-        {/* Tabs */}
-        <div className="flex border-b px-7">
-          <button
-            onClick={() => setTab('followups')}
-            className={cn('flex items-center gap-1.5 px-5 py-3 text-sm font-medium transition-colors border-b-2',
-              tab === 'followups' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700')}
+        {lead.conversation && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => router.push(`/conversations/${lead.conversation!.id}`)}
           >
-            <Calendar className="h-3.5 w-3.5" />
-            Follow-ons
-            {followOns.length > 0 && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">{followOns.length}</span>}
-          </button>
-          <button
-            onClick={() => setTab('info')}
-            className={cn('px-5 py-3 text-sm font-medium transition-colors border-b-2',
-              tab === 'info' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700')}
-          >
-            Informações
-          </button>
-        </div>
+            <MessageSquare className="h-3.5 w-3.5" />
+            Conversa
+          </Button>
+        )}
+      </div>
 
-        <div className="flex-1 overflow-y-auto p-7">
+      {/* Tabs */}
+      <div className="flex border-b px-7">
+        <button
+          onClick={() => setTab('followups')}
+          className={cn('flex items-center gap-1.5 px-5 py-3 text-sm font-medium transition-colors border-b-2',
+            tab === 'followups' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700')}
+        >
+          <Calendar className="h-3.5 w-3.5" />
+          Follow-ons
+          {followOns.length > 0 && <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">{followOns.length}</span>}
+        </button>
+        <button
+          onClick={() => setTab('info')}
+          className={cn('px-5 py-3 text-sm font-medium transition-colors border-b-2',
+            tab === 'info' ? 'border-teal-600 text-teal-700' : 'border-transparent text-muted-foreground hover:text-gray-700')}
+        >
+          Informações
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-2xl p-7">
           {tab === 'info' && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -363,15 +418,62 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
 
           {tab === 'followups' && (
             <div className="space-y-3">
-              {!showForm && (
-                <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={() => setShowForm(true)}>
-                  <Plus className="h-3.5 w-3.5" />
-                  Agendar follow-on
-                </Button>
+              {!showForm && !showNoteForm && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:text-teal-800"
+                    onClick={() => setShowForm(true)}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Agendar follow-on
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+                    onClick={() => setShowNoteForm(true)}
+                  >
+                    <StickyNote className="h-3.5 w-3.5" />
+                    Adicionar anotação
+                  </Button>
+                </div>
+              )}
+
+              {showNoteForm && (
+                <div className="space-y-2.5 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+                    <StickyNote className="h-3.5 w-3.5" />
+                    Anotação
+                  </label>
+                  <textarea
+                    autoFocus
+                    rows={3}
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder="Ex: Cliente pediu orçamento por e-mail, disse que decide até sexta"
+                    className="w-full resize-none rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-amber-500"
+                  />
+                  <p className="text-xs text-amber-700/80">
+                    Registrada na hora, sem agendamento — fica no histórico junto com as outras atividades.
+                  </p>
+                  <div className="flex gap-2 pt-1">
+                    <Button variant="outline" size="sm" className="flex-1 bg-white" onClick={() => { setShowNoteForm(false); setNoteText('') }}>Cancelar</Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+                      disabled={!noteText.trim() || createNoteMutation.isPending}
+                      onClick={() => createNoteMutation.mutate()}
+                    >
+                      {createNoteMutation.isPending ? 'Salvando...' : 'Salvar anotação'}
+                    </Button>
+                  </div>
+                </div>
               )}
 
               {showForm && (
-                <div className="space-y-3 rounded-xl border bg-gray-50 p-4">
+                <div className="space-y-3 rounded-xl border border-teal-200 bg-teal-50/40 p-4">
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-gray-700">Tipo</label>
                     <div className="grid grid-cols-2 gap-2">
@@ -380,8 +482,8 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
                           key={value}
                           onClick={() => setFoType(value)}
                           className={cn(
-                            'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors text-left',
-                            foType === value ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                            'flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-xs font-medium transition-colors text-left',
+                            foType === value ? TYPE_SELECTED_STYLES[value] : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
                           )}
                         >
                           {TYPE_ICONS[value]}
@@ -505,52 +607,82 @@ export default function LeadDetailModal({ lead, onClose }: Props) {
               {!isLoading && followOns.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-6">Nenhum follow-on registrado pra essa pessoa ainda.</p>
               )}
-              <div className="space-y-1.5">
-                {followOns.map((fo) => (
-                  <div key={fo.id} className="flex items-start gap-2 rounded-lg border bg-white px-3 py-2.5">
-                    <div className="mt-0.5 text-teal-600 shrink-0">{TYPE_ICONS[fo.type]}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-900">{followOnLabel(fo)}</p>
-                      {fo.note && <p className="text-xs text-muted-foreground truncate">{fo.note}</p>}
-                      {fo.type === 'message' && (fo.message || fo.templateName) && (
-                        <p className="text-xs text-muted-foreground font-mono truncate">
-                          {fo.templateName ? `Template: ${fo.templateName}` : fo.message}
-                        </p>
+              <div className="space-y-2">
+                {followOns.map((fo) => {
+                  const style = TYPE_STYLES[fo.type] ?? TYPE_STYLES.call
+                  return (
+                    <div
+                      key={fo.id}
+                      className={cn(
+                        'flex items-start gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 shadow-sm border-l-4 transition-colors hover:border-gray-300',
+                        style.border,
                       )}
-                    </div>
-                    <span className={cn(
-                      'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-                      fo.status === 'pending' && 'bg-amber-100 text-amber-700',
-                      fo.status === 'done' && 'bg-teal-100 text-teal-700',
-                      fo.status === 'cancelled' && 'bg-gray-100 text-gray-500',
-                    )}>
-                      {fo.status === 'pending' ? 'Pendente' : fo.status === 'done' ? 'Concluído' : 'Cancelado'}
-                    </span>
-                    {fo.status === 'pending' && (
+                    >
+                      <div className={cn('mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full', style.icon)}>
+                        {TYPE_ICONS[fo.type]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', style.badge)}>
+                            {TYPE_LABELS[fo.type] ?? fo.type}
+                          </span>
+                          <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold', STATUS_STYLES[fo.status])}>
+                            {fo.status === 'pending' ? 'Pendente' : fo.status === 'done' ? 'Concluído' : 'Cancelado'}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-xs font-medium text-gray-900">{followOnLabel(fo)}</p>
+                        {fo.note && <p className="mt-0.5 text-xs text-gray-600">{fo.note}</p>}
+                        {fo.type === 'message' && (fo.message || fo.templateName) && (
+                          <p className="mt-0.5 text-xs text-muted-foreground font-mono truncate">
+                            {fo.templateName ? `Template: ${fo.templateName}` : fo.message}
+                          </p>
+                        )}
+                      </div>
                       <div className="flex shrink-0 items-center gap-1">
                         <button
-                          onClick={() => completeMutation.mutate(fo.id)}
-                          className="text-gray-400 hover:text-teal-600"
-                          title="Marcar como concluído"
+                          onClick={() => setEditingFo(fo)}
+                          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                          title="Editar / anotar"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          onClick={() => cancelMutation.mutate(fo.id)}
-                          className="text-gray-400 hover:text-red-500"
-                          title="Cancelar"
-                        >
-                          <Ban className="h-3.5 w-3.5" />
-                        </button>
+                        {fo.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => completeMutation.mutate(fo.id)}
+                              className="rounded-md p-1.5 text-gray-400 hover:bg-teal-50 hover:text-teal-600 transition-colors"
+                              title="Marcar como concluído"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => cancelMutation.mutate(fo.id)}
+                              className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                              title="Cancelar"
+                            >
+                              <Ban className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {editingFo && (
+        <EditFollowOnModal
+          fo={editingFo}
+          users={users}
+          onClose={() => setEditingFo(null)}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          onSaved={invalidateFollowOns}
+        />
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   DndContext,
   DragEndEvent,
@@ -21,7 +22,6 @@ import type { KanbanLead, KanbanColumn } from '@/types'
 import KanbanCard from './kanban-card'
 import KanbanSettings from './kanban-settings'
 import QuickAddLeadModal from './quick-add-lead-modal'
-import LeadDetailModal from './lead-detail-modal'
 
 interface Props {
   leads: KanbanLead[]
@@ -134,12 +134,12 @@ function UnassignedColumn({
 }
 
 export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMove, onOpenConversation }: Props) {
+  const router = useRouter()
   const qc = useQueryClient()
   const [activeLead, setActiveLead] = useState<KanbanLead | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [quickAddColumnId, setQuickAddColumnId] = useState<string | null>(null)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
-  const [selectedLead, setSelectedLead] = useState<KanbanLead | null>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -191,7 +191,7 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
     if (lead.conversation) {
       onOpenConversation(lead.conversation.id)
     } else {
-      setSelectedLead(lead)
+      router.push(`/conversations/kanban/${lead.id}`)
     }
   }
 
@@ -265,10 +265,6 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
           kanbanColumnId={quickAddColumnId}
           onClose={() => { setShowQuickAdd(false); qc.invalidateQueries({ queryKey: ['kanban-leads'] }) }}
         />
-      )}
-
-      {selectedLead && (
-        <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} />
       )}
     </div>
   )

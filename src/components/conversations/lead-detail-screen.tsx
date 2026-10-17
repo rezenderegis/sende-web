@@ -261,35 +261,36 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between border-b-2 border-gray-200 bg-white px-7 py-5">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+      <div className="flex items-center justify-between gap-3 border-b-2 border-gray-200 bg-white px-4 py-4 md:px-7 md:py-5">
+        <div className="flex min-w-0 items-center gap-3 md:gap-4">
+          <button onClick={onBack} className="shrink-0 rounded-full p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-700 text-lg font-semibold text-white">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-700 text-base font-semibold text-white md:h-14 md:w-14 md:text-lg">
             {lead.name?.charAt(0).toUpperCase() || '?'}
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-teal-900">{lead.name}</h2>
-            <p className="text-sm text-gray-600">{formatPhone(lead.phone)}</p>
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-semibold text-teal-900 md:text-xl">{lead.name}</h2>
+            <p className="text-xs text-gray-600 md:text-sm">{formatPhone(lead.phone)}</p>
           </div>
         </div>
         {lead.conversation && (
           <Button
             size="sm"
-            className="gap-1.5 bg-teal-700 text-white hover:bg-teal-800"
+            className="shrink-0 gap-1.5 bg-teal-700 text-white hover:bg-teal-800"
             onClick={() => router.push(`/conversations/${lead.conversation!.id}`)}
           >
             <MessageSquare className="h-3.5 w-3.5" />
-            Conversa
+            <span className="hidden sm:inline">Conversa</span>
           </Button>
         )}
       </div>
 
-      {/* Corpo: coluna fixa de dados à esquerda + timeline de atividades à direita — */}
-      {/* padrão comum em CRM (HubSpot/Pipedrive), sem precisar trocar de aba pra ver o básico. */}
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-80 shrink-0 overflow-y-auto border-r-2 border-gray-200 bg-white p-6 space-y-5">
+      {/* Corpo: no desktop, coluna fixa de dados à esquerda + timeline à direita
+          (padrão HubSpot/Pipedrive); no celular empilha — dados em cima,
+          atividades embaixo — porque lado a lado não cabe numa tela estreita. */}
+      <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+        <aside className="w-full shrink-0 border-b-2 border-gray-200 bg-white p-5 space-y-5 md:h-full md:w-80 md:overflow-y-auto md:border-b-0 md:border-r-2 md:p-6">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
             <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} />
@@ -396,8 +397,8 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
           )}
         </aside>
 
-        <main className="flex-1 overflow-y-auto bg-gray-100">
-          <div className="mx-auto max-w-2xl p-7">
+        <main className="flex-1 bg-gray-100 md:overflow-y-auto">
+          <div className="mx-auto max-w-2xl p-4 md:p-7">
             <div className="mb-4 flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-600" />
               <h3 className="text-sm font-semibold text-gray-800">Atividades</h3>

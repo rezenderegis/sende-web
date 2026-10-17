@@ -48,7 +48,7 @@ function DroppableColumn({
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
 
   return (
-    <div className="flex w-80 shrink-0 flex-col rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+    <div className="flex w-[86vw] max-w-sm shrink-0 snap-center flex-col rounded-2xl bg-white shadow-sm ring-1 ring-black/5 md:w-80 md:max-w-none">
       {/* Header da coluna */}
       <div
         className="flex items-center gap-2 rounded-t-2xl px-4 py-3"
@@ -103,7 +103,7 @@ function UnassignedColumn({
   const { setNodeRef, isOver } = useDroppable({ id: '__unassigned__' })
 
   return (
-    <div className="flex w-80 shrink-0 flex-col rounded-2xl bg-white/70 shadow-sm ring-1 ring-black/5">
+    <div className="flex w-[86vw] max-w-sm shrink-0 snap-center flex-col rounded-2xl bg-white/70 shadow-sm ring-1 ring-black/5 md:w-80 md:max-w-none">
       <div className="flex items-center gap-2 rounded-t-2xl bg-gray-100 px-4 py-3">
         <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gray-300" />
         <span className="font-semibold text-sm text-gray-500 flex-1">Sem raia</span>
@@ -202,20 +202,27 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Toolbar do Kanban */}
-      <div className="flex items-center justify-between border-b bg-white px-6 py-2">
+      <div className="flex items-center justify-between border-b bg-white px-4 py-2 md:px-6">
         <span className="text-xs text-gray-400">{leads.length} leads</span>
         <button
           onClick={() => setShowSettings(true)}
           className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
         >
           <Settings2 className="h-3.5 w-3.5" />
-          Gerenciar raias
+          <span className="hidden sm:inline">Gerenciar raias</span>
         </button>
       </div>
 
-      {/* Board */}
+      {/* Dica de deslizar — só no celular, some depois do primeiro scroll */}
+      <p className="px-4 py-1.5 text-center text-[11px] text-gray-400 md:hidden">
+        ← Arraste pros lados pra ver as outras raias →
+      </p>
+
+      {/* Board — no celular cada raia ocupa a tela quase inteira e o scroll
+          "encaixa" raia por raia (snap), como um carrossel; no desktop
+          volta a ser várias colunas lado a lado com largura fixa. */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
-        <div className="flex flex-1 items-start gap-5 overflow-x-auto bg-gradient-to-b from-slate-50 to-slate-100 p-6">
+        <div className="flex flex-1 snap-x snap-mandatory items-start gap-5 overflow-x-auto scroll-smooth bg-gradient-to-b from-slate-50 to-slate-100 p-4 md:p-6">
           <UnassignedColumn leads={unassigned} onOpenLead={openLead} />
 
           {columns.map((col) => (
@@ -229,7 +236,7 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
           ))}
 
           {/* Botão adicionar coluna */}
-          <div className="flex w-80 shrink-0">
+          <div className="flex w-[86vw] max-w-sm shrink-0 snap-center md:w-80 md:max-w-none">
             <button
               onClick={() => setShowSettings(true)}
               className="flex items-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 bg-white/40 px-4 py-3 text-sm font-medium text-gray-500 hover:border-teal-400 hover:bg-white hover:text-teal-700 transition-colors w-full justify-center"

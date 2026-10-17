@@ -33,29 +33,32 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   note: <StickyNote className="h-3.5 w-3.5" />,
 }
 
-// Cada tipo tem sua própria cor de destaque — mesma paleta usada na Agenda —
-// pra dar pra identificar o tipo de atividade só pelo olhar, sem ler o texto.
+// Cada tipo tem sua própria cor de destaque — mesma paleta usada na Agenda.
+// Tons fortes (não pastel) e paleta escolhida pra ficar distinguível mesmo
+// com daltonismo (azul/laranja/verde/âmbar são bem separados nos eixos de
+// confusão comuns) — além disso cada tipo sempre tem ícone + texto junto,
+// nunca só a cor, pra não depender de enxergar a diferença de matiz.
 const TYPE_STYLES: Record<string, { badge: string; icon: string; border: string }> = {
-  meeting: { badge: 'bg-blue-50 text-blue-700', icon: 'bg-blue-100 text-blue-600', border: 'border-l-blue-400' },
-  call: { badge: 'bg-teal-50 text-teal-700', icon: 'bg-teal-100 text-teal-600', border: 'border-l-teal-400' },
-  message: { badge: 'bg-violet-50 text-violet-700', icon: 'bg-violet-100 text-violet-600', border: 'border-l-violet-400' },
-  message_manual: { badge: 'bg-teal-50 text-teal-700', icon: 'bg-teal-100 text-teal-600', border: 'border-l-teal-400' },
-  note: { badge: 'bg-amber-50 text-amber-700', icon: 'bg-amber-100 text-amber-600', border: 'border-l-amber-400' },
+  meeting: { badge: 'bg-blue-100 text-blue-800 ring-1 ring-blue-300', icon: 'bg-blue-600 text-white', border: 'border-l-blue-600' },
+  call: { badge: 'bg-teal-100 text-teal-800 ring-1 ring-teal-300', icon: 'bg-teal-600 text-white', border: 'border-l-teal-600' },
+  message: { badge: 'bg-orange-100 text-orange-800 ring-1 ring-orange-300', icon: 'bg-orange-600 text-white', border: 'border-l-orange-600' },
+  message_manual: { badge: 'bg-teal-100 text-teal-800 ring-1 ring-teal-300', icon: 'bg-teal-600 text-white', border: 'border-l-teal-600' },
+  note: { badge: 'bg-amber-100 text-amber-900 ring-1 ring-amber-300', icon: 'bg-amber-500 text-white', border: 'border-l-amber-500' },
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-100 text-amber-800 ring-1 ring-amber-200',
-  done: 'bg-teal-100 text-teal-800 ring-1 ring-teal-200',
-  cancelled: 'bg-gray-100 text-gray-500 ring-1 ring-gray-200',
+  pending: 'bg-amber-200 text-amber-900 ring-1 ring-amber-400',
+  done: 'bg-teal-200 text-teal-900 ring-1 ring-teal-400',
+  cancelled: 'bg-gray-200 text-gray-700 ring-1 ring-gray-400',
 }
 
 // Estado "selecionado" do seletor de tipo no formulário de agendar — cada
 // tipo mantém a cor que já usa no resto da tela em vez de todo mundo ficar teal.
 const TYPE_SELECTED_STYLES: Record<string, string> = {
-  meeting: 'border-blue-400 bg-blue-50 text-blue-700',
-  call: 'border-teal-400 bg-teal-50 text-teal-700',
-  message: 'border-violet-400 bg-violet-50 text-violet-700',
-  message_manual: 'border-teal-400 bg-teal-50 text-teal-700',
+  meeting: 'border-blue-600 bg-blue-100 text-blue-800',
+  call: 'border-teal-600 bg-teal-100 text-teal-800',
+  message: 'border-orange-600 bg-orange-100 text-orange-800',
+  message_manual: 'border-teal-600 bg-teal-100 text-teal-800',
 }
 
 function followOnLabel(fo: FollowOn): string {
@@ -258,24 +261,23 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between border-b px-7 py-5">
+      <div className="flex items-center justify-between border-b-2 border-gray-200 bg-white px-7 py-5">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+          <button onClick={onBack} className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors">
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-semibold text-gray-600">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-700 text-lg font-semibold text-white">
             {lead.name?.charAt(0).toUpperCase() || '?'}
           </div>
           <div>
             <h2 className="text-xl font-semibold text-teal-900">{lead.name}</h2>
-            <p className="text-sm text-muted-foreground">{formatPhone(lead.phone)}</p>
+            <p className="text-sm text-gray-600">{formatPhone(lead.phone)}</p>
           </div>
         </div>
         {lead.conversation && (
           <Button
             size="sm"
-            variant="outline"
-            className="gap-1.5"
+            className="gap-1.5 bg-teal-700 text-white hover:bg-teal-800"
             onClick={() => router.push(`/conversations/${lead.conversation!.id}`)}
           >
             <MessageSquare className="h-3.5 w-3.5" />
@@ -287,7 +289,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
       {/* Corpo: coluna fixa de dados à esquerda + timeline de atividades à direita — */}
       {/* padrão comum em CRM (HubSpot/Pipedrive), sem precisar trocar de aba pra ver o básico. */}
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-80 shrink-0 overflow-y-auto border-r bg-white p-6 space-y-5">
+        <aside className="w-80 shrink-0 overflow-y-auto border-r-2 border-gray-200 bg-white p-6 space-y-5">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
             <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} />
@@ -326,7 +328,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
           )}
 
           {!lead.conversation && (
-            <div className="rounded-xl border border-teal-100 bg-teal-50 p-4">
+            <div className="rounded-xl border-2 border-teal-300 bg-teal-50 p-4">
               {!showStartConv ? (
                 <Button size="sm" variant="outline" className="w-full gap-1.5 bg-white" onClick={() => setShowStartConv(true)}>
                   <Send className="h-3.5 w-3.5" />
@@ -394,20 +396,19 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
           )}
         </aside>
 
-        <main className="flex-1 overflow-y-auto bg-gray-50/60">
+        <main className="flex-1 overflow-y-auto bg-gray-100">
           <div className="mx-auto max-w-2xl p-7">
             <div className="mb-4 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <h3 className="text-sm font-semibold text-gray-700">Atividades</h3>
-              {followOns.length > 0 && <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600">{followOns.length}</span>}
+              <Calendar className="h-4 w-4 text-gray-600" />
+              <h3 className="text-sm font-semibold text-gray-800">Atividades</h3>
+              {followOns.length > 0 && <span className="rounded-full bg-gray-300 px-1.5 py-0.5 text-xs font-medium text-gray-800">{followOns.length}</span>}
             </div>
             <div className="space-y-3">
               {!showForm && !showNoteForm && (
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="gap-1.5 border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:text-teal-800"
+                    className="gap-1.5 border-2 border-teal-700 bg-teal-700 text-white hover:bg-teal-800"
                     onClick={() => setShowForm(true)}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -415,8 +416,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="gap-1.5 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+                    className="gap-1.5 border-2 border-amber-600 bg-amber-500 text-white hover:bg-amber-600"
                     onClick={() => setShowNoteForm(true)}
                   >
                     <StickyNote className="h-3.5 w-3.5" />
@@ -426,8 +426,8 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
               )}
 
               {showNoteForm && (
-                <div className="space-y-2.5 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+                <div className="space-y-2.5 rounded-xl border-2 border-amber-400 bg-amber-50 p-4">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
                     <StickyNote className="h-3.5 w-3.5" />
                     Anotação
                   </label>
@@ -437,9 +437,9 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder="Ex: Cliente pediu orçamento por e-mail, disse que decide até sexta"
-                    className="w-full resize-none rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full resize-none rounded-lg border-2 border-amber-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500"
                   />
-                  <p className="text-xs text-amber-700/80">
+                  <p className="text-xs text-amber-900/70">
                     Registrada na hora, sem agendamento — fica no histórico junto com as outras atividades.
                   </p>
                   <div className="flex gap-2 pt-1">
@@ -457,7 +457,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
               )}
 
               {showForm && (
-                <div className="space-y-3 rounded-xl border border-teal-200 bg-teal-50/40 p-4">
+                <div className="space-y-3 rounded-xl border-2 border-teal-400 bg-teal-50 p-4">
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-gray-700">Tipo</label>
                     <div className="grid grid-cols-2 gap-2">
@@ -467,7 +467,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                           onClick={() => setFoType(value)}
                           className={cn(
                             'flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-xs font-medium transition-colors text-left',
-                            foType === value ? TYPE_SELECTED_STYLES[value] : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                            foType === value ? TYPE_SELECTED_STYLES[value] : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
                           )}
                         >
                           {TYPE_ICONS[value]}
@@ -598,7 +598,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                     <div
                       key={fo.id}
                       className={cn(
-                        'flex items-start gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 shadow-sm border-l-4 transition-colors hover:border-gray-300',
+                        'flex items-start gap-3 rounded-lg border-2 border-gray-300 bg-white px-3 py-3 shadow-sm border-l-[6px] transition-colors hover:border-gray-400',
                         style.border,
                       )}
                     >
@@ -625,7 +625,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                       <div className="flex shrink-0 items-center gap-1">
                         <button
                           onClick={() => setEditingFo(fo)}
-                          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                          className="rounded-md border border-gray-300 p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
                           title="Editar / anotar"
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -634,14 +634,14 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                           <>
                             <button
                               onClick={() => completeMutation.mutate(fo.id)}
-                              className="rounded-md p-1.5 text-gray-400 hover:bg-teal-50 hover:text-teal-600 transition-colors"
+                              className="rounded-md border border-teal-300 p-1.5 text-teal-700 hover:bg-teal-100 transition-colors"
                               title="Marcar como concluído"
                             >
                               <CheckCircle2 className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={() => cancelMutation.mutate(fo.id)}
-                              className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                              className="rounded-md border border-red-300 p-1.5 text-red-600 hover:bg-red-100 transition-colors"
                               title="Cancelar"
                             >
                               <Ban className="h-3.5 w-3.5" />

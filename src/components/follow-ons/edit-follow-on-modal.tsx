@@ -10,9 +10,9 @@ import { cn } from '@/lib/utils'
 import type { FollowOn, User } from '@/types'
 
 const STATUS_CONFIG = {
-  pending: { label: 'Pendente', className: 'bg-amber-100 text-amber-700' },
-  done: { label: 'Concluído', className: 'bg-teal-100 text-teal-700' },
-  cancelled: { label: 'Cancelado', className: 'bg-gray-100 text-gray-500' },
+  pending: { label: 'Pendente', className: 'bg-amber-200 text-amber-900 ring-1 ring-amber-400' },
+  done: { label: 'Concluído', className: 'bg-teal-200 text-teal-900 ring-1 ring-teal-400' },
+  cancelled: { label: 'Cancelado', className: 'bg-gray-200 text-gray-700 ring-1 ring-gray-400' },
 }
 
 function toDatetimeLocal(iso: string): string {

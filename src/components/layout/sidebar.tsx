@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
-import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/conversations', icon: MessageSquare, label: 'Conversas' },
+  { href: '/conversations?view=kanban', icon: Kanban, label: 'Kanban' },
   { href: '/contacts', icon: Contact, label: 'Contatos' },
   { href: '/broadcasts', icon: Megaphone, label: 'Broadcasts' },
   { href: '/broadcasts/failures', icon: AlertTriangle, label: 'Falhas de Entrega' },
@@ -45,6 +46,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, logout } = useAuthStore()
 
   function handleLogout() {
@@ -55,6 +57,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   function isActive(href: string) {
     if (href === '/sales') return pathname === '/sales'
     return pathname === href || pathname.startsWith(href + '/')
+  }
+
+  const isKanbanView = searchParams.get('view') === 'kanban'
+
+  function isNavItemActive(href: string) {
+    if (pathname !== '/conversations') return pathname === href || pathname.startsWith(href + '/')
+    // /conversations tem dois itens no menu (Conversas e Kanban) — desempata pela query string
+    if (href.includes('view=kanban')) return isKanbanView
+    return !isKanbanView
   }
 
   return (
@@ -81,7 +92,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             onClick={onClose}
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              pathname === item.href || pathname.startsWith(item.href + '/')
+              isNavItemActive(item.href)
                 ? 'bg-teal-50 text-teal-600'
                 : 'text-ink-soft hover:bg-teal-50 hover:text-teal-700',
             )}

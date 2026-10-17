@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { Suspense, useState, useRef, useEffect } from 'react'
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, MessageSquare, Plus, X, UserCircle, ChevronDown, Zap, Clock, MessageCircleWarning, LayoutList, Kanban } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
@@ -56,7 +56,16 @@ const windowFilters: { key: WindowFilter; label: string }[] = [
 ]
 
 export default function ConversationsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ConversationsPageInner />
+    </Suspense>
+  )
+}
+
+function ConversationsPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -72,10 +81,17 @@ export default function ConversationsPage() {
   const [nextId, setNextId] = useState<string | null>(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem('conversations-view') as 'list' | 'kanban' | null
-    if (saved) setView(saved)
+    // link do menu (?view=kanban) tem prioridade sobre a última visão lembrada
+    const fromUrl = searchParams.get('view')
+    if (fromUrl === 'kanban' || fromUrl === 'list') {
+      setView(fromUrl)
+    } else {
+      const saved = localStorage.getItem('conversations-view') as 'list' | 'kanban' | null
+      if (saved) setView(saved)
+    }
     const savedNext = sessionStorage.getItem('conversations-next')
     if (savedNext) setNextId(savedNext)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const userFilterRef = useRef<HTMLDivElement>(null)
   const listContainerRef = useRef<HTMLDivElement>(null)

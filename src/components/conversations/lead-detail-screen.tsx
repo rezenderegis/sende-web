@@ -97,6 +97,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   const defaultScheduledAt = toLocalDatetimeValue(new Date(Date.now() + 60 * 60000))
   const [foType, setFoType] = useState<FollowOnType>('call')
   const [foScheduledAt, setFoScheduledAt] = useState(defaultScheduledAt)
+  const [foTitle, setFoTitle] = useState('')
   const [foNote, setFoNote] = useState('')
   const [foAssignedUserId, setFoAssignedUserId] = useState('')
   const [foNumberId, setFoNumberId] = useState('')
@@ -231,6 +232,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   function resetForm() {
     setFoType('call')
     setFoScheduledAt(toLocalDatetimeValue(new Date(Date.now() + 60 * 60000)))
+    setFoTitle('')
     setFoNote('')
     setFoAssignedUserId('')
     setFoNumberId('')
@@ -243,6 +245,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
       contactId: lead.id,
       type: foType,
       scheduledAt: new Date(foScheduledAt).toISOString(),
+      ...(foTitle.trim() ? { title: foTitle.trim() } : {}),
       ...(foNote.trim() ? { note: foNote.trim() } : {}),
       ...(foAssignedUserId ? { assignedUserId: foAssignedUserId } : {}),
     }
@@ -495,13 +498,24 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-700">Nota <span className="text-gray-400">(opcional)</span></label>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-700">Título <span className="text-gray-400">(opcional)</span></label>
                     <input
                       type="text"
+                      value={foTitle}
+                      onChange={(e) => setFoTitle(e.target.value)}
+                      placeholder="Ex: Reunião de parceria"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-700">Descrição <span className="text-gray-400">(opcional)</span></label>
+                    <textarea
+                      rows={2}
                       value={foNote}
                       onChange={(e) => setFoNote(e.target.value)}
                       placeholder="Ex: Ligar depois das 18h"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-teal-500"
+                      className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-teal-500"
                     />
                   </div>
 
@@ -615,7 +629,8 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                             {fo.status === 'pending' ? 'Pendente' : fo.status === 'done' ? 'Concluído' : 'Cancelado'}
                           </span>
                         </div>
-                        <p className="mt-1.5 text-xs font-medium text-gray-900">{followOnLabel(fo)}</p>
+                        <p className="mt-1.5 text-[11px] font-medium text-gray-500">{followOnLabel(fo)}</p>
+                        {fo.title && <p className="mt-0.5 text-sm font-semibold text-gray-900">{fo.title}</p>}
                         {fo.note && <p className="mt-0.5 text-xs text-gray-600">{fo.note}</p>}
                         {fo.type === 'message' && (fo.message || fo.templateName) && (
                           <p className="mt-0.5 text-xs text-muted-foreground font-mono truncate">

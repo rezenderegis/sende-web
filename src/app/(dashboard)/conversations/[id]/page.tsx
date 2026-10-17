@@ -254,6 +254,7 @@ export default function ConversationPage() {
   const defaultScheduledAt = toLocalDatetimeValue(new Date(Date.now() + 60 * 60000))
   const [foType, setFoType] = useState<FollowOnType>('call')
   const [foScheduledAt, setFoScheduledAt] = useState(defaultScheduledAt)
+  const [foTitle, setFoTitle] = useState('')
   const [foNote, setFoNote] = useState('')
   const [foAssignedUserId, setFoAssignedUserId] = useState(user?.id ?? '')
   const [foMessage, setFoMessage] = useState('')
@@ -507,6 +508,7 @@ export default function ConversationPage() {
   function resetFollowOnForm() {
     setFoType('call')
     setFoScheduledAt(toLocalDatetimeValue(new Date(Date.now() + 60 * 60000)))
+    setFoTitle('')
     setFoNote('')
     setFoAssignedUserId(user?.id ?? '')
     setFoMessage('')
@@ -521,6 +523,7 @@ export default function ConversationPage() {
       contactId: conversation?.contactId,
       type: foType,
       scheduledAt: scheduledDate.toISOString(),
+      ...(foTitle.trim() ? { title: foTitle.trim() } : {}),
       ...(foNote.trim() ? { note: foNote.trim() } : {}),
       ...(foAssignedUserId ? { assignedUserId: foAssignedUserId } : {}),
     }
@@ -799,6 +802,7 @@ export default function ConversationPage() {
                   <div className="mt-0.5 text-blue-600 shrink-0">{TYPE_ICONS[fo.type]}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-900">{followOnLabel(fo)}</p>
+                    {fo.title && <p className="text-xs font-semibold text-gray-800 truncate">{fo.title}</p>}
                     {fo.note && <p className="text-xs text-muted-foreground truncate">{fo.note}</p>}
                     {fo.type === 'message' && (fo.message || fo.templateName) && (
                       <p className="text-xs text-muted-foreground font-mono truncate">
@@ -1090,9 +1094,21 @@ export default function ConversationPage() {
                 )}
               </div>
 
-              {/* Nota */}
+              {/* Título */}
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-700">Nota <span className="text-gray-400">(opcional)</span></label>
+                <label className="mb-1.5 block text-xs font-medium text-gray-700">Título <span className="text-gray-400">(opcional)</span></label>
+                <input
+                  type="text"
+                  value={foTitle}
+                  onChange={(e) => setFoTitle(e.target.value)}
+                  placeholder="Ex: Reunião de parceria"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Descrição */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-gray-700">Descrição <span className="text-gray-400">(opcional)</span></label>
                 <input
                   type="text"
                   value={foNote}

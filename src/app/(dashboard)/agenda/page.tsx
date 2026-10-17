@@ -139,6 +139,10 @@ function FollowOnCard({ fo, onDelete, onEdit }: {
         {formatScheduledAt(fo.scheduledAt)}
       </div>
 
+      {fo.title && (
+        <p className="text-sm font-semibold text-gray-900">{fo.title}</p>
+      )}
+
       {fo.note && (
         <p className="text-sm text-gray-600">{fo.note}</p>
       )}

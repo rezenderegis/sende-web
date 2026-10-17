@@ -35,6 +35,7 @@ export default function EditFollowOnModal({ fo, users, onClose, onDelete, onSave
 }) {
   const [type, setType] = useState<FollowOn['type']>(fo.type)
   const [scheduledAt, setScheduledAt] = useState(toDatetimeLocal(fo.scheduledAt))
+  const [title, setTitle] = useState(fo.title ?? '')
   const [note, setNote] = useState(fo.note ?? '')
   const [assignedUserId, setAssignedUserId] = useState(fo.assignedUserId ?? '')
   const [message, setMessage] = useState(fo.message ?? '')
@@ -44,6 +45,7 @@ export default function EditFollowOnModal({ fo, users, onClose, onDelete, onSave
     mutationFn: () => api.patch(`/follow-ons/${fo.id}`, {
       type,
       scheduledAt: new Date(scheduledAt).toISOString(),
+      title: title || undefined,
       note: note || undefined,
       assignedUserId: assignedUserId || undefined,
       ...(type === 'message' ? { message: message || undefined } : {}),
@@ -119,11 +121,22 @@ export default function EditFollowOnModal({ fo, users, onClose, onDelete, onSave
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-gray-700">Anotação</label>
+            <label className="mb-1.5 block text-xs font-medium text-gray-700">Título</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Reunião de parceria"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-700">Descrição</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Adicione uma anotação sobre esse follow-on..."
+              placeholder="Detalhes, contexto ou resultado dessa atividade..."
               rows={3}
               className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
             />

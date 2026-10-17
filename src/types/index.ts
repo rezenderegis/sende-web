@@ -567,6 +567,7 @@ export interface FollowOn {
   assignedUser?: User | null
   type: FollowOnType
   scheduledAt: string
+  title: string | null
   note: string | null
   message: string | null
   templateName: string | null

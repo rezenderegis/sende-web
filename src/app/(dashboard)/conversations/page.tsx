@@ -255,6 +255,34 @@ function ConversationsPageInner() {
     })
   }
 
+  // Mesmos filtros da lista, aplicados aos leads do Kanban — todo o dado já
+  // vem no /contacts/kanban (conversa mais recente embutida), então dá pra
+  // filtrar aqui sem precisar de parâmetros novos no backend.
+  const filteredKanbanLeads = kanbanLeads.filter((lead) => {
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase()
+      const matchesName = lead.name?.toLowerCase().includes(q)
+      const matchesPhone = lead.phone?.includes(debouncedSearch)
+      if (!matchesName && !matchesPhone) return false
+    }
+    if (activeTagId && !(lead.tags ?? []).some((t) => t.id === activeTagId)) return false
+    if (activeUserId && lead.conversation?.assignedUserId !== activeUserId) return false
+    if (windowFilter !== 'all') {
+      if (!lead.conversation) return false
+      const ws = getWindowStatus(lead.conversation.lastInboundAt)
+      if (windowFilter === 'open' && ws === 'closed') return false
+      if (windowFilter === 'closing' && ws !== 'closing') return false
+      if (windowFilter === 'closed' && ws !== 'closed') return false
+    }
+    if (waitingReply && !lead.conversation?.waitingReply) return false
+    if (waitingCustomerReply) {
+      const c = lead.conversation
+      const isWaitingCustomer = !!c && !c.waitingReply && !!c.lastMessageAt && c.status === 'open'
+      if (!isWaitingCustomer) return false
+    }
+    return true
+  })
+
   return (
     <div className="flex h-full flex-col">
       <div className="border-b bg-white px-6 py-4">
@@ -569,7 +597,7 @@ function ConversationsPageInner() {
 
       {view === 'kanban' && (
         <KanbanBoard
-          leads={kanbanLeads}
+          leads={filteredKanbanLeads}
           columns={kanbanColumns}
           onColumnsChange={() => qc.invalidateQueries({ queryKey: ['kanban-columns'] })}
           onLeadMove={() => qc.invalidateQueries({ queryKey: ['kanban-leads'] })}

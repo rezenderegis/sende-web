@@ -122,6 +122,7 @@ export default function UsersPage() {
     canConfigureBot: true,
     canSendBroadcast: true,
   })
+  const [newPassword, setNewPassword] = useState('')
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['users'],
@@ -151,14 +152,15 @@ export default function UsersPage() {
   })
 
   const updatePermsMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: typeof editPerms }) =>
+    mutationFn: ({ id, data }: { id: string; data: typeof editPerms & { password?: string } }) =>
       api.patch(`/users/${id}`, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['users'] })
       setEditingUser(null)
+      setNewPassword('')
       toast({ title: 'Permissões atualizadas', variant: 'success' })
     },
-    onError: () => toast({ title: 'Erro ao salvar permissões', variant: 'destructive' }),
+    onError: (err: any) => toast({ title: 'Erro ao salvar permissões', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   function handleSubmit(e: React.FormEvent) {
@@ -173,6 +175,7 @@ export default function UsersPage() {
       canConfigureBot: user.canConfigureBot ?? true,
       canSendBroadcast: user.canSendBroadcast ?? true,
     })
+    setNewPassword('')
   }
 
   function numberSummary(user: User) {
@@ -198,14 +201,29 @@ export default function UsersPage() {
               canSendBroadcast={editPerms.canSendBroadcast}
               onChange={(field, value) => setEditPerms((p) => ({ ...p, [field]: value }))}
             />
+
+            <div className="border rounded-lg p-4 bg-gray-50 mt-4 space-y-2">
+              <Label>Nova senha</Label>
+              <Input
+                type="password"
+                placeholder="Deixe em branco para não alterar"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres. Só é alterada se você preencher este campo.</p>
+            </div>
+
             <div className="flex gap-3 mt-5">
               <Button variant="outline" className="flex-1" onClick={() => setEditingUser(null)}>
                 Cancelar
               </Button>
               <Button
                 className="flex-1"
-                disabled={updatePermsMutation.isPending}
-                onClick={() => updatePermsMutation.mutate({ id: editingUser.id, data: editPerms })}
+                disabled={updatePermsMutation.isPending || (newPassword.length > 0 && newPassword.length < 6)}
+                onClick={() => updatePermsMutation.mutate({
+                  id: editingUser.id,
+                  data: newPassword.trim() ? { ...editPerms, password: newPassword.trim() } : editPerms,
+                })}
               >
                 {updatePermsMutation.isPending ? 'Salvando...' : 'Salvar'}
               </Button>

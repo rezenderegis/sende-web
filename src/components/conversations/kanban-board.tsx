@@ -15,7 +15,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Settings2 } from 'lucide-react'
+import { Plus, Settings2, XCircle } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
 import type { KanbanLead, KanbanColumn } from '@/types'
@@ -28,10 +28,19 @@ interface Props {
   columns: KanbanColumn[]
   onColumnsChange: () => void
   onLeadMove: () => void
+  lostCount?: number
 }
 
 function tint(color: string, alphaHex: string) {
   return `${color}${alphaHex}`
+}
+
+function formatCurrency(value: number): string {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+function sumDealValue(leads: KanbanLead[]): number {
+  return leads.reduce((sum, l) => sum + (l.dealValue ?? 0), 0)
 }
 
 function DroppableColumn({
@@ -46,29 +55,35 @@ function DroppableColumn({
   onAddLead: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
+  const totalValue = sumDealValue(leads)
 
   return (
     <div className="flex w-[86vw] max-w-sm shrink-0 snap-center flex-col rounded-2xl bg-white shadow-sm ring-1 ring-black/5 md:w-80 md:max-w-none">
       {/* Header da coluna */}
       <div
-        className="flex items-center gap-2 rounded-t-2xl px-4 py-3"
+        className="rounded-t-2xl px-4 py-3"
         style={{ backgroundColor: tint(column.color, '21') }}
       >
-        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: column.color }} />
-        <span className="font-semibold text-sm text-gray-800 truncate flex-1">{column.name}</span>
-        <button
-          onClick={onAddLead}
-          className="rounded-full p-1 text-gray-500 transition-colors hover:bg-white/70 hover:text-gray-800"
-          title="Adicionar lead nesta raia"
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </button>
-        <span
-          className="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold text-white"
-          style={{ backgroundColor: column.color }}
-        >
-          {leads.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: column.color }} />
+          <span className="font-semibold text-sm text-gray-800 truncate flex-1">{column.name}</span>
+          <button
+            onClick={onAddLead}
+            className="rounded-full p-1 text-gray-500 transition-colors hover:bg-white/70 hover:text-gray-800"
+            title="Adicionar lead nesta raia"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+          <span
+            className="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold text-white"
+            style={{ backgroundColor: column.color }}
+          >
+            {leads.length}
+          </span>
+        </div>
+        {totalValue > 0 && (
+          <p className="mt-1 pl-[18px] text-xs font-semibold text-gray-600">{formatCurrency(totalValue)}</p>
+        )}
       </div>
 
       {/* Cards */}
@@ -132,7 +147,7 @@ function UnassignedColumn({
   )
 }
 
-export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMove }: Props) {
+export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMove, lostCount = 0 }: Props) {
   const router = useRouter()
   const qc = useQueryClient()
   const [activeLead, setActiveLead] = useState<KanbanLead | null>(null)
@@ -204,13 +219,22 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
       {/* Toolbar do Kanban */}
       <div className="flex items-center justify-between border-b bg-white px-4 py-2 md:px-6">
         <span className="text-xs text-gray-400">{leads.length} leads</span>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
-        >
-          <Settings2 className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Gerenciar raias</span>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => router.push('/conversations/kanban/lost')}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
+          >
+            <XCircle className="h-3.5 w-3.5" />
+            Perdidos {lostCount > 0 && `(${lostCount})`}
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Gerenciar raias</span>
+          </button>
+        </div>
       </div>
 
       {/* Dica de deslizar — só no celular, some depois do primeiro scroll */}

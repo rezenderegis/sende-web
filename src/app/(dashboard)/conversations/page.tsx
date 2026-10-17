@@ -190,6 +190,12 @@ function ConversationsPageInner() {
     enabled: view === 'kanban',
   })
 
+  const { data: lostLeads = [] } = useQuery<KanbanLead[]>({
+    queryKey: ['kanban-leads-lost'],
+    queryFn: () => api.get('/contacts/kanban?status=lost').then((r) => r.data),
+    enabled: view === 'kanban',
+  })
+
   const { data: numbers } = useQuery<WhatsappNumber[]>({
     queryKey: ['whatsapp-numbers'],
     queryFn: () => api.get('/whatsapp/numbers').then((r) => r.data),
@@ -601,6 +607,7 @@ function ConversationsPageInner() {
           columns={kanbanColumns}
           onColumnsChange={() => qc.invalidateQueries({ queryKey: ['kanban-columns'] })}
           onLeadMove={() => qc.invalidateQueries({ queryKey: ['kanban-leads'] })}
+          lostCount={lostLeads.length}
         />
       )}
 

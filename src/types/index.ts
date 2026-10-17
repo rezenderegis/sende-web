@@ -80,6 +80,12 @@ export interface Contact {
   automationOptOut?: boolean
   conversationId?: string | null
   kanbanColumnId?: string | null
+  kanbanColumnChangedAt?: string | null
+  dealValue?: number | null
+  dealOwnerId?: string | null
+  dealOwner?: User | null
+  lostAt?: string | null
+  lostReason?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -87,6 +93,23 @@ export interface Contact {
 // Contato pronto pro board do Kanban: inclui a conversa mais recente (se houver).
 export interface KanbanLead extends Contact {
   conversation: Conversation | null
+}
+
+export interface FunnelColumn {
+  columnId: string
+  columnName: string
+  columnColor: string
+  activeCount: number
+  enteredCount: number
+}
+
+export interface FunnelReport {
+  days: number
+  activePipelineCount: number
+  lostTotal: number
+  conversionRate: number | null
+  columns: FunnelColumn[]
+  topLostReasons: { reason: string; count: number }[]
 }
 
 export interface Tag {

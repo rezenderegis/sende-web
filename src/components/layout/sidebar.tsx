@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban } from 'lucide-react'
+import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ const salesItems = [
   { href: '/settings/products', icon: Package, label: 'Produtos' },
   { href: '/automations', icon: Zap, label: 'Automações' },
   { href: '/agenda', icon: Calendar, label: 'Agenda' },
+  { href: '/reports/funnel', icon: TrendingUp, label: 'Funil de Conversão' },
 ]
 
 const settingsItems = [

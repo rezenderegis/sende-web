@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, MessageSquare, Calendar, Plus, Phone, Users as UsersIcon,
-  Send, CheckCircle2, Ban, Pencil, StickyNote,
+  Send, CheckCircle2, Ban, Pencil, StickyNote, XCircle, RotateCcw,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
@@ -87,12 +87,20 @@ interface Props {
 export default function LeadDetailScreen({ lead, onBack }: Props) {
   const router = useRouter()
   const qc = useQueryClient()
-  const [editForm, setEditForm] = useState({ name: lead.name || '', email: lead.email || '', notes: lead.notes || '' })
+  const [editForm, setEditForm] = useState({
+    name: lead.name || '',
+    email: lead.email || '',
+    notes: lead.notes || '',
+    dealValue: lead.dealValue != null ? String(lead.dealValue) : '',
+    dealOwnerId: lead.dealOwnerId || '',
+  })
   const [dirty, setDirty] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [showNoteForm, setShowNoteForm] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [editingFo, setEditingFo] = useState<FollowOn | null>(null)
+  const [showLostForm, setShowLostForm] = useState(false)
+  const [lostReason, setLostReason] = useState('')
 
   const defaultScheduledAt = toLocalDatetimeValue(new Date(Date.now() + 60 * 60000))
   const [foType, setFoType] = useState<FollowOnType>('call')
@@ -109,7 +117,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   const [convTemplateKey, setConvTemplateKey] = useState('')
   const [convTemplateVars, setConvTemplateVars] = useState<string[]>([])
 
-  function setField(field: 'name' | 'email' | 'notes', value: string) {
+  function setField(field: 'name' | 'email' | 'notes' | 'dealValue' | 'dealOwnerId', value: string) {
     setEditForm((f) => ({ ...f, [field]: value }))
     setDirty(true)
   }
@@ -174,13 +182,38 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
       name: editForm.name.trim() || undefined,
       email: editForm.email.trim() || null,
       notes: editForm.notes.trim() || null,
+      dealValue: editForm.dealValue.trim() ? Number(editForm.dealValue.replace(',', '.')) : null,
+      dealOwnerId: editForm.dealOwnerId || null,
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['kanban-leads'] })
+      qc.invalidateQueries({ queryKey: ['kanban-leads-lost'] })
       setDirty(false)
       toast({ title: 'Lead atualizado', variant: 'success' })
     },
     onError: (err: any) => toast({ title: 'Erro ao atualizar', description: err.response?.data?.message, variant: 'destructive' }),
+  })
+
+  const markLostMutation = useMutation({
+    mutationFn: () => api.patch(`/contacts/${lead.id}/lost`, { reason: lostReason.trim() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
+      qc.invalidateQueries({ queryKey: ['kanban-leads-lost'] })
+      setShowLostForm(false)
+      toast({ title: 'Lead marcado como perdido', variant: 'success' })
+      onBack()
+    },
+    onError: (err: any) => toast({ title: 'Erro ao marcar como perdido', description: err.response?.data?.message, variant: 'destructive' }),
+  })
+
+  const reopenMutation = useMutation({
+    mutationFn: () => api.patch(`/contacts/${lead.id}/reopen`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
+      qc.invalidateQueries({ queryKey: ['kanban-leads-lost'] })
+      toast({ title: 'Lead reaberto', variant: 'success' })
+    },
+    onError: (err: any) => toast({ title: 'Erro ao reabrir', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   const createFollowOnMutation = useMutation({
@@ -294,6 +327,29 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
           atividades embaixo — porque lado a lado não cabe numa tela estreita. */}
       <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
         <aside className="w-full shrink-0 border-b-2 border-gray-200 bg-white p-5 space-y-5 md:h-full md:w-80 md:overflow-y-auto md:border-b-0 md:border-r-2 md:p-6">
+          {lead.lostAt && (
+            <div className="rounded-xl border-2 border-red-300 bg-red-50 p-4 space-y-2">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-red-800">
+                <XCircle className="h-3.5 w-3.5" />
+                Lead perdido
+              </p>
+              {lead.lostReason && <p className="text-sm text-red-900">{lead.lostReason}</p>}
+              <p className="text-xs text-red-700/70">
+                {new Date(lead.lostAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full gap-1.5 bg-white"
+                disabled={reopenMutation.isPending}
+                onClick={() => reopenMutation.mutate()}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {reopenMutation.isPending ? 'Reabrindo...' : 'Reabrir lead'}
+              </Button>
+            </div>
+          )}
+
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
             <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} />
@@ -310,6 +366,31 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
               onChange={(e) => setField('notes', e.target.value)}
               className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600 resize-none"
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Valor do negócio</label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              placeholder="R$ 0,00"
+              value={editForm.dealValue}
+              onChange={(e) => setField('dealValue', e.target.value.replace(/[^\d.,]/g, ''))}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Dono do negócio</label>
+            <Select value={editForm.dealOwnerId || '__none__'} onValueChange={(v) => setField('dealOwnerId', v === '__none__' ? '' : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Ninguém" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Ninguém</SelectItem>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {(lead.tags ?? []).length > 0 && (
@@ -392,6 +473,43 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                       onClick={() => startConversationMutation.mutate()}
                     >
                       {startConversationMutation.isPending ? 'Enviando...' : 'Enviar e iniciar'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!lead.lostAt && (
+            <div>
+              {!showLostForm ? (
+                <button
+                  onClick={() => setShowLostForm(true)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-gray-200 py-2.5 text-xs font-medium text-gray-500 hover:border-red-300 hover:text-red-600 transition-colors"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  Marcar como perdido
+                </button>
+              ) : (
+                <div className="space-y-2 rounded-xl border-2 border-red-200 bg-red-50 p-4">
+                  <p className="text-xs font-semibold text-red-800">Por que esse negócio foi perdido?</p>
+                  <textarea
+                    autoFocus
+                    rows={2}
+                    value={lostReason}
+                    onChange={(e) => setLostReason(e.target.value)}
+                    placeholder="Ex: Preço alto, escolheu concorrente, sumiu..."
+                    className="w-full resize-none rounded-lg border-2 border-red-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-400"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1 bg-white" onClick={() => { setShowLostForm(false); setLostReason('') }}>Cancelar</Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                      disabled={!lostReason.trim() || markLostMutation.isPending}
+                      onClick={() => markLostMutation.mutate()}
+                    >
+                      {markLostMutation.isPending ? 'Salvando...' : 'Confirmar perda'}
                     </Button>
                   </div>
                 </div>

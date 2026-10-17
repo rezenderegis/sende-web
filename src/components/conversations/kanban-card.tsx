@@ -2,9 +2,21 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Clock, Zap, MessageCircleOff } from 'lucide-react'
+import { Clock, Zap, MessageCircleOff, AlertTriangle, Briefcase } from 'lucide-react'
 import { cn, formatPhone, timeAgo } from '@/lib/utils'
 import type { KanbanLead } from '@/types'
+
+const STALE_DAYS = 7
+
+function formatCurrency(value: number): string {
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+function daysStale(changedAt: string | null | undefined): number | null {
+  if (!changedAt) return null
+  const days = Math.floor((Date.now() - new Date(changedAt).getTime()) / (24 * 3600000))
+  return days >= STALE_DAYS ? days : null
+}
 
 function getWindowStatus(lastInboundAt: string | null) {
   if (!lastInboundAt) return 'closed'
@@ -37,6 +49,7 @@ export default function KanbanCard({ lead, onOpen }: Props) {
   const conv = lead.conversation
   const ws = conv ? getWindowStatus(conv.lastInboundAt) : null
   const wLabel = conv ? getWindowLabel(conv.lastInboundAt) : null
+  const stale = daysStale(lead.kanbanColumnChangedAt)
 
   return (
     <div
@@ -60,8 +73,19 @@ export default function KanbanCard({ lead, onOpen }: Props) {
         {conv?.whatsappNumber?.phoneNumber ?? formatPhone(lead.phone || '')}
       </p>
 
+      {/* Valor do negócio */}
+      {lead.dealValue != null && (
+        <p className="mt-1 text-sm font-bold text-teal-700">{formatCurrency(lead.dealValue)}</p>
+      )}
+
       {/* Badges */}
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {stale !== null && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-medium text-orange-800" title="Sem movimentação há um tempo">
+            <AlertTriangle className="h-3 w-3" />
+            Parado há {stale}d
+          </span>
+        )}
         {conv ? (
           <>
             {/* Janela */}
@@ -113,17 +137,27 @@ export default function KanbanCard({ lead, onOpen }: Props) {
         ))}
       </div>
 
-      {/* Rodapé: atendente + tempo */}
-      <div className="mt-2 flex items-center justify-between">
-        {conv?.assignedUser ? (
-          <span className="flex items-center gap-1 text-[11px] text-gray-400">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[9px] font-semibold text-gray-600">
-              {conv.assignedUser.name.charAt(0).toUpperCase()}
-            </div>
-            {conv.assignedUser.name.split(' ')[0]}
-          </span>
-        ) : <span />}
-        <span className="text-[11px] text-gray-400">
+      {/* Rodapé: dono do negócio + atendente + tempo */}
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {lead.dealOwner && (
+            <span className="flex items-center gap-1 text-[11px] text-gray-500" title={`Dono do negócio: ${lead.dealOwner.name}`}>
+              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-teal-100 text-[9px] font-semibold text-teal-700">
+                <Briefcase className="h-2.5 w-2.5" />
+              </div>
+              {lead.dealOwner.name.split(' ')[0]}
+            </span>
+          )}
+          {conv?.assignedUser && (
+            <span className="flex items-center gap-1 text-[11px] text-gray-400" title={`Atendendo: ${conv.assignedUser.name}`}>
+              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-[9px] font-semibold text-gray-600">
+                {conv.assignedUser.name.charAt(0).toUpperCase()}
+              </div>
+              {conv.assignedUser.name.split(' ')[0]}
+            </span>
+          )}
+        </div>
+        <span className="shrink-0 text-[11px] text-gray-400">
           {timeAgo(conv?.lastMessageAt || lead.updatedAt)}
         </span>
       </div>

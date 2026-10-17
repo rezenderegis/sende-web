@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { X, Plus, Trash2, GripVertical } from 'lucide-react'
 import api from '@/lib/api'
+import { toast } from '@/hooks/use-toast'
 import type { KanbanColumn } from '@/types'
 
 const PRESET_COLORS = [
@@ -33,16 +34,19 @@ export default function KanbanSettings({ columns, onClose, onChange }: Props) {
   const createMutation = useMutation({
     mutationFn: () => api.post('/kanban-columns', { name: newName, color: newColor }),
     onSuccess: () => { invalidate(); setNewName('') },
+    onError: (err: any) => toast({ title: 'Erro ao criar raia', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ id, name, color }: { id: string; name?: string; color?: string }) =>
       api.patch(`/kanban-columns/${id}`, { name, color }),
     onSuccess: () => { invalidate(); setEditingId(null) },
+    onError: (err: any) => toast({ title: 'Erro ao atualizar raia', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/kanban-columns/${id}`),
+    onError: (err: any) => toast({ title: 'Erro ao excluir raia', description: err.response?.data?.message, variant: 'destructive' }),
     onSuccess: invalidate,
   })
 

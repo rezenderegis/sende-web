@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import { formatPhone } from '@/lib/utils'
 import EditFollowOnModal from '@/components/follow-ons/edit-follow-on-modal'
-import type { ActivityType, KanbanLead, FollowOn, FollowOnType, User, WhatsappNumber, WhatsappTemplate } from '@/types'
+import type { ActivityType, Deal, FollowOn, FollowOnType, User, WhatsappNumber, WhatsappTemplate } from '@/types'
 
 const TYPE_LABELS: Record<string, string> = {
   meeting: 'Reunião',
@@ -76,23 +76,25 @@ function toLocalDatetimeValue(date: Date): string {
 }
 
 interface Props {
-  lead: KanbanLead
+  deal: Deal
   onBack: () => void
 }
 
 /**
- * Tela cheia de detalhe do lead — deixou de ser popup porque essa tela vai
+ * Tela cheia de detalhe do negócio — deixou de ser popup porque essa tela vai
  * crescer com cada vez mais dados (histórico, notas, campos de CRM).
  */
-export default function LeadDetailScreen({ lead, onBack }: Props) {
+export default function LeadDetailScreen({ deal, onBack }: Props) {
   const router = useRouter()
   const qc = useQueryClient()
+  const contact = deal.contact
   const [editForm, setEditForm] = useState({
-    name: lead.name || '',
-    email: lead.email || '',
-    notes: lead.notes || '',
-    dealValue: lead.dealValue != null ? String(lead.dealValue) : '',
-    dealOwnerId: lead.dealOwnerId || '',
+    title: deal.title || '',
+    name: contact.name || '',
+    email: contact.email || '',
+    notes: contact.notes || '',
+    dealValue: deal.dealValue != null ? String(deal.dealValue) : '',
+    dealOwnerId: deal.dealOwnerId || '',
   })
   const [dirty, setDirty] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -118,17 +120,17 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   const [convTemplateKey, setConvTemplateKey] = useState('')
   const [convTemplateVars, setConvTemplateVars] = useState<string[]>([])
 
-  function setField(field: 'name' | 'email' | 'notes' | 'dealValue' | 'dealOwnerId', value: string) {
+  function setField(field: 'title' | 'name' | 'email' | 'notes' | 'dealValue' | 'dealOwnerId', value: string) {
     setEditForm((f) => ({ ...f, [field]: value }))
     setDirty(true)
   }
 
-  const followOnsKey = ['follow-ons-contact', lead.id]
+  const followOnsKey = ['follow-ons-contact', deal.contactId]
   const invalidateFollowOns = () => qc.invalidateQueries({ queryKey: followOnsKey })
 
   const { data: followOns = [], isLoading } = useQuery<FollowOn[]>({
     queryKey: followOnsKey,
-    queryFn: () => api.get(`/follow-ons/contact/${lead.id}`).then((r) => r.data),
+    queryFn: () => api.get(`/follow-ons/contact/${deal.contactId}`).then((r) => r.data),
   })
 
   const { data: users = [] } = useQuery<User[]>({
@@ -167,7 +169,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
       const [templateName, templateLanguage] = convTemplateKey.split('|')
       return api.post('/whatsapp/messages/send', {
         whatsappNumberId: convNumberId,
-        to: lead.phone,
+        to: contact.phone,
         type: 'template',
         templateName,
         templateLanguage,
@@ -175,7 +177,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
       })
     },
     onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban'] })
       const conversationId = res.data?.conversationId
       toast({ title: 'Conversa iniciada', variant: 'success' })
       if (conversationId) router.push(`/conversations/${conversationId}`)
@@ -184,40 +186,45 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   })
 
   const updateMutation = useMutation({
-    mutationFn: () => api.patch(`/contacts/${lead.id}`, {
-      name: editForm.name.trim() || undefined,
-      email: editForm.email.trim() || null,
-      notes: editForm.notes.trim() || null,
-      dealValue: editForm.dealValue.trim() ? Number(editForm.dealValue.replace(',', '.')) : null,
-      dealOwnerId: editForm.dealOwnerId || null,
-    }),
+    mutationFn: async () => {
+      await api.patch(`/contacts/${deal.contactId}`, {
+        name: editForm.name.trim() || undefined,
+        email: editForm.email.trim() || null,
+        notes: editForm.notes.trim() || null,
+      })
+      await api.patch(`/deals/${deal.id}`, {
+        title: editForm.title.trim() || undefined,
+        dealValue: editForm.dealValue.trim() ? Number(editForm.dealValue.replace(',', '.')) : null,
+        dealOwnerId: editForm.dealOwnerId || null,
+      })
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
-      qc.invalidateQueries({ queryKey: ['kanban-leads-lost'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban-lost'] })
       setDirty(false)
-      toast({ title: 'Lead atualizado', variant: 'success' })
+      toast({ title: 'Negócio atualizado', variant: 'success' })
     },
     onError: (err: any) => toast({ title: 'Erro ao atualizar', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   const markLostMutation = useMutation({
-    mutationFn: () => api.patch(`/contacts/${lead.id}/lost`, { reason: lostReason.trim() }),
+    mutationFn: () => api.patch(`/deals/${deal.id}/lost`, { reason: lostReason.trim() }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
-      qc.invalidateQueries({ queryKey: ['kanban-leads-lost'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban-lost'] })
       setShowLostForm(false)
-      toast({ title: 'Lead marcado como perdido', variant: 'success' })
+      toast({ title: 'Negócio marcado como perdido', variant: 'success' })
       onBack()
     },
     onError: (err: any) => toast({ title: 'Erro ao marcar como perdido', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   const reopenMutation = useMutation({
-    mutationFn: () => api.patch(`/contacts/${lead.id}/reopen`),
+    mutationFn: () => api.patch(`/deals/${deal.id}/reopen`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
-      qc.invalidateQueries({ queryKey: ['kanban-leads-lost'] })
-      toast({ title: 'Lead reaberto', variant: 'success' })
+      qc.invalidateQueries({ queryKey: ['deals-kanban'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban-lost'] })
+      toast({ title: 'Negócio reaberto', variant: 'success' })
     },
     onError: (err: any) => toast({ title: 'Erro ao reabrir', description: err.response?.data?.message, variant: 'destructive' }),
   })
@@ -234,7 +241,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   })
 
   const createNoteMutation = useMutation({
-    mutationFn: () => api.post('/follow-ons', { contactId: lead.id, type: 'note', note: noteText.trim() }),
+    mutationFn: () => api.post('/follow-ons', { contactId: deal.contactId, type: 'note', note: noteText.trim() }),
     onSuccess: () => {
       invalidateFollowOns()
       setShowNoteForm(false)
@@ -282,7 +289,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
 
   function handleCreate() {
     const dto: any = {
-      contactId: lead.id,
+      contactId: deal.contactId,
       type: foType,
       scheduledAt: new Date(foScheduledAt).toISOString(),
       ...(foTitle.trim() ? { title: foTitle.trim() } : {}),
@@ -311,18 +318,18 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-700 text-base font-semibold text-white md:h-14 md:w-14 md:text-lg">
-            {lead.name?.charAt(0).toUpperCase() || '?'}
+            {deal.title?.charAt(0).toUpperCase() || '?'}
           </div>
           <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold text-teal-900 md:text-xl">{lead.name}</h2>
-            <p className="text-xs text-gray-600 md:text-sm">{formatPhone(lead.phone)}</p>
+            <h2 className="truncate text-base font-semibold text-teal-900 md:text-xl">{deal.title}</h2>
+            <p className="text-xs text-gray-600 md:text-sm">{formatPhone(contact.phone)}</p>
           </div>
         </div>
-        {lead.conversation && (
+        {deal.conversation && (
           <Button
             size="sm"
             className="shrink-0 gap-1.5 bg-teal-700 text-white hover:bg-teal-800"
-            onClick={() => router.push(`/conversations/${lead.conversation!.id}`)}
+            onClick={() => router.push(`/conversations/${deal.conversation!.id}`)}
           >
             <MessageSquare className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Conversa</span>
@@ -335,15 +342,15 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
           atividades embaixo — porque lado a lado não cabe numa tela estreita. */}
       <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
         <aside className="w-full shrink-0 border-b-2 border-gray-200 bg-white p-5 space-y-5 md:h-full md:w-80 md:overflow-y-auto md:border-b-0 md:border-r-2 md:p-6">
-          {lead.lostAt && (
+          {deal.lostAt && (
             <div className="rounded-xl border-2 border-red-300 bg-red-50 p-4 space-y-2">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-red-800">
                 <XCircle className="h-3.5 w-3.5" />
-                Lead perdido
+                Negócio perdido
               </p>
-              {lead.lostReason && <p className="text-sm text-red-900">{lead.lostReason}</p>}
+              {deal.lostReason && <p className="text-sm text-red-900">{deal.lostReason}</p>}
               <p className="text-xs text-red-700/70">
-                {new Date(lead.lostAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                {new Date(deal.lostAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
               </p>
               <Button
                 size="sm"
@@ -353,13 +360,17 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                 onClick={() => reopenMutation.mutate()}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                {reopenMutation.isPending ? 'Reabrindo...' : 'Reabrir lead'}
+                {reopenMutation.isPending ? 'Reabrindo...' : 'Reabrir negócio'}
               </Button>
             </div>
           )}
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">Nome</label>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Título do negócio</label>
+            <Input value={editForm.title} onChange={(e) => setField('title', e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">Nome do contato</label>
             <Input value={editForm.name} onChange={(e) => setField('name', e.target.value)} />
           </div>
           <div>
@@ -401,11 +412,11 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
             </Select>
           </div>
 
-          {(lead.tags ?? []).length > 0 && (
+          {(contact.tags ?? []).length > 0 && (
             <div>
               <p className="mb-1.5 text-xs font-medium text-gray-700">Tags</p>
               <div className="flex flex-wrap gap-1.5">
-                {lead.tags!.map((tag) => (
+                {contact.tags!.map((tag) => (
                   <span key={tag.id} className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: tag.color }}>
                     {tag.name}
                   </span>
@@ -420,7 +431,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
             </Button>
           )}
 
-          {!lead.conversation && (
+          {!deal.conversation && (
             <div className="rounded-xl border-2 border-teal-300 bg-teal-50 p-4">
               {!showStartConv ? (
                 <Button size="sm" variant="outline" className="w-full gap-1.5 bg-white" onClick={() => setShowStartConv(true)}>
@@ -488,7 +499,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
             </div>
           )}
 
-          {!lead.lostAt && (
+          {!deal.lostAt && (
             <div>
               {!showLostForm ? (
                 <button

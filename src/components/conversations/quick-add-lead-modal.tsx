@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { X, Plus, Search, UserCheck, AlertTriangle } from 'lucide-react'
+import { X, Plus, Search, AlertTriangle } from 'lucide-react'
 import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -35,14 +35,16 @@ export default function QuickAddLeadModal({ kanbanColumnId, onClose }: Props) {
       .slice(0, 30)
   }, [allContacts, search])
 
-  const assignMutation = useMutation({
-    mutationFn: (contactId: string) => api.patch(`/contacts/${contactId}`, { kanbanColumnId }),
+  // Cria um negócio novo pra um contato já existente — não move/reaproveita
+  // nenhum negócio antigo, já que a mesma pessoa pode ter vários ao mesmo tempo.
+  const createDealMutation = useMutation({
+    mutationFn: (contactId: string) => api.post('/deals', { contactId, kanbanColumnId: kanbanColumnId ?? undefined }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
-      toast({ title: 'Contato colocado no quadro', variant: 'success' })
+      qc.invalidateQueries({ queryKey: ['deals-kanban'] })
+      toast({ title: 'Negócio criado', variant: 'success' })
       onClose()
     },
-    onError: (err: any) => toast({ title: 'Erro ao colocar no quadro', description: err.response?.data?.message, variant: 'destructive' }),
+    onError: (err: any) => toast({ title: 'Erro ao criar negócio', description: err.response?.data?.message, variant: 'destructive' }),
   })
 
   // --- aba "Novo contato" ---
@@ -69,40 +71,51 @@ export default function QuickAddLeadModal({ kanbanColumnId, onClose }: Props) {
     return () => clearTimeout(t)
   }, [normalizedPhone])
 
+  // Telefone já cadastrado não bloqueia mais — só cria o negócio pro contato
+  // que já existe, em vez de tentar (e falhar) criar um contato duplicado.
   const createMutation = useMutation({
-    mutationFn: () => api.post('/contacts', {
-      name: name.trim() || undefined,
-      phone: normalizedPhone,
-      notes: notes.trim() || undefined,
-      kanbanColumnId: kanbanColumnId ?? undefined,
-    }),
+    mutationFn: async () => {
+      let contactId = duplicate?.id
+      if (!contactId) {
+        try {
+          const res = await api.post('/contacts', {
+            name: name.trim() || undefined,
+            phone: normalizedPhone,
+            notes: notes.trim() || undefined,
+          })
+          contactId = res.data.id
+        } catch (err: any) {
+          if (err.response?.status === 409 && err.response?.data?.contactId) {
+            contactId = err.response.data.contactId
+          } else {
+            throw err
+          }
+        }
+      }
+      return api.post('/deals', { contactId, kanbanColumnId: kanbanColumnId ?? undefined })
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban'] })
       qc.invalidateQueries({ queryKey: ['contacts'] })
-      toast({ title: 'Lead adicionado ao quadro', variant: 'success' })
+      toast({ title: 'Negócio adicionado ao quadro', variant: 'success' })
       onClose()
     },
     onError: (err: any) => {
-      if (err.response?.status === 409 && err.response?.data?.contactId) {
-        setDuplicate({ id: err.response.data.contactId } as Contact)
-        toast({ title: 'Esse telefone já está cadastrado', description: 'Use o contato existente em vez de criar um novo.', variant: 'destructive' })
-        return
-      }
       toast({
-        title: 'Erro ao adicionar lead',
+        title: 'Erro ao adicionar negócio',
         description: err.response?.data?.message || 'Verifique os dados e tente novamente.',
         variant: 'destructive',
       })
     },
   })
 
-  const validNew = normalizedPhone.length >= 10 && !duplicate
+  const validNew = normalizedPhone.length >= 10
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-lg rounded-2xl border bg-white shadow-xl p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-teal-900">Adicionar lead ao quadro</h2>
+          <h2 className="text-base font-semibold text-teal-900">Adicionar negócio ao quadro</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors">
             <X className="h-4 w-4" />
           </button>
@@ -149,17 +162,14 @@ export default function QuickAddLeadModal({ kanbanColumnId, onClose }: Props) {
               {filteredContacts.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => assignMutation.mutate(c.id)}
-                  disabled={assignMutation.isPending}
+                  onClick={() => createDealMutation.mutate(c.id)}
+                  disabled={createDealMutation.isPending}
                   className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm hover:bg-teal-50 disabled:opacity-50 border-b last:border-b-0"
                 >
                   <span>
                     <span className="block font-medium text-gray-900">{c.name}</span>
                     <span className="block text-xs text-muted-foreground">{formatPhone(c.phone)}</span>
                   </span>
-                  {c.kanbanColumnId === kanbanColumnId && kanbanColumnId && (
-                    <span className="shrink-0 text-xs text-teal-600">já está aqui</span>
-                  )}
                 </button>
               ))}
             </div>
@@ -181,14 +191,8 @@ export default function QuickAddLeadModal({ kanbanColumnId, onClose }: Props) {
                   <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                     <div className="flex-1 text-xs text-amber-800">
-                      Já existe um contato com esse telefone{duplicate.name ? ` (${duplicate.name})` : ''}.
-                      <button
-                        onClick={() => assignMutation.mutate(duplicate.id)}
-                        className="mt-1 flex items-center gap-1 font-semibold text-amber-900 hover:underline"
-                      >
-                        <UserCheck className="h-3.5 w-3.5" />
-                        Usar esse contato
-                      </button>
+                      Já existe um contato com esse telefone{duplicate.name ? ` (${duplicate.name})` : ''} — ao
+                      adicionar, cria um negócio novo pra essa pessoa.
                     </div>
                   </div>
                 )}
@@ -199,6 +203,7 @@ export default function QuickAddLeadModal({ kanbanColumnId, onClose }: Props) {
                   placeholder="João Silva"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  disabled={!!duplicate}
                 />
               </div>
               <div>
@@ -207,6 +212,7 @@ export default function QuickAddLeadModal({ kanbanColumnId, onClose }: Props) {
                   placeholder="Observações sobre o lead"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
+                  disabled={!!duplicate}
                 />
               </div>
             </div>

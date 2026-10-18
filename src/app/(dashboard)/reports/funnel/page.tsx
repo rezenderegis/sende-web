@@ -41,7 +41,7 @@ export default function FunnelReportPage() {
 
   const { data: report, isLoading } = useQuery<FunnelReport>({
     queryKey: ['funnel-report', days],
-    queryFn: () => api.get(`/contacts/funnel?days=${days}`).then((r) => r.data),
+    queryFn: () => api.get(`/deals/funnel?days=${days}`).then((r) => r.data),
     enabled: isManager,
   })
 

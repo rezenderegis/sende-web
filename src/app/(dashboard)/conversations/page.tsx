@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { timeAgo, formatPhone, cn } from '@/lib/utils'
-import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User, KanbanColumn, KanbanLead } from '@/types'
+import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User, KanbanColumn, Deal } from '@/types'
 import KanbanBoard from '@/components/conversations/kanban-board'
 
 type WindowFilter = 'all' | 'open' | 'closing' | 'closed'
@@ -184,15 +184,15 @@ function ConversationsPageInner() {
     queryFn: () => api.get('/kanban-columns').then((r) => r.data),
   })
 
-  const { data: kanbanLeads = [] } = useQuery<KanbanLead[]>({
-    queryKey: ['kanban-leads'],
-    queryFn: () => api.get('/contacts/kanban').then((r) => r.data),
+  const { data: kanbanDeals = [] } = useQuery<Deal[]>({
+    queryKey: ['deals-kanban'],
+    queryFn: () => api.get('/deals/kanban').then((r) => r.data),
     enabled: view === 'kanban',
   })
 
-  const { data: lostLeads = [] } = useQuery<KanbanLead[]>({
-    queryKey: ['kanban-leads-lost'],
-    queryFn: () => api.get('/contacts/kanban?status=lost').then((r) => r.data),
+  const { data: lostDeals = [] } = useQuery<Deal[]>({
+    queryKey: ['deals-kanban-lost'],
+    queryFn: () => api.get('/deals/kanban?status=lost').then((r) => r.data),
     enabled: view === 'kanban',
   })
 
@@ -261,28 +261,28 @@ function ConversationsPageInner() {
     })
   }
 
-  // Mesmos filtros da lista, aplicados aos leads do Kanban — todo o dado já
-  // vem no /contacts/kanban (conversa mais recente embutida), então dá pra
-  // filtrar aqui sem precisar de parâmetros novos no backend.
-  const filteredKanbanLeads = kanbanLeads.filter((lead) => {
+  // Mesmos filtros da lista, aplicados aos negócios do Kanban — todo o dado já
+  // vem no /deals/kanban (contato + conversa mais recente embutidos), então dá
+  // pra filtrar aqui sem precisar de parâmetros novos no backend.
+  const filteredKanbanDeals = kanbanDeals.filter((deal) => {
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase()
-      const matchesName = lead.name?.toLowerCase().includes(q)
-      const matchesPhone = lead.phone?.includes(debouncedSearch)
+      const matchesName = deal.contact.name?.toLowerCase().includes(q)
+      const matchesPhone = deal.contact.phone?.includes(debouncedSearch)
       if (!matchesName && !matchesPhone) return false
     }
-    if (activeTagId && !(lead.tags ?? []).some((t) => t.id === activeTagId)) return false
-    if (activeUserId && lead.conversation?.assignedUserId !== activeUserId) return false
+    if (activeTagId && !(deal.contact.tags ?? []).some((t) => t.id === activeTagId)) return false
+    if (activeUserId && deal.conversation?.assignedUserId !== activeUserId) return false
     if (windowFilter !== 'all') {
-      if (!lead.conversation) return false
-      const ws = getWindowStatus(lead.conversation.lastInboundAt)
+      if (!deal.conversation) return false
+      const ws = getWindowStatus(deal.conversation.lastInboundAt)
       if (windowFilter === 'open' && ws === 'closed') return false
       if (windowFilter === 'closing' && ws !== 'closing') return false
       if (windowFilter === 'closed' && ws !== 'closed') return false
     }
-    if (waitingReply && !lead.conversation?.waitingReply) return false
+    if (waitingReply && !deal.conversation?.waitingReply) return false
     if (waitingCustomerReply) {
-      const c = lead.conversation
+      const c = deal.conversation
       const isWaitingCustomer = !!c && !c.waitingReply && !!c.lastMessageAt && c.status === 'open'
       if (!isWaitingCustomer) return false
     }
@@ -603,11 +603,11 @@ function ConversationsPageInner() {
 
       {view === 'kanban' && (
         <KanbanBoard
-          leads={filteredKanbanLeads}
+          deals={filteredKanbanDeals}
           columns={kanbanColumns}
           onColumnsChange={() => qc.invalidateQueries({ queryKey: ['kanban-columns'] })}
-          onLeadMove={() => qc.invalidateQueries({ queryKey: ['kanban-leads'] })}
-          lostCount={lostLeads.length}
+          onDealMove={() => qc.invalidateQueries({ queryKey: ['deals-kanban'] })}
+          lostCount={lostDeals.length}
         />
       )}
 

@@ -12,7 +12,7 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { formatPhone, formatDate, cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { ProductPicker } from '@/components/sales/product-picker'
-import type { Broadcast, Contact, ContactProductSetting, KanbanColumn, Product, Sale, Tag } from '@/types'
+import type { Broadcast, Contact, ContactProductSetting, Product, Sale, Tag } from '@/types'
 
 const COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
@@ -387,15 +387,9 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
   })
   const [dirty, setDirty] = useState(false)
   const [automationOptOut, setAutomationOptOut] = useState(contact.automationOptOut ?? false)
-  const [kanbanColumnId, setKanbanColumnId] = useState(contact.kanbanColumnId ?? '')
   const [showStartConversation, setShowStartConversation] = useState(false)
   const [convForm, setConvForm] = useState({ whatsappNumberId: '', templateName: '', templateLanguage: '' })
   const [convTemplateVars, setConvTemplateVars] = useState<string[]>([])
-
-  const { data: kanbanColumns = [] } = useQuery<KanbanColumn[]>({
-    queryKey: ['kanban-columns'],
-    queryFn: () => api.get('/kanban-columns').then((r) => r.data),
-  })
 
   const { data: whatsappNumbers = [] } = useQuery<any[]>({
     queryKey: ['whatsapp-numbers'],
@@ -488,17 +482,6 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
     }),
   })
 
-  const kanbanMutation = useMutation({
-    mutationFn: (value: string) => api.patch(`/contacts/${contact.id}`, { kanbanColumnId: value || null }),
-    onSuccess: (_, value) => {
-      setKanbanColumnId(value)
-      qc.invalidateQueries({ queryKey: ['contacts'] })
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
-      toast({ title: value ? 'Contato colocado no quadro' : 'Contato removido do quadro', variant: 'success' })
-    },
-    onError: (err: any) => toast({ title: 'Erro ao mover no quadro', description: err.response?.data?.message, variant: 'destructive' }),
-  })
-
   const startConversationMutation = useMutation({
     mutationFn: () => api.post('/whatsapp/messages/send', {
       whatsappNumberId: convForm.whatsappNumberId,
@@ -510,7 +493,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
     }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['contacts'] })
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban'] })
       const conversationId = res.data?.conversationId
       toast({ title: 'Conversa iniciada', variant: 'success' })
       if (conversationId) router.push(`/conversations/${conversationId}`)
@@ -657,21 +640,6 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                 <div>
                   <label className="mb-1 block text-xs font-medium text-gray-700">Empresa</label>
                   <Input value={editForm.companyName} onChange={(e) => setField('companyName', e.target.value)} placeholder="Nome da empresa" />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-700">Raia do Kanban</label>
-                  <select
-                    value={kanbanColumnId}
-                    onChange={(e) => kanbanMutation.mutate(e.target.value)}
-                    disabled={kanbanMutation.isPending}
-                    className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
-                  >
-                    <option value="">Fora do quadro</option>
-                    {kanbanColumns.map((col) => (
-                      <option key={col.id} value={col.id}>{col.name}</option>
-                    ))}
-                  </select>
                 </div>
 
                 <div>
@@ -1077,12 +1045,6 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient()
   const [form, setForm] = useState({ name: '', phone: '', email: '', companyName: '', notes: '', birthDate: '' })
   const [tags, setTags] = useState<Tag[]>([])
-  const [kanbanColumnId, setKanbanColumnId] = useState('')
-
-  const { data: kanbanColumns = [] } = useQuery<KanbanColumn[]>({
-    queryKey: ['kanban-columns'],
-    queryFn: () => api.get('/kanban-columns').then((r) => r.data),
-  })
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -1093,7 +1055,6 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
         companyName: form.companyName.trim() || undefined,
         notes: form.notes.trim() || undefined,
         birthDate: form.birthDate || undefined,
-        kanbanColumnId: kanbanColumnId || undefined,
       }).then((r) => r.data)
 
       if (tags.length > 0) {
@@ -1106,7 +1067,6 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contacts'] })
-      qc.invalidateQueries({ queryKey: ['kanban-leads'] })
       toast({ title: 'Contato criado', variant: 'success' })
       onClose()
     },
@@ -1184,22 +1144,6 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Tags</label>
             <TagMultiSelect selected={tags} onChange={setTags} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Raia do Kanban <span className="text-gray-400">(opcional)</span></label>
-            <select
-              value={kanbanColumnId}
-              onChange={(e) => setKanbanColumnId(e.target.value)}
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
-            >
-              <option value="">Não colocar no quadro</option>
-              {kanbanColumns.map((col) => (
-                <option key={col.id} value={col.id}>{col.name}</option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Coloca o contato direto numa raia do quadro Kanban, mesmo sem conversa iniciada.
-            </p>
           </div>
         </div>
 

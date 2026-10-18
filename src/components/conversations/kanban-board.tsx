@@ -18,16 +18,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Settings2, XCircle } from 'lucide-react'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
-import type { KanbanLead, KanbanColumn } from '@/types'
+import type { Deal, KanbanColumn } from '@/types'
 import KanbanCard from './kanban-card'
 import KanbanSettings from './kanban-settings'
 import QuickAddLeadModal from './quick-add-lead-modal'
 
 interface Props {
-  leads: KanbanLead[]
+  deals: Deal[]
   columns: KanbanColumn[]
   onColumnsChange: () => void
-  onLeadMove: () => void
+  onDealMove: () => void
   lostCount?: number
 }
 
@@ -39,23 +39,23 @@ function formatCurrency(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-function sumDealValue(leads: KanbanLead[]): number {
-  return leads.reduce((sum, l) => sum + (l.dealValue ?? 0), 0)
+function sumDealValue(deals: Deal[]): number {
+  return deals.reduce((sum, d) => sum + (d.dealValue ?? 0), 0)
 }
 
 function DroppableColumn({
   column,
-  leads,
-  onOpenLead,
+  deals,
+  onOpenDeal,
   onAddLead,
 }: {
   column: KanbanColumn
-  leads: KanbanLead[]
-  onOpenLead: (lead: KanbanLead) => void
+  deals: Deal[]
+  onOpenDeal: (deal: Deal) => void
   onAddLead: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
-  const totalValue = sumDealValue(leads)
+  const totalValue = sumDealValue(deals)
 
   return (
     <div className="flex w-[86vw] max-w-sm shrink-0 snap-center flex-col rounded-2xl bg-white shadow-sm ring-1 ring-black/5 md:w-80 md:max-w-none">
@@ -78,7 +78,7 @@ function DroppableColumn({
             className="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold text-white"
             style={{ backgroundColor: column.color }}
           >
-            {leads.length}
+            {deals.length}
           </span>
         </div>
         {totalValue > 0 && (
@@ -94,12 +94,12 @@ function DroppableColumn({
           isOver ? 'bg-black/[0.03]' : 'bg-transparent',
         )}
       >
-        <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-          {leads.map((lead) => (
+        <SortableContext items={deals.map((d) => d.id)} strategy={verticalListSortingStrategy}>
+          {deals.map((deal) => (
             <KanbanCard
-              key={lead.id}
-              lead={lead}
-              onOpen={() => onOpenLead(lead)}
+              key={deal.id}
+              deal={deal}
+              onOpen={() => onOpenDeal(deal)}
             />
           ))}
         </SortableContext>
@@ -109,11 +109,11 @@ function DroppableColumn({
 }
 
 function UnassignedColumn({
-  leads,
-  onOpenLead,
+  deals,
+  onOpenDeal,
 }: {
-  leads: KanbanLead[]
-  onOpenLead: (lead: KanbanLead) => void
+  deals: Deal[]
+  onOpenDeal: (deal: Deal) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: '__unassigned__' })
 
@@ -123,7 +123,7 @@ function UnassignedColumn({
         <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gray-300" />
         <span className="font-semibold text-sm text-gray-500 flex-1">Sem raia</span>
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-400 px-1 text-[11px] font-bold text-white">
-          {leads.length}
+          {deals.length}
         </span>
       </div>
       <div
@@ -133,12 +133,12 @@ function UnassignedColumn({
           isOver ? 'bg-black/[0.03]' : 'bg-transparent',
         )}
       >
-        <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-          {leads.map((lead) => (
+        <SortableContext items={deals.map((d) => d.id)} strategy={verticalListSortingStrategy}>
+          {deals.map((deal) => (
             <KanbanCard
-              key={lead.id}
-              lead={lead}
-              onOpen={() => onOpenLead(lead)}
+              key={deal.id}
+              deal={deal}
+              onOpen={() => onOpenDeal(deal)}
             />
           ))}
         </SortableContext>
@@ -147,10 +147,10 @@ function UnassignedColumn({
   )
 }
 
-export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMove, lostCount = 0 }: Props) {
+export default function KanbanBoard({ deals, columns, onColumnsChange, onDealMove, lostCount = 0 }: Props) {
   const router = useRouter()
   const qc = useQueryClient()
-  const [activeLead, setActiveLead] = useState<KanbanLead | null>(null)
+  const [activeDeal, setActiveDeal] = useState<Deal | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [quickAddColumnId, setQuickAddColumnId] = useState<string | null>(null)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
@@ -159,27 +159,27 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
 
   const moveMutation = useMutation({
     mutationFn: ({ id, kanbanColumnId }: { id: string; kanbanColumnId: string | null }) =>
-      api.patch(`/contacts/${id}`, { kanbanColumnId }),
-    onSuccess: onLeadMove,
+      api.patch(`/deals/${id}`, { kanbanColumnId }),
+    onSuccess: onDealMove,
   })
 
-  function getColumnLeads(columnId: string | null) {
-    return leads.filter((l) => (l.kanbanColumnId ?? null) === columnId)
+  function getColumnDeals(columnId: string | null) {
+    return deals.filter((d) => (d.kanbanColumnId ?? null) === columnId)
   }
 
   function handleDragStart(event: DragStartEvent) {
-    const lead = event.active.data.current?.lead as KanbanLead
-    if (lead) setActiveLead(lead)
+    const deal = event.active.data.current?.deal as Deal
+    if (deal) setActiveDeal(deal)
   }
 
   function handleDragEnd(event: DragEndEvent) {
-    setActiveLead(null)
+    setActiveDeal(null)
     const { active, over } = event
     if (!over) return
 
-    const leadId = active.id as string
-    const lead = leads.find((l) => l.id === leadId)
-    if (!lead) return
+    const dealId = active.id as string
+    const deal = deals.find((d) => d.id === dealId)
+    if (!deal) return
 
     let targetColumnId: string | null = null
 
@@ -188,12 +188,12 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
     } else if (columns.find((col) => col.id === over.id)) {
       targetColumnId = over.id as string
     } else {
-      const targetLead = leads.find((l) => l.id === over.id)
-      targetColumnId = targetLead?.kanbanColumnId ?? null
+      const targetDeal = deals.find((d) => d.id === over.id)
+      targetColumnId = targetDeal?.kanbanColumnId ?? null
     }
 
-    if (targetColumnId !== (lead.kanbanColumnId ?? null)) {
-      moveMutation.mutate({ id: leadId, kanbanColumnId: targetColumnId })
+    if (targetColumnId !== (deal.kanbanColumnId ?? null)) {
+      moveMutation.mutate({ id: dealId, kanbanColumnId: targetColumnId })
     }
   }
 
@@ -201,10 +201,10 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
     void event
   }
 
-  function openLead(lead: KanbanLead) {
-    // Sempre abre a tela de detalhe (CRM) do contato — a conversa fica
+  function openDeal(deal: Deal) {
+    // Sempre abre a tela de detalhe (CRM) do negócio — a conversa fica
     // acessível a partir de lá, num botão, não substitui a tela toda.
-    router.push(`/conversations/kanban/${lead.id}`)
+    router.push(`/conversations/kanban/${deal.id}`)
   }
 
   function openQuickAdd(columnId: string | null) {
@@ -212,13 +212,13 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
     setShowQuickAdd(true)
   }
 
-  const unassigned = getColumnLeads(null)
+  const unassigned = getColumnDeals(null)
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Toolbar do Kanban */}
       <div className="flex items-center justify-between border-b bg-white px-4 py-2 md:px-6">
-        <span className="text-xs text-gray-400">{leads.length} leads</span>
+        <span className="text-xs text-gray-400">{deals.length} negócios</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => router.push('/conversations/kanban/lost')}
@@ -247,14 +247,14 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
           volta a ser várias colunas lado a lado com largura fixa. */}
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragOver={handleDragOver}>
         <div className="flex flex-1 snap-x snap-mandatory items-start gap-5 overflow-x-auto scroll-smooth bg-gradient-to-b from-slate-50 to-slate-100 p-4 md:p-6">
-          <UnassignedColumn leads={unassigned} onOpenLead={openLead} />
+          <UnassignedColumn deals={unassigned} onOpenDeal={openDeal} />
 
           {columns.map((col) => (
             <DroppableColumn
               key={col.id}
               column={col}
-              leads={getColumnLeads(col.id)}
-              onOpenLead={openLead}
+              deals={getColumnDeals(col.id)}
+              onOpenDeal={openDeal}
               onAddLead={() => openQuickAdd(col.id)}
             />
           ))}
@@ -272,9 +272,9 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
         </div>
 
         <DragOverlay>
-          {activeLead && (
+          {activeDeal && (
             <div className="rotate-2 opacity-90 w-72">
-              <KanbanCard lead={activeLead} onOpen={() => {}} />
+              <KanbanCard deal={activeDeal} onOpen={() => {}} />
             </div>
           )}
         </DragOverlay>
@@ -291,7 +291,7 @@ export default function KanbanBoard({ leads, columns, onColumnsChange, onLeadMov
       {showQuickAdd && (
         <QuickAddLeadModal
           kanbanColumnId={quickAddColumnId}
-          onClose={() => { setShowQuickAdd(false); qc.invalidateQueries({ queryKey: ['kanban-leads'] }) }}
+          onClose={() => { setShowQuickAdd(false); qc.invalidateQueries({ queryKey: ['deals-kanban'] }) }}
         />
       )}
     </div>

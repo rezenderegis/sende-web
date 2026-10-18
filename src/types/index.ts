@@ -80,20 +80,28 @@ export interface Contact {
   metadata?: Record<string, any>
   automationOptOut?: boolean
   conversationId?: string | null
-  kanbanColumnId?: string | null
-  kanbanColumnChangedAt?: string | null
-  dealValue?: number | null
-  dealOwnerId?: string | null
-  dealOwner?: User | null
-  lostAt?: string | null
-  lostReason?: string | null
   createdAt: string
   updatedAt: string
 }
 
-// Contato pronto pro board do Kanban: inclui a conversa mais recente (se houver).
-export interface KanbanLead extends Contact {
+// Um contato pode ter vários negócios (compra de novo, outra frente de
+// venda) — é o Deal que carrega raia/valor/dono/perda, não mais o Contact.
+export interface Deal {
+  id: string
+  companyId: string
+  contactId: string
+  contact: Contact
+  title: string
+  kanbanColumnId: string | null
+  kanbanColumnChangedAt: string | null
+  dealValue: number | null
+  dealOwnerId: string | null
+  dealOwner?: User | null
+  lostAt: string | null
+  lostReason: string | null
   conversation: Conversation | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface FunnelColumn {

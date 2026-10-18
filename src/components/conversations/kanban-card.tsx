@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Clock, Zap, MessageCircleOff, AlertTriangle, Briefcase } from 'lucide-react'
 import { cn, formatPhone, timeAgo } from '@/lib/utils'
-import type { KanbanLead } from '@/types'
+import type { Deal } from '@/types'
 
 const STALE_DAYS = 7
 
@@ -36,20 +36,21 @@ function getWindowLabel(lastInboundAt: string | null) {
 }
 
 interface Props {
-  lead: KanbanLead
+  deal: Deal
   onOpen: () => void
 }
 
-export default function KanbanCard({ lead, onOpen }: Props) {
+export default function KanbanCard({ deal, onOpen }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: lead.id,
-    data: { type: 'card', lead },
+    id: deal.id,
+    data: { type: 'card', deal },
   })
 
-  const conv = lead.conversation
+  const contact = deal.contact
+  const conv = deal.conversation
   const ws = conv ? getWindowStatus(conv.lastInboundAt) : null
   const wLabel = conv ? getWindowLabel(conv.lastInboundAt) : null
-  const stale = daysStale(lead.kanbanColumnChangedAt)
+  const stale = daysStale(deal.kanbanColumnChangedAt)
 
   return (
     <div
@@ -63,19 +64,19 @@ export default function KanbanCard({ lead, onOpen }: Props) {
       )}
       onClick={onOpen}
     >
-      {/* Nome */}
+      {/* Título do negócio (pro primeiro negócio de alguém, é igual ao nome) */}
       <p className="truncate font-semibold text-sm text-gray-900">
-        {lead.name || formatPhone(lead.phone || '')}
+        {deal.title || contact.name || formatPhone(contact.phone || '')}
       </p>
 
       {/* Número WhatsApp / telefone */}
       <p className="mt-0.5 truncate text-xs text-gray-400">
-        {conv?.whatsappNumber?.phoneNumber ?? formatPhone(lead.phone || '')}
+        {conv?.whatsappNumber?.phoneNumber ?? formatPhone(contact.phone || '')}
       </p>
 
       {/* Valor do negócio */}
-      {lead.dealValue != null && (
-        <p className="mt-1 text-sm font-bold text-teal-700">{formatCurrency(lead.dealValue)}</p>
+      {deal.dealValue != null && (
+        <p className="mt-1 text-sm font-bold text-teal-700">{formatCurrency(deal.dealValue)}</p>
       )}
 
       {/* Badges */}
@@ -126,7 +127,7 @@ export default function KanbanCard({ lead, onOpen }: Props) {
         )}
 
         {/* Tags do contato (quando não vieram pela conversa) */}
-        {!conv && lead.tags?.map((tag) => (
+        {!conv && contact.tags?.map((tag) => (
           <span
             key={tag.id}
             className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium text-white"
@@ -140,12 +141,12 @@ export default function KanbanCard({ lead, onOpen }: Props) {
       {/* Rodapé: dono do negócio + atendente + tempo */}
       <div className="mt-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          {lead.dealOwner && (
-            <span className="flex items-center gap-1 text-[11px] text-gray-500" title={`Dono do negócio: ${lead.dealOwner.name}`}>
+          {deal.dealOwner && (
+            <span className="flex items-center gap-1 text-[11px] text-gray-500" title={`Dono do negócio: ${deal.dealOwner.name}`}>
               <div className="flex h-4 w-4 items-center justify-center rounded-full bg-teal-100 text-[9px] font-semibold text-teal-700">
                 <Briefcase className="h-2.5 w-2.5" />
               </div>
-              {lead.dealOwner.name.split(' ')[0]}
+              {deal.dealOwner.name.split(' ')[0]}
             </span>
           )}
           {conv?.assignedUser && (
@@ -158,7 +159,7 @@ export default function KanbanCard({ lead, onOpen }: Props) {
           )}
         </div>
         <span className="shrink-0 text-[11px] text-gray-400">
-          {timeAgo(conv?.lastMessageAt || lead.updatedAt)}
+          {timeAgo(conv?.lastMessageAt || deal.updatedAt)}
         </span>
       </div>
     </div>

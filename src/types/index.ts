@@ -29,6 +29,7 @@ export interface User {
   canConfigureBot: boolean
   canSendBroadcast: boolean
   isPlatformAdmin: boolean
+  teamId: string | null
   createdAt: string
   updatedAt: string
 }
@@ -588,6 +589,7 @@ export interface FollowOn {
   whatsappNumberId: string | null
   assignedUserId: string | null
   assignedUser?: User | null
+  activityTypeId: string | null
   type: FollowOnType
   scheduledAt: string
   title: string | null
@@ -600,6 +602,84 @@ export interface FollowOn {
   sentAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface Team {
+  id: string
+  companyId: string
+  name: string
+  leaderId: string | null
+  leader?: User | null
+  memberCount?: number
+  members?: User[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ActivityType {
+  id: string
+  companyId: string
+  name: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type GoalMetric = 'contacts_created' | 'followup_messages' | 'activity'
+export type GoalPeriod = 'day' | 'week' | 'month'
+export type GoalScope = 'user' | 'team'
+
+export interface ProductivityGoal {
+  id: string
+  companyId: string
+  scope: GoalScope
+  userId: string | null
+  teamId: string | null
+  metric: GoalMetric
+  activityTypeId: string | null
+  activityType?: { id: string; name: string } | null
+  targetCount: number
+  period: GoalPeriod
+  createdAt: string
+  updatedAt: string
+}
+
+export interface GoalProgressItem {
+  goalId: string
+  metric: GoalMetric
+  metricLabel: string
+  activityTypeId: string | null
+  period: GoalPeriod
+  target: number
+  current: number
+  percent: number
+}
+
+export interface TeamMemberProgress {
+  userId: string
+  userName: string
+  goals: GoalProgressItem[]
+}
+
+export interface TeamProgress {
+  teamId: string
+  teamName: string
+  goals: GoalProgressItem[]
+  members: TeamMemberProgress[]
+}
+
+export interface AllTeamsProgressEntry {
+  teamId: string
+  teamName: string
+  leaderName: string | null
+  memberCount: number
+  goals: GoalProgressItem[]
+}
+
+export interface GoalProgressResponse {
+  me: { userId: string; teamId: string | null; goals: GoalProgressItem[] }
+  team?: TeamProgress
+  allTeams?: AllTeamsProgressEntry[]
 }
 
 export interface AppNotification {

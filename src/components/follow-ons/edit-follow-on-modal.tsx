@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Pencil, X, CheckCheck, RotateCcw, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
-import type { FollowOn, User } from '@/types'
+import type { ActivityType, FollowOn, User } from '@/types'
 
 const STATUS_CONFIG = {
   pending: { label: 'Pendente', className: 'bg-amber-200 text-amber-900 ring-1 ring-amber-400' },
@@ -38,8 +38,14 @@ export default function EditFollowOnModal({ fo, users, onClose, onDelete, onSave
   const [title, setTitle] = useState(fo.title ?? '')
   const [note, setNote] = useState(fo.note ?? '')
   const [assignedUserId, setAssignedUserId] = useState(fo.assignedUserId ?? '')
+  const [activityTypeId, setActivityTypeId] = useState(fo.activityTypeId ?? '')
   const [message, setMessage] = useState(fo.message ?? '')
   const isPending = fo.status === 'pending'
+
+  const { data: activityTypes = [] } = useQuery<ActivityType[]>({
+    queryKey: ['activity-types'],
+    queryFn: () => api.get('/activity-types').then((r) => r.data),
+  })
 
   const saveMutation = useMutation({
     mutationFn: () => api.patch(`/follow-ons/${fo.id}`, {
@@ -48,6 +54,7 @@ export default function EditFollowOnModal({ fo, users, onClose, onDelete, onSave
       title: title || undefined,
       note: note || undefined,
       assignedUserId: assignedUserId || undefined,
+      activityTypeId: activityTypeId || undefined,
       ...(type === 'message' ? { message: message || undefined } : {}),
     }),
     onSuccess: () => {
@@ -107,6 +114,20 @@ export default function EditFollowOnModal({ fo, users, onClose, onDelete, onSave
               <option value="message_manual">Mensagem (lembrete manual)</option>
               <option value="message">Mensagem (envio automático)</option>
               <option value="note">Anotação</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-700">Atividade (meta)</label>
+            <select
+              value={activityTypeId}
+              onChange={(e) => setActivityTypeId(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">Padrão (conforme o tipo)</option>
+              {activityTypes.filter((t) => t.isActive).map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
             </select>
           </div>
 

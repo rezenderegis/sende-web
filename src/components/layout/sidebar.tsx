@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban, TrendingUp } from 'lucide-react'
+import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban, TrendingUp, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -30,6 +30,7 @@ const salesItems = [
 const settingsItems = [
   { href: '/settings/numbers', icon: Phone, label: 'Números WhatsApp' },
   { href: '/settings/users', icon: Users, label: 'Usuários' },
+  { href: '/settings/teams', icon: Target, label: 'Equipes e Metas' },
   { href: '/settings/company', icon: Settings, label: 'Empresa' },
   { href: '/settings/tags', icon: Tag, label: 'Tags' },
   { href: '/settings/saved-messages', icon: BookMarked, label: 'Msgs Salvas' },

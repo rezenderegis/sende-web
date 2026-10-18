@@ -9,7 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn, formatPhone } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import type { Conversation, Contact, WhatsappNumber, User, FollowOn, UsageSummary } from '@/types'
+import { MyGoalTodayCard } from '@/components/goals/my-goal-today-card'
+import { TeamGoalProgressCard } from '@/components/goals/team-goal-progress-card'
+import { AllTeamsGoalOverview } from '@/components/goals/all-teams-goal-overview'
+import type { Conversation, Contact, WhatsappNumber, User, FollowOn, UsageSummary, GoalProgressResponse } from '@/types'
 
 function centsToReais(cents: number): string {
   return (cents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -162,6 +165,11 @@ export default function DashboardPage() {
     enabled: isManager,
   })
 
+  const { data: goalProgress } = useQuery<GoalProgressResponse>({
+    queryKey: ['goal-progress', 'day'],
+    queryFn: () => api.get('/goals/progress?period=day').then((r) => r.data),
+  })
+
   const expiringConversations = (conversations?.data ?? [])
     .filter((c) => {
       if (getWindowStatus(c.lastInboundAt) === 'open') return false
@@ -186,6 +194,10 @@ export default function DashboardPage() {
         <h1 className="text-xl md:text-2xl font-bold text-teal-900">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Visão geral da sua plataforma</p>
       </div>
+
+      <MyGoalTodayCard goals={goalProgress?.me.goals ?? []} />
+      {goalProgress?.team && <TeamGoalProgressCard team={goalProgress.team} />}
+      {goalProgress?.allTeams && <AllTeamsGoalOverview teams={goalProgress.allTeams} />}
 
       <div className="grid gap-3 grid-cols-2 md:gap-4 lg:grid-cols-4">
         <StatCard

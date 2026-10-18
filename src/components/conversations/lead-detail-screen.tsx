@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import { formatPhone } from '@/lib/utils'
 import EditFollowOnModal from '@/components/follow-ons/edit-follow-on-modal'
-import type { KanbanLead, FollowOn, FollowOnType, User, WhatsappNumber, WhatsappTemplate } from '@/types'
+import type { ActivityType, KanbanLead, FollowOn, FollowOnType, User, WhatsappNumber, WhatsappTemplate } from '@/types'
 
 const TYPE_LABELS: Record<string, string> = {
   meeting: 'Reunião',
@@ -108,6 +108,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   const [foTitle, setFoTitle] = useState('')
   const [foNote, setFoNote] = useState('')
   const [foAssignedUserId, setFoAssignedUserId] = useState('')
+  const [foActivityTypeId, setFoActivityTypeId] = useState('')
   const [foNumberId, setFoNumberId] = useState('')
   const [foTemplateKey, setFoTemplateKey] = useState('')
   const [foTemplateVars, setFoTemplateVars] = useState<string[]>([])
@@ -138,6 +139,11 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
   const { data: numbers = [] } = useQuery<WhatsappNumber[]>({
     queryKey: ['whatsapp-numbers'],
     queryFn: () => api.get('/whatsapp/numbers').then((r) => r.data),
+  })
+
+  const { data: activityTypes = [] } = useQuery<ActivityType[]>({
+    queryKey: ['activity-types'],
+    queryFn: () => api.get('/activity-types').then((r) => r.data),
   })
 
   const { data: templates = [] } = useQuery<WhatsappTemplate[]>({
@@ -268,6 +274,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
     setFoTitle('')
     setFoNote('')
     setFoAssignedUserId('')
+    setFoActivityTypeId('')
     setFoNumberId('')
     setFoTemplateKey('')
     setFoTemplateVars([])
@@ -281,6 +288,7 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
       ...(foTitle.trim() ? { title: foTitle.trim() } : {}),
       ...(foNote.trim() ? { note: foNote.trim() } : {}),
       ...(foAssignedUserId ? { assignedUserId: foAssignedUserId } : {}),
+      ...(foActivityTypeId ? { activityTypeId: foActivityTypeId } : {}),
     }
     if (foType === 'message') {
       const [templateName, templateLanguage] = foTemplateKey.split('|')
@@ -603,6 +611,20 @@ export default function LeadDetailScreen({ lead, onBack }: Props) {
                     {foType === 'message' && (
                       <p className="mt-1.5 text-xs text-muted-foreground">Envio automático por template — sem conversa aberta, só template aprovado garante entrega.</p>
                     )}
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-700">Atividade (meta) <span className="text-gray-400">(opcional)</span></label>
+                    <select
+                      value={foActivityTypeId}
+                      onChange={(e) => setFoActivityTypeId(e.target.value)}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-teal-500"
+                    >
+                      <option value="">Padrão (conforme o tipo)</option>
+                      {activityTypes.filter((t) => t.isActive).map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>

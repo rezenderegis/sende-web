@@ -13,7 +13,7 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { toast } from '@/hooks/use-toast'
 import { formatTime, formatPhone, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
-import type { Conversation, ConversationEvent, FollowOn, FollowOnType, Message, User, SavedMessage, WhatsappTemplate } from '@/types'
+import type { ActivityType, Conversation, ConversationEvent, FollowOn, FollowOnType, Message, User, SavedMessage, WhatsappTemplate } from '@/types'
 
 function renderContent(content: string, contactName?: string): string {
   if (!content.includes('{{')) return content
@@ -257,6 +257,7 @@ export default function ConversationPage() {
   const [foTitle, setFoTitle] = useState('')
   const [foNote, setFoNote] = useState('')
   const [foAssignedUserId, setFoAssignedUserId] = useState(user?.id ?? '')
+  const [foActivityTypeId, setFoActivityTypeId] = useState('')
   const [foMessage, setFoMessage] = useState('')
   const [foTemplateKey, setFoTemplateKey] = useState('')
   const [foTemplateVars, setFoTemplateVars] = useState<string[]>([])
@@ -369,6 +370,11 @@ export default function ConversationPage() {
   const { data: users = [] } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: () => api.get('/users').then((r) => r.data),
+  })
+
+  const { data: activityTypes = [] } = useQuery<ActivityType[]>({
+    queryKey: ['activity-types'],
+    queryFn: () => api.get('/activity-types').then((r) => r.data),
   })
 
   const { data: savedMessages = [] } = useQuery<SavedMessage[]>({
@@ -511,6 +517,7 @@ export default function ConversationPage() {
     setFoTitle('')
     setFoNote('')
     setFoAssignedUserId(user?.id ?? '')
+    setFoActivityTypeId('')
     setFoMessage('')
     setFoTemplateKey('')
     setFoTemplateVars([])
@@ -526,6 +533,7 @@ export default function ConversationPage() {
       ...(foTitle.trim() ? { title: foTitle.trim() } : {}),
       ...(foNote.trim() ? { note: foNote.trim() } : {}),
       ...(foAssignedUserId ? { assignedUserId: foAssignedUserId } : {}),
+      ...(foActivityTypeId ? { activityTypeId: foActivityTypeId } : {}),
     }
     if (foType === 'message') {
       dto.whatsappNumberId = conversation?.whatsappNumberId
@@ -1078,6 +1086,21 @@ export default function ConversationPage() {
                 {foType === 'message' && (
                   <p className="mt-1.5 text-xs text-muted-foreground">A mensagem ou template será enviado automaticamente no horário agendado.</p>
                 )}
+              </div>
+
+              {/* Atividade (meta) */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-gray-700">Atividade (meta) <span className="text-gray-400">(opcional)</span></label>
+                <select
+                  value={foActivityTypeId}
+                  onChange={(e) => setFoActivityTypeId(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Padrão (conforme o tipo)</option>
+                  {activityTypes.filter((t) => t.isActive).map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Data/hora */}

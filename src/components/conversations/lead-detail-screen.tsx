@@ -125,12 +125,19 @@ export default function LeadDetailScreen({ deal, onBack }: Props) {
     setDirty(true)
   }
 
-  const followOnsKey = ['follow-ons-contact', deal.contactId]
-  const invalidateFollowOns = () => qc.invalidateQueries({ queryKey: followOnsKey })
+  // Por padrão mostra só o histórico deste negócio — um contato com vários
+  // negócios não deve misturar as atividades de um com as de outro. A opção
+  // de ver tudo existe pra quem quer o panorama completo da pessoa.
+  const [showFullHistory, setShowFullHistory] = useState(false)
+  const followOnsKey = showFullHistory ? ['follow-ons-contact', deal.contactId] : ['follow-ons-deal', deal.id]
+  const invalidateFollowOns = () => {
+    qc.invalidateQueries({ queryKey: ['follow-ons-deal', deal.id] })
+    qc.invalidateQueries({ queryKey: ['follow-ons-contact', deal.contactId] })
+  }
 
   const { data: followOns = [], isLoading } = useQuery<FollowOn[]>({
     queryKey: followOnsKey,
-    queryFn: () => api.get(`/follow-ons/contact/${deal.contactId}`).then((r) => r.data),
+    queryFn: () => api.get(showFullHistory ? `/follow-ons/contact/${deal.contactId}` : `/follow-ons/deal/${deal.id}`).then((r) => r.data),
   })
 
   const { data: users = [] } = useQuery<User[]>({
@@ -241,7 +248,7 @@ export default function LeadDetailScreen({ deal, onBack }: Props) {
   })
 
   const createNoteMutation = useMutation({
-    mutationFn: () => api.post('/follow-ons', { contactId: deal.contactId, type: 'note', note: noteText.trim() }),
+    mutationFn: () => api.post('/follow-ons', { contactId: deal.contactId, dealId: deal.id, type: 'note', note: noteText.trim() }),
     onSuccess: () => {
       invalidateFollowOns()
       setShowNoteForm(false)
@@ -290,6 +297,7 @@ export default function LeadDetailScreen({ deal, onBack }: Props) {
   function handleCreate() {
     const dto: any = {
       contactId: deal.contactId,
+      dealId: deal.id,
       type: foType,
       scheduledAt: new Date(foScheduledAt).toISOString(),
       ...(foTitle.trim() ? { title: foTitle.trim() } : {}),
@@ -539,10 +547,18 @@ export default function LeadDetailScreen({ deal, onBack }: Props) {
 
         <main className="flex-1 bg-gray-100 md:overflow-y-auto">
           <div className="mx-auto max-w-2xl p-4 md:p-7">
-            <div className="mb-4 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-600" />
-              <h3 className="text-sm font-semibold text-gray-800">Atividades</h3>
-              {followOns.length > 0 && <span className="rounded-full bg-gray-300 px-1.5 py-0.5 text-xs font-medium text-gray-800">{followOns.length}</span>}
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-gray-600" />
+                <h3 className="text-sm font-semibold text-gray-800">Atividades</h3>
+                {followOns.length > 0 && <span className="rounded-full bg-gray-300 px-1.5 py-0.5 text-xs font-medium text-gray-800">{followOns.length}</span>}
+              </div>
+              <button
+                onClick={() => setShowFullHistory((v) => !v)}
+                className="text-xs font-medium text-teal-700 hover:text-teal-900 hover:underline"
+              >
+                {showFullHistory ? 'Ver só este negócio' : 'Ver histórico completo do contato'}
+              </button>
             </div>
             <div className="space-y-3">
               {!showForm && !showNoteForm && (
@@ -755,7 +771,9 @@ export default function LeadDetailScreen({ deal, onBack }: Props) {
 
               {isLoading && <p className="text-center text-sm text-muted-foreground py-4">Carregando...</p>}
               {!isLoading && followOns.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-6">Nenhum follow-on registrado pra essa pessoa ainda.</p>
+                <p className="text-center text-sm text-muted-foreground py-6">
+                  {showFullHistory ? 'Nenhum follow-on registrado pra essa pessoa ainda.' : 'Nenhum follow-on registrado nesse negócio ainda.'}
+                </p>
               )}
               <div className="space-y-2">
                 {followOns.map((fo) => {

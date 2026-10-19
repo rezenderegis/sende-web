@@ -592,6 +592,7 @@ export interface FollowOn {
   companyId: string
   contactId: string
   contact?: Contact
+  dealId?: string | null
   // calculado no backend: conversa mais recente desse contato (se houver)
   conversationId?: string | null
   whatsappNumberId: string | null

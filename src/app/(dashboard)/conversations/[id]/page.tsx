@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare, Play, Pause, Loader2, ImageIcon, FileText, Video, Download } from 'lucide-react'
+import { ArrowLeft, Send, Phone, CheckCheck, Clock, X, Bot, UserCircle, ChevronDown, BookMarked, Zap, History, Calendar, Plus, Users, MessageSquare, Play, Pause, Loader2, ImageIcon, FileText, Video, Download, Pencil } from 'lucide-react'
 import api from '@/lib/api'
+import EditContactModal from '@/components/contacts/edit-contact-modal'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -241,6 +242,7 @@ export default function ConversationPage() {
   const [savedSearch, setSavedSearch] = useState('')
   const [showHistory, setShowHistory] = useState(false)
   const [showFollowOns, setShowFollowOns] = useState(false)
+  const [showEditContact, setShowEditContact] = useState(false)
   const [followOnModal, setFollowOnModal] = useState(false)
   const assignRef = useRef<HTMLDivElement>(null)
   const savedRef = useRef<HTMLDivElement>(null)
@@ -597,7 +599,18 @@ export default function ConversationPage() {
             {contact?.name?.charAt(0).toUpperCase() || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 truncate">{contact?.name || formatPhone(contact?.phone || '')}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-gray-900 truncate">{contact?.name || formatPhone(contact?.phone || '')}</p>
+              {contact && (
+                <button
+                  onClick={() => setShowEditContact(true)}
+                  className="shrink-0 rounded p-0.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                  title="Editar contato"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Phone className="h-3 w-3" />
               {formatPhone(contact?.phone || '')}
@@ -1234,6 +1247,10 @@ export default function ConversationPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showEditContact && contact && (
+        <EditContactModal contact={contact} onClose={() => setShowEditContact(false)} />
       )}
     </div>
   )

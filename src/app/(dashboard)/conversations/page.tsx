@@ -292,9 +292,9 @@ function ConversationsPageInner() {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b bg-white px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-teal-900">Conversas</h1>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="shrink-0 text-lg font-semibold text-teal-900">Conversas</h1>
+          <div className="flex shrink-0 items-center gap-2">
             <div className="flex rounded-lg border border-gray-200 p-0.5">
               <button
                 onClick={() => toggleView('list')}
@@ -313,7 +313,7 @@ function ConversationsPageInner() {
             </div>
             <Button size="sm" className="gap-2" onClick={() => setShowNew(!showNew)}>
               <Plus className="h-4 w-4" />
-              Nova conversa
+              <span className="hidden sm:inline">Nova conversa</span>
             </Button>
           </div>
         </div>

@@ -629,7 +629,7 @@ function ContactDetailModal({ contact, onClose }: { contact: Contact; onClose: (
                   </label>
                   <Input
                     value={editForm.phone}
-                    onChange={(e) => setField('phone', e.target.value)}
+                    onChange={(e) => setField('phone', e.target.value.replace(/\D/g, ''))}
                     placeholder="5561999999999"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -1097,7 +1097,7 @@ function NewContactModal({ onClose }: { onClose: () => void }) {
             <Input
               placeholder="(11) 99999-9999"
               value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value.replace(/\D/g, '') }))}
             />
           </div>
           <div>

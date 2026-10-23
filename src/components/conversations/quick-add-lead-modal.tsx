@@ -184,7 +184,7 @@ export default function QuickAddLeadModal({ kanbanColumnId, onClose }: Props) {
                 <Input
                   placeholder="(11) 99999-9999"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                 />
                 {checkingPhone && <p className="mt-1 text-xs text-muted-foreground">Verificando...</p>}
                 {duplicate && (

@@ -507,7 +507,7 @@ function ConversationsPageInner() {
                 className="bg-white"
                 placeholder="5561984402868"
                 value={form.to}
-                onChange={(e) => setForm((f) => ({ ...f, to: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, to: e.target.value.replace(/\D/g, '') }))}
               />
             </div>
             <div className="space-y-1 sm:col-span-2">

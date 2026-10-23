@@ -347,7 +347,7 @@ export default function SalesPage() {
                 <Input
                   placeholder="(61) 99999-9999"
                   value={saleForm.contactPhone}
-                  onChange={(e) => setSaleForm((f) => ({ ...f, contactPhone: e.target.value }))}
+                  onChange={(e) => setSaleForm((f) => ({ ...f, contactPhone: e.target.value.replace(/\D/g, '') }))}
                   className={contactSearch.status === 'found' ? 'border-teal-500 pr-8' : contactSearch.status === 'not_found' ? 'border-red-400 pr-8' : ''}
                 />
                 {contactSearch.status === 'loading' && (

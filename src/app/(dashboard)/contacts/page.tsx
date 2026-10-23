@@ -12,7 +12,7 @@ import { TagSelector } from '@/components/tags/tag-selector'
 import { formatPhone, formatDate, cn } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 import { ProductPicker } from '@/components/sales/product-picker'
-import type { Broadcast, Contact, ContactProductSetting, Product, Sale, Tag } from '@/types'
+import type { Broadcast, Contact, ContactProductSetting, KanbanColumn, Product, Sale, Tag } from '@/types'
 
 const COLORS = [
   '#ef4444', '#f97316', '#eab308', '#22c55e',
@@ -26,6 +26,7 @@ function ImportModal({ onClose }: { onClose: () => void }) {
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const [file, setFile] = useState<File | null>(null)
+  const [kanbanColumnId, setKanbanColumnId] = useState('')
   const [tagSearch, setTagSearch] = useState('')
   const [tagOpen, setTagOpen] = useState(false)
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
@@ -35,6 +36,11 @@ function ImportModal({ onClose }: { onClose: () => void }) {
   const { data: allTags = [] } = useQuery<Tag[]>({
     queryKey: ['tags'],
     queryFn: () => api.get('/tags').then((r) => r.data),
+  })
+
+  const { data: kanbanColumns = [] } = useQuery<KanbanColumn[]>({
+    queryKey: ['kanban-columns'],
+    queryFn: () => api.get('/kanban-columns').then((r) => r.data),
   })
 
   useEffect(() => {
@@ -49,16 +55,19 @@ function ImportModal({ onClose }: { onClose: () => void }) {
   }, [])
 
   const importMutation = useMutation({
-    mutationFn: ({ file, globalTagName }: { file: File; globalTagName?: string }) => {
+    mutationFn: ({ file, globalTagName, kanbanColumnId }: { file: File; globalTagName?: string; kanbanColumnId?: string }) => {
       const form = new FormData()
       form.append('file', file)
-      const url = globalTagName
-        ? `/contacts/import?globalTagName=${encodeURIComponent(globalTagName)}`
-        : '/contacts/import'
+      const params = new URLSearchParams()
+      if (globalTagName) params.set('globalTagName', globalTagName)
+      if (kanbanColumnId) params.set('kanbanColumnId', kanbanColumnId)
+      const query = params.toString()
+      const url = query ? `/contacts/import?${query}` : '/contacts/import'
       return api.post(url, form, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data)
     },
     onSuccess: (result: { created: number; updated: number; failed: number }) => {
       qc.invalidateQueries({ queryKey: ['contacts'] })
+      qc.invalidateQueries({ queryKey: ['deals-kanban'] })
       toast({
         title: 'Importação concluída',
         description: `${result.created} criados · ${result.updated} atualizados · ${result.failed} erros`,
@@ -214,12 +223,30 @@ function ImportModal({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
+        {/* Raia do Kanban */}
+        <div className="mb-6 space-y-2">
+          <label className="text-sm font-medium text-gray-700">
+            Raia do Kanban <span className="text-muted-foreground font-normal">(opcional)</span>
+          </label>
+          <p className="text-xs text-muted-foreground">Cria um negócio nessa raia pra cada contato importado.</p>
+          <select
+            value={kanbanColumnId}
+            onChange={(e) => setKanbanColumnId(e.target.value)}
+            className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-600"
+          >
+            <option value="">Não adicionar ao Kanban</option>
+            {kanbanColumns.map((col) => (
+              <option key={col.id} value={col.id}>{col.name}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="flex gap-3">
           <Button variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
           <Button
             className="flex-1 gap-2"
             disabled={!file || importMutation.isPending}
-            onClick={() => importMutation.mutate({ file: file!, globalTagName: selectedTag?.name })}
+            onClick={() => importMutation.mutate({ file: file!, globalTagName: selectedTag?.name, kanbanColumnId: kanbanColumnId || undefined })}
           >
             {importMutation.isPending ? (
               <><Upload className="h-4 w-4 animate-bounce" />Importando...</>

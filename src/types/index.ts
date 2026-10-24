@@ -721,6 +721,75 @@ export interface AppNotification {
   createdAt: string
 }
 
+export interface Service {
+  id: string
+  companyId: string
+  name: string
+  durationMinutes: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ProfessionalAvailability {
+  id: string
+  professionalId: string
+  companyId: string
+  weekday: number
+  startTime: string
+  endTime: string
+}
+
+export interface ProfessionalTimeOff {
+  id: string
+  professionalId: string
+  companyId: string
+  date: string
+  startTime: string | null
+  endTime: string | null
+  reason: string | null
+  createdAt: string
+}
+
+export interface Professional {
+  id: string
+  companyId: string
+  name: string
+  specialty: string | null
+  isActive: boolean
+  services?: Service[]
+  availability?: ProfessionalAvailability[]
+  timeOff?: ProfessionalTimeOff[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type AppointmentStatus = 'scheduled' | 'cancelled' | 'completed' | 'no_show'
+
+export interface AvailableSlot {
+  professionalId: string
+  professionalName: string
+  startAt: string
+}
+
+export interface Appointment {
+  id: string
+  companyId: string
+  contactId: string
+  contact?: Contact
+  professionalId: string | null
+  professional?: Professional | null
+  serviceId: string | null
+  service?: Service | null
+  scheduledAt: string
+  durationMinutes: number
+  status: AppointmentStatus
+  notes: string | null
+  reminderSentAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface AuthResponse {
   accessToken: string
   user: User

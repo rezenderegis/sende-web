@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban, TrendingUp, Target, Building2 } from 'lucide-react'
+import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, CalendarClock, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban, TrendingUp, Target, Building2, Stethoscope, ClipboardList } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/broadcasts', icon: Megaphone, label: 'Broadcasts' },
   { href: '/broadcasts/failures', icon: AlertTriangle, label: 'Falhas de Entrega' },
   { href: '/leads', icon: UserCheck, label: 'Leads' },
+  { href: '/appointments', icon: CalendarClock, label: 'Agendamentos' },
 ]
 
 const salesItems = [
@@ -32,6 +33,8 @@ const settingsItems = [
   { href: '/settings/users', icon: Users, label: 'Usuários' },
   { href: '/settings/teams', icon: Target, label: 'Equipes e Metas' },
   { href: '/settings/departments', icon: Building2, label: 'Departamentos' },
+  { href: '/settings/services', icon: ClipboardList, label: 'Serviços' },
+  { href: '/settings/professionals', icon: Stethoscope, label: 'Profissionais' },
   { href: '/settings/company', icon: Settings, label: 'Empresa' },
   { href: '/settings/tags', icon: Tag, label: 'Tags' },
   { href: '/settings/saved-messages', icon: BookMarked, label: 'Msgs Salvas' },

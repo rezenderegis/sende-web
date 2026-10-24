@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, X, Power } from 'lucide-react'
+import { Plus, X, Power, BotMessageSquare } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,6 +68,14 @@ export default function ServicesPage() {
             <span className="hidden sm:inline">Novo serviço</span>
           </Button>
         )}
+      </div>
+
+      <div className="mb-6 flex gap-3 rounded-xl border border-teal-200 bg-teal-50/60 p-4">
+        <BotMessageSquare className="h-5 w-5 shrink-0 text-teal-600" />
+        <p className="text-sm text-teal-900">
+          Assim que houver pelo menos um serviço <strong>ativo</strong> aqui, o assistente de IA já passa a poder buscar horários e marcar agendamentos
+          automaticamente durante as conversas do WhatsApp — não precisa configurar mais nada. Isso vale pra todos os números da empresa.
+        </p>
       </div>
 
       {showForm && isManager && (

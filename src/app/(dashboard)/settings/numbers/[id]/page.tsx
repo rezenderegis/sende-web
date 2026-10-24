@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
 import { ToolFlowSelector } from '@/components/bot/tool-flow-selector'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { Department, WhatsappNumber, WhatsappTemplate, CampaignPrompt } from '@/types'
+import type { Department, WhatsappNumber, WhatsappTemplate, CampaignPrompt, Service } from '@/types'
 
 export default function NumberConfigPage() {
   const { id } = useParams<{ id: string }>()
@@ -42,6 +42,12 @@ export default function NumberConfigPage() {
     queryKey: ['campaign-prompts'],
     queryFn: () => api.get('/campaign-prompts').then((r) => r.data),
   })
+
+  const { data: services = [] } = useQuery<Service[]>({
+    queryKey: ['services'],
+    queryFn: () => api.get('/services').then((r) => r.data),
+  })
+  const schedulingActive = services.some((s) => s.isActive)
 
   const num = numbers?.find((n) => n.id === id)
 
@@ -233,6 +239,31 @@ export default function NumberConfigPage() {
             >
               {updateMutation.isPending ? 'Salvando...' : 'Salvar departamento'}
             </Button>
+          </div>
+
+          {/* Status do agendamento */}
+          <div className="rounded-xl border bg-white p-5 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-semibold text-teal-900">Agendamento</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Quando ativo, o assistente de IA pode buscar horários e marcar agendamentos direto na conversa do WhatsApp.
+                </p>
+              </div>
+              <Badge variant={schedulingActive ? 'success' : 'secondary'} className="shrink-0">
+                {schedulingActive ? 'Ativo' : 'Inativo'}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {schedulingActive
+                ? 'Vale pra todos os números da empresa — os serviços não são configurados por número.'
+                : (
+                  <>
+                    Nenhum serviço ativo cadastrado.{' '}
+                    <Link href="/settings/services" className="text-teal-600 underline">Cadastre um serviço</Link> pra habilitar.
+                  </>
+                )}
+            </p>
           </div>
 
           {/* Bot Tools e Fluxos */}

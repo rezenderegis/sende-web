@@ -6,6 +6,7 @@ import { Plus, X, Power, BotMessageSquare } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
@@ -90,28 +91,34 @@ export default function ServicesPage() {
                 const durationMinutes = parseInt(duration, 10)
                 if (name.trim() && durationMinutes > 0) createMutation.mutate({ name: name.trim(), durationMinutes })
               }}
-              className="flex flex-wrap gap-3"
+              className="flex flex-wrap items-end gap-3"
             >
-              <Input
-                placeholder="Ex: Limpeza dental, Consulta"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="flex-1 min-w-[180px]"
-                required
-              />
-              <Input
-                type="number"
-                min={5}
-                step={5}
-                placeholder="Duração (min)"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                className="w-36"
-                required
-              />
+              <div className="flex-1 min-w-[180px] space-y-1">
+                <Label htmlFor="service-name">Nome do serviço</Label>
+                <Input
+                  id="service-name"
+                  placeholder="Ex: Limpeza dental, Consulta"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="w-36 space-y-1">
+                <Label htmlFor="service-duration">Duração (min)</Label>
+                <Input
+                  id="service-duration"
+                  type="number"
+                  min={5}
+                  step={5}
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  required
+                />
+              </div>
               <Button type="submit" disabled={createMutation.isPending}>Criar</Button>
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
             </form>
+            <p className="mt-2 text-xs text-muted-foreground">A duração é usada pra calcular o fim de cada horário ao montar a agenda e evitar sobreposição de agendamentos.</p>
           </CardContent>
         </Card>
       )}

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
 import { timeAgo, formatPhone, cn } from '@/lib/utils'
-import type { Conversation, WhatsappNumber, WhatsappTemplate, Tag, User, KanbanColumn, Deal } from '@/types'
+import type { Conversation, Department, WhatsappNumber, WhatsappTemplate, Tag, User, KanbanColumn, Deal } from '@/types'
 import KanbanBoard from '@/components/conversations/kanban-board'
 
 type WindowFilter = 'all' | 'open' | 'closing' | 'closed'
@@ -76,6 +76,9 @@ function ConversationsPageInner() {
   const [waitingCustomerReply, setWaitingCustomerReply] = useState(false)
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
   const [userSearch, setUserSearch] = useState('')
+  const [activeDepartmentId, setActiveDepartmentId] = useState<string | null>(null)
+  const [unassignedOnly, setUnassignedOnly] = useState(false)
+  const [departmentDropdownOpen, setDepartmentDropdownOpen] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [view, setView] = useState<'list' | 'kanban'>('list')
   const [nextId, setNextId] = useState<string | null>(null)
@@ -94,6 +97,7 @@ function ConversationsPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const userFilterRef = useRef<HTMLDivElement>(null)
+  const departmentFilterRef = useRef<HTMLDivElement>(null)
   const listContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -111,6 +115,9 @@ function ConversationsPageInner() {
       if (userFilterRef.current && !userFilterRef.current.contains(e.target as Node)) {
         setUserDropdownOpen(false)
         setUserSearch('')
+      }
+      if (departmentFilterRef.current && !departmentFilterRef.current.contains(e.target as Node)) {
+        setDepartmentDropdownOpen(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -135,6 +142,11 @@ function ConversationsPageInner() {
     queryFn: () => api.get('/users').then((r) => r.data),
   })
 
+  const { data: departments = [] } = useQuery<Department[]>({
+    queryKey: ['departments'],
+    queryFn: () => api.get('/departments').then((r) => r.data),
+  })
+
   const CONVERSATIONS_LIMIT = 50
   const {
     data: conversationPages,
@@ -143,13 +155,16 @@ function ConversationsPageInner() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['conversations', activeTagId, waitingReply, waitingCustomerReply, debouncedSearch],
+    queryKey: ['conversations', activeTagId, waitingReply, waitingCustomerReply, debouncedSearch, activeUserId, activeDepartmentId, unassignedOnly],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({ page: String(pageParam), limit: String(CONVERSATIONS_LIMIT) })
       if (activeTagId) params.set('tagId', activeTagId)
       if (waitingReply) params.set('waitingReply', 'true')
       if (waitingCustomerReply) params.set('waitingCustomerReply', 'true')
       if (debouncedSearch) params.set('search', debouncedSearch)
+      if (activeUserId) params.set('assignedUserId', activeUserId)
+      if (activeDepartmentId) params.set('departmentId', activeDepartmentId)
+      if (unassignedOnly) params.set('unassigned', 'true')
       return api.get(`/conversations?${params}`).then((r) => r.data as { data: Conversation[]; total: number; page: number; limit: number })
     },
     initialPageParam: 1,
@@ -243,7 +258,6 @@ function ConversationsPageInner() {
   )
 
   let conversations = data?.data?.filter((c) => {
-    if (activeUserId && c.assignedUserId !== activeUserId) return false
     if (windowFilter !== 'all') {
       const ws = getWindowStatus(c.lastInboundAt)
       if (windowFilter === 'open' && ws === 'closed') return false
@@ -441,6 +455,70 @@ function ConversationsPageInner() {
                   ))}
                   {filteredUsers.length === 0 && (
                     <p className="px-3 py-2 text-xs text-gray-400">Nenhum atendente encontrado</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Filtro por departamento */}
+          <div ref={departmentFilterRef} className="relative">
+            <button
+              onClick={() => setDepartmentDropdownOpen((v) => !v)}
+              className={cn(
+                'flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
+                activeDepartmentId || unassignedOnly
+                  ? 'border-purple-400 bg-purple-50 text-purple-700'
+                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50',
+              )}
+            >
+              {unassignedOnly
+                ? 'Sem atendente'
+                : departments.find((d) => d.id === activeDepartmentId)?.name ?? 'Departamento'}
+              {(activeDepartmentId || unassignedOnly) ? (
+                <X
+                  className="h-3 w-3"
+                  onClick={(e) => { e.stopPropagation(); setActiveDepartmentId(null); setUnassignedOnly(false) }}
+                />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+            </button>
+
+            {departmentDropdownOpen && (
+              <div className="absolute left-0 top-full z-50 mt-1 w-56 rounded-lg border bg-white shadow-lg">
+                <div className="max-h-60 overflow-y-auto py-1">
+                  <button
+                    onClick={() => { setActiveDepartmentId(null); setUnassignedOnly(false); setDepartmentDropdownOpen(false) }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                  >
+                    <span className="flex-1 text-left text-gray-600">Todos</span>
+                    {!activeDepartmentId && !unassignedOnly && <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />}
+                  </button>
+                  <button
+                    onClick={() => { setUnassignedOnly(!unassignedOnly); setActiveDepartmentId(null); setDepartmentDropdownOpen(false) }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                  >
+                    <span className="flex-1 text-left text-gray-600">Sem atendente (fila)</span>
+                    {unassignedOnly && <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />}
+                  </button>
+                  <div className="my-1 border-t" />
+                  {departments.map((d) => (
+                    <button
+                      key={d.id}
+                      onClick={() => {
+                        setActiveDepartmentId(activeDepartmentId === d.id ? null : d.id)
+                        setUnassignedOnly(false)
+                        setDepartmentDropdownOpen(false)
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      <span className="flex-1 text-left truncate">{d.name}</span>
+                      {activeDepartmentId === d.id && <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />}
+                    </button>
+                  ))}
+                  {departments.length === 0 && (
+                    <p className="px-3 py-2 text-xs text-gray-400">Nenhum departamento criado</p>
                   )}
                 </div>
               </div>

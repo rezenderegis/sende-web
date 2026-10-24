@@ -47,8 +47,19 @@ export interface WhatsappNumber {
   botHistoryLimit: number
   enabledToolNames: string[] | null
   enabledFlowNames: string[] | null
+  defaultDepartmentId?: string | null
   dailySpendLimitCents: number | null
   monthlySpendLimitCents: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Department {
+  id: string
+  companyId: string
+  name: string
+  memberCount?: number
+  members?: User[]
   createdAt: string
   updatedAt: string
 }
@@ -151,8 +162,10 @@ export interface Conversation {
   aiState: AiState
   lastMessageAt: string
   lastInboundAt: string | null
-  assignedUserId?: string
-  assignedUser?: User
+  assignedUserId?: string | null
+  assignedUser?: User | null
+  departmentId?: string | null
+  department?: Department | null
   tags: Tag[]
   campaignPrompt: string | null
   campaignBroadcastId: string | null
@@ -187,6 +200,10 @@ export type ConversationEventType =
   | 'campaign_reset_human'
   | 'campaign_reset_manual'
   | 'campaign_expired'
+  | 'external_action_called'
+  | 'flow_action_executed'
+  | 'transferred_to_department'
+  | 'transferred_to_user'
 
 export interface ConversationEvent {
   id: string

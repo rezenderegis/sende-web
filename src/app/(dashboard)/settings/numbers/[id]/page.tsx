@@ -13,7 +13,8 @@ import { PromptEditor } from '@/components/bot/prompt-editor'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
 import { ToolFlowSelector } from '@/components/bot/tool-flow-selector'
-import type { WhatsappNumber, WhatsappTemplate, CampaignPrompt } from '@/types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { Department, WhatsappNumber, WhatsappTemplate, CampaignPrompt } from '@/types'
 
 export default function NumberConfigPage() {
   const { id } = useParams<{ id: string }>()
@@ -25,10 +26,16 @@ export default function NumberConfigPage() {
   const [selectedPromptId, setSelectedPromptId] = useState('')
   const [enabledToolNames, setEnabledToolNames] = useState<string[] | null>(null)
   const [enabledFlowNames, setEnabledFlowNames] = useState<string[] | null>(null)
+  const [defaultDepartmentId, setDefaultDepartmentId] = useState<string>('')
 
   const { data: numbers } = useQuery<WhatsappNumber[]>({
     queryKey: ['whatsapp-numbers'],
     queryFn: () => api.get('/whatsapp/numbers').then((r) => r.data),
+  })
+
+  const { data: departments = [] } = useQuery<Department[]>({
+    queryKey: ['departments'],
+    queryFn: () => api.get('/departments').then((r) => r.data),
   })
 
   const { data: savedPrompts = [] } = useQuery<CampaignPrompt[]>({
@@ -44,11 +51,12 @@ export default function NumberConfigPage() {
       setHistoryLimit(num.botHistoryLimit ?? 20)
       setEnabledToolNames(num.enabledToolNames ?? null)
       setEnabledFlowNames(num.enabledFlowNames ?? null)
+      setDefaultDepartmentId(num.defaultDepartmentId ?? '')
     }
   }, [num])
 
   const updateMutation = useMutation({
-    mutationFn: (data: { systemPrompt?: string | null; botHistoryLimit?: number; enabledToolNames?: string[] | null; enabledFlowNames?: string[] | null }) =>
+    mutationFn: (data: { systemPrompt?: string | null; botHistoryLimit?: number; enabledToolNames?: string[] | null; enabledFlowNames?: string[] | null; defaultDepartmentId?: string | null }) =>
       api.patch(`/whatsapp/numbers/${id}`, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['whatsapp-numbers'] })
@@ -193,6 +201,37 @@ export default function NumberConfigPage() {
               disabled={updateMutation.isPending}
             >
               {updateMutation.isPending ? 'Salvando...' : 'Salvar limite'}
+            </Button>
+          </div>
+
+          {/* Departamento padrão */}
+          <div className="rounded-xl border bg-white p-5 space-y-4">
+            <div>
+              <h2 className="font-semibold text-teal-900">Departamento padrão</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Conversas novas que chegarem por esse número já nascem nesse departamento (fila de atendimento).
+              </p>
+            </div>
+            <Select
+              value={defaultDepartmentId || '__none__'}
+              onValueChange={(v) => setDefaultDepartmentId(v === '__none__' ? '' : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Nenhum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Nenhum</SelectItem>
+                {departments.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              className="w-full"
+              onClick={() => updateMutation.mutate({ defaultDepartmentId: defaultDepartmentId || null })}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? 'Salvando...' : 'Salvar departamento'}
             </Button>
           </div>
 

@@ -203,6 +203,23 @@ function followOnLabel(fo: FollowOn): string {
   return `${label} · ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} ${time}`
 }
 
+function transferEventLabel(ev: ConversationEvent, departments: Department[], users: User[]): string | null {
+  const byUser = users.find((u) => u.id === ev.metadata?.byUserId)
+  const suffix = byUser ? ` (por ${byUser.name})` : ''
+
+  if (ev.type === 'transferred_to_department') {
+    const dept = departments.find((d) => d.id === ev.metadata?.toDepartmentId)
+    return dept ? `➡️ Transferida para o departamento ${dept.name}${suffix}` : `➡️ Removida do departamento${suffix}`
+  }
+
+  if (ev.type === 'transferred_to_user') {
+    const user = users.find((u) => u.id === ev.metadata?.toUserId)
+    return user ? `➡️ Transferida para ${user.name}${suffix}` : `➡️ Atendente removido da conversa${suffix}`
+  }
+
+  return null
+}
+
 const statusIcon: Record<string, any> = {
   sent: <Clock className="h-3 w-3 text-gray-400" />,
   delivered: <CheckCheck className="h-3 w-3 text-gray-400" />,
@@ -401,8 +418,22 @@ export default function ConversationPage() {
   const { data: events = [] } = useQuery<ConversationEvent[]>({
     queryKey: ['conversation-events', id],
     queryFn: () => api.get(`/conversations/${id}/events`).then((r) => r.data),
-    enabled: showHistory,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   })
+
+  const transferEvents = events.filter(
+    (ev) => ev.type === 'transferred_to_department' || ev.type === 'transferred_to_user',
+  )
+
+  type TimelineItem =
+    | { kind: 'message'; key: string; createdAt: string; message: Message }
+    | { kind: 'transfer'; key: string; createdAt: string; event: ConversationEvent }
+
+  const timeline: TimelineItem[] = [
+    ...messages.data.map((m): TimelineItem => ({ kind: 'message', key: `m-${m.id}`, createdAt: m.createdAt, message: m })),
+    ...transferEvents.map((ev): TimelineItem => ({ kind: 'transfer', key: `e-${ev.id}`, createdAt: ev.createdAt, event: ev })),
+  ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 
   const { data: followOns = [] } = useQuery<FollowOn[]>({
     queryKey: ['follow-ons-contact', conversation?.contactId],
@@ -896,43 +927,58 @@ export default function ConversationPage() {
         {isFetchingOlder && (
           <p className="py-1 text-center text-xs text-muted-foreground">Carregando mensagens antigas...</p>
         )}
-        {messages?.data?.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}
-          >
+        {timeline.map((item) => {
+          if (item.kind === 'transfer') {
+            const label = transferEventLabel(item.event, departments, users)
+            if (!label) return null
+            return (
+              <div key={item.key} className="flex justify-center">
+                <span className="rounded-full bg-gray-200 px-3 py-1 text-xs text-gray-600">
+                  {label} · {formatTime(item.event.createdAt)}
+                </span>
+              </div>
+            )
+          }
+
+          const msg = item.message
+          return (
             <div
-              className={`max-w-[70%] rounded-lg px-4 py-2 text-sm shadow-sm ${
-                msg.direction === 'outbound'
-                  ? 'bg-teal-600 text-white rounded-br-none'
-                  : 'bg-white text-gray-900 rounded-bl-none'
-              }`}
+              key={item.key}
+              className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}
             >
-              {msg.type === 'audio' ? (
-                <AudioMessage messageId={msg.id} isOut={msg.direction === 'outbound'} transcription={msg.metadata?.transcription} />
-              ) : msg.type === 'image' || msg.type === 'video' || msg.type === 'document' ? (
-                <MediaMessage messageId={msg.id} type={msg.type} content={msg.content} isOut={msg.direction === 'outbound'} />
-              ) : (
-                <p className="whitespace-pre-wrap break-words">{renderContent(msg.content, contact?.name)}</p>
-              )}
-              <div className={`flex items-center justify-end gap-1 mt-1 ${
-                msg.direction === 'outbound' ? 'text-teal-100' : 'text-gray-400'
-              }`}>
-                {msg.direction === 'outbound' && msg.aiPromptSource && (
-                  <span className={`text-xs rounded-full px-1.5 py-0 mr-1 ${
-                    msg.aiPromptSource === 'campaign'
-                      ? 'bg-orange-400/30 text-orange-100'
-                      : 'bg-white/20 text-white/70'
-                  }`}>
-                    {msg.aiPromptSource === 'campaign' ? '⚡ campanha' : msg.aiPromptSource === 'system' ? 'prompt do número' : 'padrão'}
-                  </span>
+              <div
+                className={`max-w-[70%] rounded-lg px-4 py-2 text-sm shadow-sm ${
+                  msg.direction === 'outbound'
+                    ? 'bg-teal-600 text-white rounded-br-none'
+                    : 'bg-white text-gray-900 rounded-bl-none'
+                }`}
+              >
+                {msg.type === 'audio' ? (
+                  <AudioMessage messageId={msg.id} isOut={msg.direction === 'outbound'} transcription={msg.metadata?.transcription} />
+                ) : msg.type === 'image' || msg.type === 'video' || msg.type === 'document' ? (
+                  <MediaMessage messageId={msg.id} type={msg.type} content={msg.content} isOut={msg.direction === 'outbound'} />
+                ) : (
+                  <p className="whitespace-pre-wrap break-words">{renderContent(msg.content, contact?.name)}</p>
                 )}
-                <span className="text-xs">{formatTime(msg.createdAt)}</span>
-                {msg.direction === 'outbound' && statusIcon[msg.status]}
+                <div className={`flex items-center justify-end gap-1 mt-1 ${
+                  msg.direction === 'outbound' ? 'text-teal-100' : 'text-gray-400'
+                }`}>
+                  {msg.direction === 'outbound' && msg.aiPromptSource && (
+                    <span className={`text-xs rounded-full px-1.5 py-0 mr-1 ${
+                      msg.aiPromptSource === 'campaign'
+                        ? 'bg-orange-400/30 text-orange-100'
+                        : 'bg-white/20 text-white/70'
+                    }`}>
+                      {msg.aiPromptSource === 'campaign' ? '⚡ campanha' : msg.aiPromptSource === 'system' ? 'prompt do número' : 'padrão'}
+                    </span>
+                  )}
+                  <span className="text-xs">{formatTime(msg.createdAt)}</span>
+                  {msg.direction === 'outbound' && statusIcon[msg.status]}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
         <div ref={bottomRef} />
       </div>
 

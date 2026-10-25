@@ -19,6 +19,7 @@ export function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
   const [numberId, setNumberId] = useState('')
   const [templateName, setTemplateName] = useState('')
   const [started, setStarted] = useState(false)
+  const [schedulingState, setSchedulingState] = useState<any>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const { data: numbers = [] } = useQuery<WhatsappNumber[]>({
@@ -45,6 +46,7 @@ export function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
     setHistory([])
     setStarted(false)
     setTemplateName('')
+    setSchedulingState(null)
   }
 
   useEffect(() => {
@@ -65,7 +67,9 @@ export function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
         history: newHistory.map(({ role, content }) => ({ role, content })),
         enabledToolNames: prompt.enabledToolNames,
         enabledFlowNames: prompt.enabledFlowNames,
+        schedulingState,
       })
+      setSchedulingState(res.data.schedulingState ?? null)
       setHistory((h) => [...h, { role: 'assistant', content: res.data.reply, toolCalls: res.data.toolCalls }])
     } catch {
       setHistory((h) => [...h, { role: 'assistant', content: '⚠️ Erro ao obter resposta. Verifique a chave de API.' }])
@@ -203,6 +207,12 @@ export function PromptTestChat({ prompt }: { prompt: CampaignPrompt }) {
           )}
           <div ref={bottomRef} />
         </div>
+
+        {schedulingState && (
+          <div className="border-t bg-violet-50 px-3 py-1.5 text-[11px] text-violet-700">
+            📅 No fluxo de agendamento — etapa: <span className="font-mono">{schedulingState.step}</span>. Responda escolhendo uma das opções listadas, exatamente como aparece.
+          </div>
+        )}
 
         <div className="flex gap-2 border-t bg-white rounded-b-xl p-2">
           <input

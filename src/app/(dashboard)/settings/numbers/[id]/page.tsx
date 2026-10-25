@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -51,15 +51,21 @@ export default function NumberConfigPage() {
 
   const num = numbers?.find((n) => n.id === id)
 
+  // Só inicializa os campos uma vez por número (não a cada vez que `numbers`
+  // é refeito — a cada refetch em background o react-query entrega um array
+  // novo, e usar `num` direto como dependência reescrevia por cima do que o
+  // usuário estava selecionando/editando antes de clicar em Salvar).
+  const initializedForId = useRef<string | null>(null)
   useEffect(() => {
-    if (num) {
+    if (num && initializedForId.current !== id) {
       setPromptDraft(num.systemPrompt ?? '')
       setHistoryLimit(num.botHistoryLimit ?? 20)
       setEnabledToolNames(num.enabledToolNames ?? null)
       setEnabledFlowNames(num.enabledFlowNames ?? null)
       setDefaultDepartmentId(num.defaultDepartmentId ?? '')
+      initializedForId.current = id
     }
-  }, [num])
+  }, [num, id])
 
   const updateMutation = useMutation({
     mutationFn: (data: { systemPrompt?: string | null; botHistoryLimit?: number; enabledToolNames?: string[] | null; enabledFlowNames?: string[] | null; defaultDepartmentId?: string | null }) =>

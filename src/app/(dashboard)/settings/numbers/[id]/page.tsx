@@ -9,7 +9,6 @@ import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { PromptEditor } from '@/components/bot/prompt-editor'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
 import { ToolFlowSelector } from '@/components/bot/tool-flow-selector'
@@ -63,12 +62,13 @@ export default function NumberConfigPage() {
       setEnabledToolNames(num.enabledToolNames ?? null)
       setEnabledFlowNames(num.enabledFlowNames ?? null)
       setDefaultDepartmentId(num.defaultDepartmentId ?? '')
+      setSelectedPromptId(num.promptSourceId ?? '')
       initializedForId.current = id
     }
   }, [num, id])
 
   const updateMutation = useMutation({
-    mutationFn: (data: { systemPrompt?: string | null; botHistoryLimit?: number; enabledToolNames?: string[] | null; enabledFlowNames?: string[] | null; defaultDepartmentId?: string | null }) =>
+    mutationFn: (data: { systemPrompt?: string | null; promptSourceId?: string | null; botHistoryLimit?: number; enabledToolNames?: string[] | null; enabledFlowNames?: string[] | null; defaultDepartmentId?: string | null }) =>
       api.patch(`/whatsapp/numbers/${id}`, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['whatsapp-numbers'] })
@@ -97,7 +97,7 @@ export default function NumberConfigPage() {
   function applyPrompt(promptId: string) {
     setSelectedPromptId(promptId)
     const prompt = savedPrompts.find((p) => p.id === promptId)
-    if (prompt) setPromptDraft(prompt.content)
+    setPromptDraft(prompt?.content ?? '')
   }
 
   if (!num) {
@@ -143,43 +143,48 @@ export default function NumberConfigPage() {
           <div>
             <Label className="text-sm font-semibold">Instruções do bot</Label>
             <p className="text-xs text-muted-foreground mt-1">
-              Use{' '}
-              <code className="rounded bg-gray-100 px-1 py-0.5 font-mono">${'{contactName}'}</code>{' '}
-              onde quiser que o nome do cliente apareça. Se vazio, usa o prompt padrão do servidor.
+              Escolha qual prompt esse número usa. Pra criar ou editar o conteúdo, vá em{' '}
+              <Link href="/settings/prompts" className="text-teal-600 hover:underline">Gerenciar prompts</Link>.
             </p>
           </div>
-          {savedPrompts.length > 0 && (
-            <div className="shrink-0">
-              <select
-                value={selectedPromptId}
-                onChange={(e) => applyPrompt(e.target.value)}
-                className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-teal-600"
-              >
-                <option value="">Carregar um prompt salvo...</option>
-                {savedPrompts.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Selecionar preenche o texto abaixo — você pode ajustar antes de salvar.{' '}
-                <Link href="/settings/prompts" className="text-teal-600 hover:underline">Gerenciar prompts</Link>
-              </p>
+
+          {savedPrompts.length === 0 ? (
+            <div className="rounded-lg border border-dashed bg-gray-50 px-4 py-6 text-center text-sm text-muted-foreground">
+              Nenhum prompt salvo ainda.{' '}
+              <Link href="/settings/prompts" className="text-teal-600 hover:underline">Criar um prompt</Link>
+              {' '}pra poder selecionar aqui.
             </div>
+          ) : (
+            <>
+              <div className="shrink-0">
+                <select
+                  value={selectedPromptId}
+                  onChange={(e) => applyPrompt(e.target.value)}
+                  className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-teal-600"
+                >
+                  <option value="">Usar prompt padrão do servidor</option>
+                  {savedPrompts.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="shrink-0">
+                <Button
+                  onClick={() => updateMutation.mutate({ systemPrompt: promptDraft || null, promptSourceId: selectedPromptId || null })}
+                  disabled={updateMutation.isPending}
+                >
+                  {updateMutation.isPending ? 'Salvando...' : 'Salvar prompt'}
+                </Button>
+              </div>
+            </>
           )}
-          <PromptEditor
-            wrapperClassName="flex-1 flex flex-col min-h-0"
-            placeholder="Usando prompt padrão do servidor"
-            value={promptDraft}
-            onChange={setPromptDraft}
-            className="flex-1 resize-none font-mono text-sm leading-relaxed"
-          />
-          <div className="shrink-0">
-            <Button
-              onClick={() => updateMutation.mutate({ systemPrompt: promptDraft || null })}
-              disabled={updateMutation.isPending}
-            >
-              {updateMutation.isPending ? 'Salvando...' : 'Salvar prompt'}
-            </Button>
+
+          <div className="flex-1 min-h-0 overflow-y-auto rounded-lg border bg-gray-50 px-3 py-2">
+            {promptDraft ? (
+              <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-gray-700">{promptDraft}</pre>
+            ) : (
+              <p className="text-sm text-muted-foreground">Usando o prompt padrão do servidor.</p>
+            )}
           </div>
         </div>
 

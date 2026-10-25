@@ -44,6 +44,7 @@ export interface WhatsappNumber {
   isActive: boolean
   webhookVerifyToken: string
   systemPrompt: string | null
+  promptSourceId?: string | null
   botHistoryLimit: number
   enabledToolNames: string[] | null
   enabledFlowNames: string[] | null

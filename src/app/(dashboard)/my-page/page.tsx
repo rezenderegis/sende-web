@@ -261,7 +261,14 @@ export default function MyPagePage() {
                       {site.domain} <ExternalLink className="h-3 w-3" />
                     </a>
                   ) : (
-                    <p className="mt-0.5 text-xs text-muted-foreground">Sem domínio configurado ainda</p>
+                    <a
+                      href={`/sites/${site.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-0.5 flex items-center gap-1 text-xs text-amber-600 hover:underline"
+                    >
+                      Link temporário de preview (sem domínio ainda) <ExternalLink className="h-3 w-3" />
+                    </a>
                   )}
                 </div>
                 <div className="flex shrink-0 gap-1.5">

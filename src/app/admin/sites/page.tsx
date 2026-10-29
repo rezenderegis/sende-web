@@ -32,6 +32,9 @@ function SiteRow({ site }: { site: AdminSite }) {
       <div className="min-w-[160px] flex-1">
         <p className="truncate text-sm font-semibold text-gray-900">{site.name}</p>
         <p className="truncate text-xs text-muted-foreground">{site.companyName} · /{site.slug}</p>
+        <a href={`/sites/${site.slug}`} target="_blank" rel="noreferrer" className="text-xs text-teal-600 hover:underline">
+          Ver preview
+        </a>
       </div>
 
       <div className="flex items-center gap-1.5">

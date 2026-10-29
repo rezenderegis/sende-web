@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { notFound } from 'next/navigation'
 import SfPinturaNav from '@/components/sf-pintura/nav'
 import SfPinturaFooter from '@/components/sf-pintura/footer'
 import SfPinturaWhatsAppFloat from '@/components/sf-pintura/whatsapp-float'
+import { isLandingPageActive } from '@/lib/landing-pages'
 
 const GOOGLE_ADS_ID = 'AW-16505662855'
 
@@ -12,7 +14,9 @@ export const metadata: Metadata = {
     'Funilaria, pintura automotiva, polimento cristalizado e martelinho de ouro. Soluções completas para restaurar a beleza e a integridade do seu veículo.',
 }
 
-export default function SfPinturaLayout({ children }: { children: React.ReactNode }) {
+export default async function SfPinturaLayout({ children }: { children: React.ReactNode }) {
+  if (!(await isLandingPageActive('sf-pintura'))) notFound()
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Google tag (gtag.js) — escopado só nessa rota, não afeta Sende/GlobalSix */}

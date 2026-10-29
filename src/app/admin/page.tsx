@@ -160,6 +160,11 @@ function BalanceHistoryModal({ companyId, companyName, onClose }: { companyId: s
   )
 }
 
+const AVAILABLE_MODULES = [
+  { key: 'crm', label: 'CRM / WhatsApp' },
+  { key: 'pages', label: 'GlobalSixPages' },
+]
+
 function CompanyCard({ company }: { company: AdminCompanySummary }) {
   const qc = useQueryClient()
   const [expanded, setExpanded] = useState(false)
@@ -175,6 +180,21 @@ function CompanyCard({ company }: { company: AdminCompanySummary }) {
     },
     onError: () => toast({ title: 'Erro ao atualizar limites', variant: 'destructive' }),
   })
+
+  const modulesMutation = useMutation({
+    mutationFn: (enabledModules: string[]) => api.patch(`/admin/companies/${company.id}/modules`, { enabledModules }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-companies'] })
+      toast({ title: 'Módulos atualizados', variant: 'success' })
+    },
+    onError: () => toast({ title: 'Erro ao atualizar módulos', variant: 'destructive' }),
+  })
+
+  function toggleModule(key: string) {
+    const current = company.enabledModules ?? []
+    const next = current.includes(key) ? current.filter((m) => m !== key) : [...current, key]
+    modulesMutation.mutate(next)
+  }
 
   return (
     <div className="rounded-lg border bg-white">
@@ -201,6 +221,22 @@ function CompanyCard({ company }: { company: AdminCompanySummary }) {
 
       {expanded && (
         <div className="space-y-2 border-t bg-gray-50/40 p-4">
+          <div className="rounded-lg border border-gray-100 bg-white p-3">
+            <p className="mb-2 text-xs font-medium text-gray-600">Módulos contratados</p>
+            <div className="flex flex-wrap gap-3">
+              {AVAILABLE_MODULES.map((m) => (
+                <label key={m.key} className="flex items-center gap-1.5 text-xs text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={(company.enabledModules ?? []).includes(m.key)}
+                    disabled={modulesMutation.isPending}
+                    onChange={() => toggleModule(m.key)}
+                  />
+                  {m.label}
+                </label>
+              ))}
+            </div>
+          </div>
           {company.numbers.length === 0 ? (
             <p className="text-xs text-muted-foreground">Nenhum número conectado.</p>
           ) : (

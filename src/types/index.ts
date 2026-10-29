@@ -13,6 +13,19 @@ export interface Company {
   plan: CompanyPlan
   isActive: boolean
   balanceCents: number
+  enabledModules: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Site {
+  id: string
+  companyId: string
+  slug: string
+  name: string
+  domain: string | null
+  content: string
+  isActive: boolean
   createdAt: string
   updatedAt: string
 }
@@ -825,6 +838,7 @@ export interface AdminCompanySummary extends UsageSummary {
   email: string
   plan: CompanyPlan
   isActive: boolean
+  enabledModules: string[]
 }
 
 export interface PlatformSettings {

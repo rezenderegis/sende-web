@@ -3,10 +3,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, CalendarClock, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban, TrendingUp, Target, Building2, Stethoscope, ClipboardList } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Users, Phone, Settings, LogOut, LayoutDashboard, Contact, Tag, Megaphone, BookMarked, BotMessageSquare, AlertTriangle, ShoppingBag, Package, Upload, Zap, Calendar, CalendarClock, MessageSquare, UserCheck, ShieldCheck, Webhook, Workflow, Radio, Kanban, TrendingUp, Target, Building2, Stethoscope, ClipboardList, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
+import api from '@/lib/api'
+import type { Company } from '@/types'
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -28,20 +31,27 @@ const salesItems = [
   { href: '/reports/funnel', icon: TrendingUp, label: 'Funil de Conversão' },
 ]
 
-const settingsItems = [
-  { href: '/settings/numbers', icon: Phone, label: 'Números WhatsApp' },
+const settingsItemsAlways = [
   { href: '/settings/users', icon: Users, label: 'Usuários' },
+  { href: '/settings/company', icon: Settings, label: 'Empresa' },
+]
+
+const settingsItemsCrm = [
+  { href: '/settings/numbers', icon: Phone, label: 'Números WhatsApp' },
   { href: '/settings/teams', icon: Target, label: 'Equipes e Metas' },
   { href: '/settings/departments', icon: Building2, label: 'Departamentos' },
   { href: '/settings/services', icon: ClipboardList, label: 'Serviços' },
   { href: '/settings/professionals', icon: Stethoscope, label: 'Profissionais' },
-  { href: '/settings/company', icon: Settings, label: 'Empresa' },
   { href: '/settings/tags', icon: Tag, label: 'Tags' },
   { href: '/settings/saved-messages', icon: BookMarked, label: 'Msgs Salvas' },
   { href: '/settings/prompts', icon: BotMessageSquare, label: 'Prompts IA' },
   { href: '/settings/actions', icon: Webhook, label: 'Bot Tools' },
   { href: '/settings/flows', icon: Workflow, label: 'Fluxo Guiado' },
   { href: '/settings/webhooks', icon: Radio, label: 'Webhooks' },
+]
+
+const pagesItems = [
+  { href: '/my-page', icon: Globe, label: 'Minha Página' },
 ]
 
 interface SidebarProps {
@@ -54,6 +64,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, logout } = useAuthStore()
+
+  const { data: company } = useQuery<Company>({
+    queryKey: ['company'],
+    queryFn: () => api.get('/companies/me').then((r) => r.data),
+  })
+  // Enquanto carrega, assume 'crm' ligado pra não piscar o menu inteiro
+  // sumindo e reaparecendo (hoje é o caso da esmagadora maioria das contas).
+  const hasCrm = company ? company.enabledModules?.includes('crm') : true
+  const hasPages = company?.enabledModules?.includes('pages') ?? false
 
   function handleLogout() {
     logout()
@@ -91,7 +110,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
 
       <nav className="flex-1 overflow-y-auto space-y-1 px-3 py-4">
-        {navItems.map((item) => (
+        {hasCrm && navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -108,18 +127,59 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Link>
         ))}
 
+        {hasPages && pagesItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onClose}
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+              isActive(item.href)
+                ? 'bg-teal-50 text-teal-600'
+                : 'text-ink-soft hover:bg-teal-50 hover:text-teal-700',
+            )}
+          >
+            <item.icon className="h-4 w-4" />
+            {item.label}
+          </Link>
+        ))}
+
+        {hasCrm && (
+          <div className="pt-4">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+              Vendas
+            </p>
+            {salesItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive(item.href)
+                    ? 'bg-teal-50 text-teal-600'
+                    : 'text-ink-soft hover:bg-teal-50 hover:text-teal-700',
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
+
         <div className="pt-4">
           <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-            Vendas
+            Configurações
           </p>
-          {salesItems.map((item) => (
+          {settingsItemsAlways.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={onClose}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                isActive(item.href)
+                pathname === item.href
                   ? 'bg-teal-50 text-teal-600'
                   : 'text-ink-soft hover:bg-teal-50 hover:text-teal-700',
               )}
@@ -128,13 +188,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               {item.label}
             </Link>
           ))}
-        </div>
-
-        <div className="pt-4">
-          <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-            Configurações
-          </p>
-          {settingsItems.map((item) => (
+          {hasCrm && settingsItemsCrm.map((item) => (
             <Link
               key={item.href}
               href={item.href}

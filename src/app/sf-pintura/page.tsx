@@ -13,8 +13,8 @@ import {
   BadgeCheck,
   Clock3,
 } from 'lucide-react'
+import { notFound } from 'next/navigation'
 import { isLandingPageActive } from '@/lib/landing-pages'
-import LandingPageUnavailable from '@/components/landing-pages/unavailable'
 
 const WA_NUMBER = '5562999007445'
 const WA_LINK = (msg: string) => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`
@@ -277,7 +277,7 @@ function Contato() {
 
 /* ─── Page ──────────────────────────────────────────────── */
 export default async function SfPinturaPage() {
-  if (!(await isLandingPageActive('sf-pintura'))) return <LandingPageUnavailable />
+  if (!(await isLandingPageActive('sf-pintura'))) notFound()
 
   return (
     <>

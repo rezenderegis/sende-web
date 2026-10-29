@@ -1,14 +1,15 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Pencil, Trash2, X, Globe, ExternalLink } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Globe, ExternalLink, Sparkles, ArrowRight, LayoutGrid, Code2, Wand2 } from 'lucide-react'
 import api from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/hooks/use-toast'
+import { cn } from '@/lib/utils'
 import type { Site } from '@/types'
 
 const TEMPLATES: { key: string; label: string; category: string | null; html: string }[] = [
@@ -1256,6 +1257,18 @@ const templateGroups: [string | null, typeof TEMPLATES][] = (() => {
   return Array.from(groups.entries())
 })()
 
+const CATEGORY_STYLES: Record<string, { border: string; badge: string; chipActive: string; dot: string }> = {
+  'Clínica Odontológica': { border: 'hover:border-blue-400', badge: 'bg-blue-100 text-blue-700', chipActive: 'bg-blue-600 text-white border-blue-600', dot: 'bg-blue-500' },
+  'Clínica Médica': { border: 'hover:border-teal-400', badge: 'bg-teal-100 text-teal-700', chipActive: 'bg-teal-600 text-white border-teal-600', dot: 'bg-teal-500' },
+  'Vendas pela Internet': { border: 'hover:border-purple-400', badge: 'bg-purple-100 text-purple-700', chipActive: 'bg-purple-600 text-white border-purple-600', dot: 'bg-purple-500' },
+  Infoproduto: { border: 'hover:border-orange-400', badge: 'bg-orange-100 text-orange-700', chipActive: 'bg-orange-600 text-white border-orange-600', dot: 'bg-orange-500' },
+  'Bar e Restaurante': { border: 'hover:border-amber-400', badge: 'bg-amber-100 text-amber-700', chipActive: 'bg-amber-600 text-white border-amber-600', dot: 'bg-amber-500' },
+  'Comércio em Geral': { border: 'hover:border-green-400', badge: 'bg-green-100 text-green-700', chipActive: 'bg-green-600 text-white border-green-600', dot: 'bg-green-500' },
+  Vendas: { border: 'hover:border-gray-400', badge: 'bg-gray-100 text-gray-700', chipActive: 'bg-gray-700 text-white border-gray-700', dot: 'bg-gray-400' },
+}
+
+const CATEGORIES = templateGroups.map(([category]) => category).filter((c): c is string => !!c)
+
 function SitePreview({ html }: { html: string }) {
   return (
     <iframe
@@ -1264,6 +1277,102 @@ function SitePreview({ html }: { html: string }) {
       sandbox=""
       className="h-full w-full rounded-lg border bg-white"
     />
+  )
+}
+
+function TemplateThumbnail({ html }: { html: string }) {
+  return (
+    <div className="relative h-36 w-full overflow-hidden rounded-t-lg bg-gray-50">
+      {html ? (
+        <iframe
+          title="thumb"
+          srcDoc={html}
+          sandbox=""
+          tabIndex={-1}
+          style={{ width: '400%', height: '400%', transform: 'scale(0.25)', transformOrigin: 'top left', pointerEvents: 'none', border: 0 }}
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center text-xs text-gray-300">Em branco</div>
+      )}
+    </div>
+  )
+}
+
+function TemplateGallery({ onSelect }: { onSelect: (html: string) => void }) {
+  const [filter, setFilter] = useState<string | null>(null)
+  const groupsToShow = filter ? templateGroups.filter(([category]) => category === filter) : templateGroups
+
+  return (
+    <div>
+      <div className="mb-5 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setFilter(null)}
+          className={cn(
+            'rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors',
+            filter === null ? 'border-teal-600 bg-teal-600 text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300',
+          )}
+        >
+          Todos
+        </button>
+        {CATEGORIES.map((category) => {
+          const style = CATEGORY_STYLES[category]
+          const active = filter === category
+          return (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setFilter(category)}
+              className={cn(
+                'rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors',
+                active ? style?.chipActive : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300',
+              )}
+            >
+              {category}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="space-y-7">
+        {groupsToShow.map(([category, templates]) => (
+          <div key={category ?? 'sem-categoria'}>
+            {!filter && category && (
+              <p className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className={cn('h-1.5 w-1.5 rounded-full', CATEGORY_STYLES[category]?.dot)} />
+                {category}
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
+              {templates.map((t) => {
+                const style = t.category ? CATEGORY_STYLES[t.category] : undefined
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => onSelect(t.html)}
+                    className={cn(
+                      'group overflow-hidden rounded-lg border-2 border-gray-200 bg-white text-left shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg',
+                      style?.border,
+                    )}
+                  >
+                    <TemplateThumbnail html={t.html} />
+                    <div className="space-y-1.5 p-2.5">
+                      <p className="truncate text-xs font-semibold text-gray-800">{t.label}</p>
+                      {t.category && (
+                        <span className={cn('inline-block rounded-full px-2 py-0.5 text-[10px] font-medium', style?.badge)}>
+                          {t.category}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -1282,22 +1391,18 @@ function SiteForm({
   const [slug, setSlug] = useState(initial?.slug ?? '')
   const [slugTouched, setSlugTouched] = useState(!!initial)
   const [content, setContent] = useState(initial?.content ?? '')
+  const [started, setStarted] = useState(!!initial)
+  const [focusCodeOnMount, setFocusCodeOnMount] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [generating, setGenerating] = useState(false)
+  const codeRef = useRef<HTMLTextAreaElement>(null)
 
-  async function handleGenerate() {
-    if (!aiPrompt.trim()) return
-    setGenerating(true)
-    try {
-      const res = await api.post('/sites-mine/generate', { prompt: aiPrompt })
-      setContent(res.data.html)
-      toast({ title: 'Página gerada — revise o conteúdo antes de salvar', variant: 'success' })
-    } catch (err: any) {
-      toast({ title: err?.response?.data?.message || 'Erro ao gerar com IA', variant: 'destructive' })
-    } finally {
-      setGenerating(false)
+  useEffect(() => {
+    if (started && focusCodeOnMount) {
+      codeRef.current?.focus()
+      setFocusCodeOnMount(false)
     }
-  }
+  }, [started, focusCodeOnMount])
 
   function handleNameChange(value: string) {
     setName(value)
@@ -1313,8 +1418,122 @@ function SiteForm({
     }
   }
 
+  function applyGeneratedHtml(html: string) {
+    setContent(html)
+    setStarted(true)
+    if (!name.trim()) {
+      const match = html.match(/<title>([^<]*)<\/title>/i)
+      if (match?.[1]?.trim()) handleNameChange(match[1].trim())
+    }
+  }
+
+  function pickTemplate(html: string) {
+    setContent(html)
+    setStarted(true)
+  }
+
+  function startBlank() {
+    setFocusCodeOnMount(true)
+    setStarted(true)
+  }
+
+  // Serve tanto pra gerar do zero (content vazio) quanto pra pedir ajuste
+  // sobre o que já existe (template escolhido, HTML colado ou já gerado
+  // antes) — o backend decide o modo com base em currentHtml estar
+  // preenchido ou não.
+  async function handleAiAction() {
+    if (!aiPrompt.trim()) return
+    setGenerating(true)
+    try {
+      const res = await api.post('/sites-mine/generate', { prompt: aiPrompt, currentHtml: content || undefined })
+      applyGeneratedHtml(res.data.html)
+      setAiPrompt('')
+      toast({ title: content ? 'Ajuste aplicado — confira o preview' : 'Página gerada — revise o conteúdo antes de salvar', variant: 'success' })
+    } catch (err: any) {
+      toast({ title: err?.response?.data?.message || 'Erro ao gerar com IA', variant: 'destructive' })
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  if (!started) {
+    return (
+      <div className="space-y-8">
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="flex flex-col rounded-2xl bg-gradient-to-br from-violet-600 via-indigo-600 to-teal-500 p-6 text-white shadow-lg transition-shadow hover:shadow-xl">
+            <div className="mb-3 flex items-center gap-2">
+              <Sparkles className="h-6 w-6" />
+              <h2 className="text-lg font-bold">Criar com IA</h2>
+            </div>
+            <div className="mb-4 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-white/90">
+              <span className="rounded-full bg-white/20 px-2.5 py-1">1. Descreva</span>
+              <ArrowRight className="h-3 w-3" />
+              <span className="rounded-full bg-white/20 px-2.5 py-1">2. Gerar</span>
+              <ArrowRight className="h-3 w-3" />
+              <span className="rounded-full bg-white/20 px-2.5 py-1">3. Ver e ajustar</span>
+            </div>
+            <Textarea
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="Ex: página de vendas pra uma barbearia masculina, tom moderno, com seção de serviços e botão de agendar no WhatsApp"
+              className="h-28 flex-1 border-white/30 bg-white/10 text-sm text-white placeholder:text-white/60 focus-visible:ring-white"
+            />
+            <Button
+              type="button"
+              className="mt-3 w-full bg-white font-semibold text-indigo-700 hover:bg-white/90"
+              disabled={!aiPrompt.trim() || generating}
+              onClick={handleAiAction}
+            >
+              {generating ? 'Gerando sua página...' : 'Gerar página com IA'}
+            </Button>
+          </div>
+
+          <div className="flex flex-col rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-6 shadow-sm transition-shadow hover:shadow-md">
+            <div className="mb-3 flex items-center gap-2 text-amber-700">
+              <LayoutGrid className="h-6 w-6" />
+              <h2 className="text-lg font-bold text-gray-800">Escolher um modelo</h2>
+            </div>
+            <p className="text-sm text-gray-600">
+              20 modelos prontos (clínicas, vendas, infoproduto, bar/restaurante, comércio). Escolha um e, se quiser,
+              refine com IA depois — dentro do editor.
+            </p>
+            <div className="mt-4 flex-1" />
+            <p className="text-xs font-medium text-amber-700">↓ Veja a galeria completa logo abaixo</p>
+          </div>
+
+          <div className="flex flex-col rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+            <div className="mb-3 flex items-center gap-2 text-slate-700">
+              <Code2 className="h-6 w-6" />
+              <h2 className="text-lg font-bold text-gray-800">Colar meu HTML</h2>
+            </div>
+            <p className="text-sm text-gray-600">Já tem o código pronto (exportado de outro editor, feito à mão)? Cole direto e veja o preview na hora.</p>
+            <div className="flex-1" />
+            <Button type="button" variant="outline" className="mt-4 border-slate-300" onClick={startBlank}>
+              Colar código
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="mb-3 text-lg font-semibold text-gray-800">Galeria de modelos</h2>
+          <TemplateGallery onSelect={pickTemplate} />
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={onCancel}>Cancelar</Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-xl border bg-white p-6 md:p-8">
+      {!initial && (
+        <button type="button" onClick={() => setStarted(false)} className="mb-4 text-xs font-medium text-teal-600 hover:underline">
+          ← Voltar pras opções de início
+        </button>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 md:max-w-2xl">
         <div>
           <Label>Nome da página</Label>
@@ -1333,45 +1552,32 @@ function SiteForm({
         </div>
       </div>
 
-      {!initial && (
-        <div className="mt-5">
-          <Label>Começar a partir de um modelo</Label>
-          <div className="mt-2 space-y-3">
-            {templateGroups.map(([category, templates]) => (
-              <div key={category ?? 'sem-categoria'}>
-                {category && <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{category}</p>}
-                <div className="flex flex-wrap gap-2">
-                  {templates.map((t) => (
-                    <Button key={t.key} type="button" size="sm" variant="outline" onClick={() => setContent(t.html)}>
-                      {t.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+      <div className="mt-5 rounded-xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-5 shadow-sm">
+        <div className="mb-1.5 flex items-center gap-2">
+          <Wand2 className="h-5 w-5 text-violet-600" />
+          <Label className="!mb-0 text-sm font-semibold text-violet-900">
+            {content.trim() ? 'Pedir ajuste à IA' : 'Gerar com IA'}
+          </Label>
         </div>
-      )}
-
-      <div className="mt-5 rounded-lg border border-dashed border-teal-200 bg-teal-50/40 p-5">
-        <Label>Ou gerar com IA</Label>
-        <p className="mb-3 mt-1 text-xs text-muted-foreground">
-          Descreva o negócio e o que a página deve ter — a IA gera um HTML completo pra você revisar e ajustar.
+        <p className="mb-3 text-xs text-violet-700/80">
+          {content.trim()
+            ? 'Descreva o que quer mudar (ex: "deixe o botão verde", "troque o título pra X") — a IA edita o HTML atual preservando o resto.'
+            : 'Descreva o negócio e o que a página deve ter — a IA gera o HTML completo.'}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <Textarea
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="Ex: página de vendas pra uma barbearia masculina, tom moderno, com seção de serviços (corte, barba, combo) e botão de agendar no WhatsApp"
-            className="h-24 flex-1 text-sm"
+            placeholder={content.trim() ? 'Ex: deixe as cores mais vivas e troque o título' : 'Ex: página de vendas pra uma barbearia masculina...'}
+            className="h-20 flex-1 border-violet-200 bg-white text-sm"
           />
           <Button
             type="button"
-            className="shrink-0 bg-teal-600 text-white hover:bg-teal-700 sm:h-24"
+            className="shrink-0 bg-violet-600 text-white hover:bg-violet-700 sm:h-20"
             disabled={!aiPrompt.trim() || generating}
-            onClick={handleGenerate}
+            onClick={handleAiAction}
           >
-            {generating ? 'Gerando...' : 'Gerar com IA'}
+            {generating ? 'Aplicando...' : content.trim() ? 'Aplicar ajuste' : 'Gerar página'}
           </Button>
         </div>
       </div>
@@ -1380,6 +1586,7 @@ function SiteForm({
         <div>
           <Label>Código HTML da página</Label>
           <Textarea
+            ref={codeRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Cole aqui o HTML completo da página..."

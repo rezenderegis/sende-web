@@ -16,6 +16,8 @@ import {
   Zap,
 } from "lucide-react";
 import TrialForm from "@/components/landing/trial-form";
+import { isLandingPageActive } from "@/lib/landing-pages";
+import LandingPageUnavailable from "@/components/landing-pages/unavailable";
 
 /* ─── Hero ──────────────────────────────────────────────── */
 function Hero() {
@@ -769,7 +771,9 @@ function CtaFinal() {
 }
 
 /* ─── Page ──────────────────────────────────────────────── */
-export default function LandingPage() {
+export default async function LandingPage() {
+  if (!(await isLandingPageActive('sende'))) return <LandingPageUnavailable />
+
   return (
     <>
       <Hero />

@@ -20,6 +20,8 @@ import GlobalSixNav from '@/components/globalsix/nav'
 import GlobalSixFooter from '@/components/globalsix/footer'
 import GlobalSixWhatsAppFloat from '@/components/globalsix/whatsapp-float'
 import GlobalSixLeadForm from '@/components/globalsix/lead-form'
+import { isLandingPageActive } from '@/lib/landing-pages'
+import LandingPageUnavailable from '@/components/landing-pages/unavailable'
 
 export const metadata: Metadata = {
   title: 'GlobalSix Technology — Sistemas, IA e o Sende',
@@ -354,7 +356,9 @@ function Contact() {
 }
 
 /* ─── Page ──────────────────────────────────────────────── */
-export default function GlobalSixPage() {
+export default async function GlobalSixPage() {
+  if (!(await isLandingPageActive('globalsix'))) return <LandingPageUnavailable />
+
   return (
     <div className="min-h-screen bg-[#F5F4F2] text-black">
       <GlobalSixNav />

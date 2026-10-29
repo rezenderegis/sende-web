@@ -55,6 +55,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             Reconciliação
           </Link>
+          <Link
+            href="/admin/landing-pages"
+            className={cn('font-medium', pathname === '/admin/landing-pages' ? 'text-teal-700' : 'text-gray-500 hover:text-gray-700')}
+          >
+            Landing Pages
+          </Link>
         </nav>
         <Link href="/dashboard" className="ml-auto text-xs text-gray-400 hover:text-gray-600">
           Voltar pro app

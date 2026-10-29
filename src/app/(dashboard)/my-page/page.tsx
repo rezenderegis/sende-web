@@ -1314,8 +1314,8 @@ function SiteForm({
   }
 
   return (
-    <div className="rounded-lg border bg-white p-5">
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="rounded-xl border bg-white p-6 md:p-8">
+      <div className="grid gap-4 md:grid-cols-2 md:max-w-2xl">
         <div>
           <Label>Nome da página</Label>
           <Input value={name} onChange={(e) => handleNameChange(e.target.value)} placeholder="Ex: Loja da Maria" />
@@ -1334,12 +1334,12 @@ function SiteForm({
       </div>
 
       {!initial && (
-        <div className="mt-4">
+        <div className="mt-5">
           <Label>Começar a partir de um modelo</Label>
-          <div className="mt-1.5 space-y-3">
+          <div className="mt-2 space-y-3">
             {templateGroups.map(([category, templates]) => (
               <div key={category ?? 'sem-categoria'}>
-                {category && <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{category}</p>}
+                {category && <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{category}</p>}
                 <div className="flex flex-wrap gap-2">
                   {templates.map((t) => (
                     <Button key={t.key} type="button" size="sm" variant="outline" onClick={() => setContent(t.html)}>
@@ -1353,21 +1353,21 @@ function SiteForm({
         </div>
       )}
 
-      <div className="mt-4 rounded-lg border border-dashed border-teal-200 bg-teal-50/40 p-4">
+      <div className="mt-5 rounded-lg border border-dashed border-teal-200 bg-teal-50/40 p-5">
         <Label>Ou gerar com IA</Label>
-        <p className="mb-2 mt-1 text-xs text-muted-foreground">
+        <p className="mb-3 mt-1 text-xs text-muted-foreground">
           Descreva o negócio e o que a página deve ter — a IA gera um HTML completo pra você revisar e ajustar.
         </p>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <Textarea
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
             placeholder="Ex: página de vendas pra uma barbearia masculina, tom moderno, com seção de serviços (corte, barba, combo) e botão de agendar no WhatsApp"
-            className="h-20 flex-1 text-xs sm:h-10"
+            className="h-24 flex-1 text-sm"
           />
           <Button
             type="button"
-            className="shrink-0 bg-teal-600 text-white hover:bg-teal-700"
+            className="shrink-0 bg-teal-600 text-white hover:bg-teal-700 sm:h-24"
             disabled={!aiPrompt.trim() || generating}
             onClick={handleGenerate}
           >
@@ -1376,25 +1376,25 @@ function SiteForm({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <div>
           <Label>Código HTML da página</Label>
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Cole aqui o HTML completo da página..."
-            className="mt-1.5 h-80 font-mono text-xs"
+            className="mt-1.5 h-[68vh] min-h-[480px] resize-none font-mono text-sm"
           />
         </div>
         <div>
           <Label>Preview</Label>
-          <div className="mt-1.5 h-80">
+          <div className="mt-1.5 h-[68vh] min-h-[480px]">
             <SitePreview html={content} />
           </div>
         </div>
       </div>
 
-      <div className="mt-4 flex justify-end gap-2">
+      <div className="mt-5 flex justify-end gap-2">
         <Button variant="outline" onClick={onCancel}>Cancelar</Button>
         <Button
           className="bg-teal-600 text-white hover:bg-teal-700"
@@ -1450,14 +1450,20 @@ export default function MyPagePage() {
     onError: () => toast({ title: 'Erro ao remover', variant: 'destructive' }),
   })
 
+  const isEditing = showCreate || !!editingSite
+
   return (
-    <div className="p-4 md:p-8 max-w-4xl">
+    <div className={isEditing ? 'p-4 md:p-8' : 'p-4 md:p-8 max-w-4xl'}>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-teal-900">Minha Página</h1>
-          <p className="text-sm text-muted-foreground">Crie e edite o conteúdo da sua página — o domínio é configurado pela nossa equipe depois que você cria.</p>
+          <p className="text-sm text-muted-foreground">
+            {isEditing
+              ? 'Edite o conteúdo com calma — nada é publicado até você clicar em Salvar.'
+              : 'Crie e edite o conteúdo da sua página — o domínio é configurado pela nossa equipe depois que você cria.'}
+          </p>
         </div>
-        {!showCreate && (
+        {!isEditing && (
           <Button className="bg-teal-600 text-white hover:bg-teal-700" onClick={() => setShowCreate(true)}>
             <Plus className="mr-1.5 h-4 w-4" />
             Nova página
@@ -1466,38 +1472,38 @@ export default function MyPagePage() {
       </div>
 
       {showCreate && (
-        <div className="mb-6">
-          <SiteForm
-            onCancel={() => setShowCreate(false)}
-            onSubmit={(data) => createMutation.mutate(data)}
-            isPending={createMutation.isPending}
-          />
-        </div>
+        <SiteForm
+          onCancel={() => setShowCreate(false)}
+          onSubmit={(data) => createMutation.mutate(data)}
+          isPending={createMutation.isPending}
+        />
       )}
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
-      ) : sites.length === 0 && !showCreate ? (
-        <div className="rounded-lg border border-dashed bg-gray-50/60 p-8 text-center">
-          <Globe className="mx-auto mb-3 h-8 w-8 text-gray-300" />
-          <p className="text-sm font-medium text-gray-700">Você ainda não tem nenhuma página criada</p>
-          <p className="mx-auto mt-1.5 max-w-sm text-xs text-muted-foreground">
-            Clique em "Nova página", cole o HTML (ou comece de um modelo pronto) e salve. Depois de criar, fale com a
-            gente pra configurarmos o domínio próprio da sua página — até lá, ela fica salva mas sem endereço público.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {sites.map((site) =>
-            editingSite?.id === site.id ? (
-              <SiteForm
-                key={site.id}
-                initial={{ name: site.name, slug: site.slug, content: site.content }}
-                onCancel={() => setEditingId(null)}
-                onSubmit={(data) => updateMutation.mutate({ id: site.id, name: data.name, content: data.content })}
-                isPending={updateMutation.isPending}
-              />
-            ) : (
+      {editingSite && (
+        <SiteForm
+          key={editingSite.id}
+          initial={{ name: editingSite.name, slug: editingSite.slug, content: editingSite.content }}
+          onCancel={() => setEditingId(null)}
+          onSubmit={(data) => updateMutation.mutate({ id: editingSite.id, name: data.name, content: data.content })}
+          isPending={updateMutation.isPending}
+        />
+      )}
+
+      {!isEditing &&
+        (isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : sites.length === 0 ? (
+          <div className="rounded-lg border border-dashed bg-gray-50/60 p-8 text-center">
+            <Globe className="mx-auto mb-3 h-8 w-8 text-gray-300" />
+            <p className="text-sm font-medium text-gray-700">Você ainda não tem nenhuma página criada</p>
+            <p className="mx-auto mt-1.5 max-w-sm text-xs text-muted-foreground">
+              Clique em "Nova página", cole o HTML (ou comece de um modelo pronto) e salve. Depois de criar, fale com a
+              gente pra configurarmos o domínio próprio da sua página — até lá, ela fica salva mas sem endereço público.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sites.map((site) => (
               <div key={site.id} className="flex items-center justify-between gap-3 rounded-lg border bg-white p-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -1543,10 +1549,9 @@ export default function MyPagePage() {
                   </Button>
                 </div>
               </div>
-            ),
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        ))}
     </div>
   )
 }

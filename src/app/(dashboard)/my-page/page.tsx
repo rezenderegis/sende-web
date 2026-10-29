@@ -18,30 +18,209 @@ const TEMPLATES: { key: string; label: string; html: string }[] = [
     html: '',
   },
   {
-    key: 'simples',
-    label: 'Página simples',
+    key: 'vendas',
+    label: 'Landing page de vendas',
     html: `<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Minha Empresa</title>
+<title>Nome do Produto</title>
 <style>
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#111; }
-  header { padding:24px; text-align:center; background:#0f172a; color:#fff; }
-  main { max-width:720px; margin:0 auto; padding:32px 24px; }
-  h1 { font-size:28px; margin-bottom:8px; }
-  p { line-height:1.6; color:#374151; }
-  .cta { display:inline-block; margin-top:16px; padding:12px 24px; background:#16a34a; color:#fff; text-decoration:none; border-radius:8px; font-weight:600; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#0f172a; }
+  .hero { background:linear-gradient(135deg,#0f172a,#1e293b); color:#fff; padding:80px 24px 96px; text-align:center; }
+  .hero h1 { font-size:36px; max-width:680px; margin:0 auto 16px; line-height:1.25; }
+  .hero p { font-size:17px; color:#cbd5e1; max-width:560px; margin:0 auto 28px; line-height:1.6; }
+  .cta { display:inline-block; padding:14px 32px; background:#22c55e; color:#fff; text-decoration:none; border-radius:999px; font-weight:700; font-size:16px; }
+  .section { max-width:960px; margin:0 auto; padding:64px 24px; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:32px; }
+  @media (max-width:720px) { .grid { grid-template-columns:1fr; } }
+  .card { background:#f8fafc; border-radius:16px; padding:28px; text-align:center; }
+  .card .emoji { font-size:32px; margin-bottom:12px; }
+  .card h3 { font-size:17px; margin:0 0 8px; }
+  .card p { font-size:14px; color:#475569; line-height:1.5; margin:0; }
+  .quote { max-width:640px; margin:0 auto; text-align:center; font-size:19px; font-style:italic; color:#1e293b; line-height:1.6; }
+  .quote span { display:block; margin-top:14px; font-size:14px; font-style:normal; color:#64748b; }
+  .final { background:#0f172a; color:#fff; text-align:center; padding:64px 24px; }
+  .final h2 { font-size:26px; margin:0 0 20px; }
+  footer { text-align:center; padding:24px; font-size:13px; color:#94a3b8; }
 </style>
 </head>
 <body>
-<header><h1>Nome da Empresa</h1></header>
-<main>
-  <h1>Título chamativo aqui</h1>
-  <p>Descreva seu produto ou serviço em algumas frases. Fale o que o cliente ganha ao te contratar.</p>
+<section class="hero">
+  <h1>O título que resolve o problema do seu cliente em uma frase</h1>
+  <p>Explique em uma ou duas frases o que você vende e por que isso importa pra quem está lendo agora.</p>
+  <a class="cta" href="https://wa.me/5500000000000">Quero saber mais</a>
+</section>
+
+<section class="section">
+  <div class="grid">
+    <div class="card"><div class="emoji">⚡</div><h3>Benefício 1</h3><p>Descreva rapidamente o primeiro grande benefício do seu produto ou serviço.</p></div>
+    <div class="card"><div class="emoji">🎯</div><h3>Benefício 2</h3><p>Descreva o segundo benefício — o que torna sua solução diferente das outras.</p></div>
+    <div class="card"><div class="emoji">🤝</div><h3>Benefício 3</h3><p>Descreva o terceiro benefício, reforçando confiança e resultado.</p></div>
+  </div>
+</section>
+
+<section class="section">
+  <p class="quote">"Coloque aqui um depoimento real de um cliente satisfeito — isso gera muito mais confiança do que qualquer texto de venda."<span>Nome do Cliente, Empresa</span></p>
+</section>
+
+<section class="final">
+  <h2>Pronto pra começar?</h2>
+  <a class="cta" href="https://wa.me/5500000000000">Falar no WhatsApp agora</a>
+</section>
+
+<footer>© Nome da Empresa — todos os direitos reservados</footer>
+</body>
+</html>`,
+  },
+  {
+    key: 'odonto',
+    label: 'Clínica odontológica',
+    html: `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clínica Odontológica</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#0c4a6e; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid #e0f2fe; }
+  nav .logo { font-weight:800; font-size:18px; color:#0369a1; }
+  nav a.phone { color:#0369a1; text-decoration:none; font-weight:600; font-size:14px; }
+  .hero { background:#f0f9ff; padding:64px 24px; text-align:center; }
+  .hero h1 { font-size:34px; max-width:600px; margin:0 auto 14px; color:#0c4a6e; }
+  .hero p { font-size:16px; color:#0369a1; max-width:520px; margin:0 auto 26px; line-height:1.6; }
+  .cta { display:inline-block; padding:14px 30px; background:#0ea5e9; color:#fff; text-decoration:none; border-radius:999px; font-weight:700; }
+  .section { max-width:960px; margin:0 auto; padding:56px 24px; }
+  .section h2 { text-align:center; font-size:26px; margin-bottom:32px; color:#0c4a6e; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  @media (max-width:720px) { .grid { grid-template-columns:1fr 1fr; } }
+  .card { background:#fff; border:1px solid #e0f2fe; border-radius:14px; padding:22px; text-align:center; }
+  .card .emoji { font-size:28px; margin-bottom:8px; }
+  .card h3 { font-size:15px; margin:0; color:#0c4a6e; }
+  .why { background:#f0f9ff; }
+  .why ul { max-width:480px; margin:0 auto; padding:0; list-style:none; }
+  .why li { padding:8px 0; font-size:15px; }
+  .why li::before { content:"✓ "; color:#0ea5e9; font-weight:800; }
+  .final { text-align:center; padding:56px 24px; }
+  footer { text-align:center; padding:24px; font-size:13px; color:#64748b; border-top:1px solid #e0f2fe; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="logo">Nome da Clínica</span>
+  <a class="phone" href="https://wa.me/5500000000000">(00) 00000-0000</a>
+</nav>
+
+<section class="hero">
+  <h1>Sorria com confiança</h1>
+  <p>Cuidado odontológico completo, com atendimento humano e tecnologia de ponta pra sua família.</p>
+  <a class="cta" href="https://wa.me/5500000000000">Agendar consulta</a>
+</section>
+
+<section class="section">
+  <h2>Nossos tratamentos</h2>
+  <div class="grid">
+    <div class="card"><div class="emoji">✨</div><h3>Clareamento</h3></div>
+    <div class="card"><div class="emoji">🦷</div><h3>Ortodontia</h3></div>
+    <div class="card"><div class="emoji">🔧</div><h3>Implantes</h3></div>
+    <div class="card"><div class="emoji">🪥</div><h3>Limpeza</h3></div>
+    <div class="card"><div class="emoji">👑</div><h3>Próteses</h3></div>
+    <div class="card"><div class="emoji">🚨</div><h3>Urgência</h3></div>
+  </div>
+</section>
+
+<section class="section why">
+  <h2>Por que escolher a gente</h2>
+  <ul>
+    <li>Equipe especializada e atualizada</li>
+    <li>Equipamentos modernos e esterilização rigorosa</li>
+    <li>Atendimento acolhedor, sem pressa</li>
+    <li>Facilidade de agendamento pelo WhatsApp</li>
+  </ul>
+</section>
+
+<section class="final">
+  <h2>Marque sua avaliação</h2>
   <a class="cta" href="https://wa.me/5500000000000">Falar no WhatsApp</a>
-</main>
+</section>
+
+<footer>Nome da Clínica — Endereço, Cidade/UF</footer>
+</body>
+</html>`,
+  },
+  {
+    key: 'medica',
+    label: 'Clínica médica',
+    html: `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clínica Médica</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#134e4a; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid #ccfbf1; }
+  nav .logo { font-weight:800; font-size:18px; color:#0f766e; }
+  nav a.phone { color:#0f766e; text-decoration:none; font-weight:600; font-size:14px; }
+  .hero { background:#f0fdfa; padding:64px 24px; text-align:center; }
+  .hero h1 { font-size:34px; max-width:600px; margin:0 auto 14px; color:#134e4a; }
+  .hero p { font-size:16px; color:#0f766e; max-width:520px; margin:0 auto 26px; line-height:1.6; }
+  .cta { display:inline-block; padding:14px 30px; background:#14b8a6; color:#fff; text-decoration:none; border-radius:999px; font-weight:700; }
+  .section { max-width:960px; margin:0 auto; padding:56px 24px; }
+  .section h2 { text-align:center; font-size:26px; margin-bottom:32px; color:#134e4a; }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  @media (max-width:720px) { .grid { grid-template-columns:1fr 1fr; } }
+  .card { background:#fff; border:1px solid #ccfbf1; border-radius:14px; padding:20px; text-align:center; }
+  .card .emoji { font-size:26px; margin-bottom:8px; }
+  .card h3 { font-size:14px; margin:0; color:#134e4a; }
+  .team { background:#f0fdfa; text-align:center; }
+  .team p { max-width:560px; margin:0 auto; line-height:1.6; color:#0f766e; }
+  .final { text-align:center; padding:56px 24px; }
+  footer { text-align:center; padding:24px; font-size:13px; color:#64748b; border-top:1px solid #ccfbf1; }
+</style>
+</head>
+<body>
+<nav>
+  <span class="logo">Nome da Clínica</span>
+  <a class="phone" href="https://wa.me/5500000000000">(00) 00000-0000</a>
+</nav>
+
+<section class="hero">
+  <h1>Cuidado médico que você pode confiar</h1>
+  <p>Atendimento humanizado, diagnóstico preciso e acompanhamento completo da sua saúde.</p>
+  <a class="cta" href="https://wa.me/5500000000000">Agendar consulta</a>
+</section>
+
+<section class="section">
+  <h2>Especialidades</h2>
+  <div class="grid">
+    <div class="card"><div class="emoji">🩺</div><h3>Clínico Geral</h3></div>
+    <div class="card"><div class="emoji">❤️</div><h3>Cardiologia</h3></div>
+    <div class="card"><div class="emoji">🧒</div><h3>Pediatria</h3></div>
+    <div class="card"><div class="emoji">🩹</div><h3>Dermatologia</h3></div>
+    <div class="card"><div class="emoji">🦴</div><h3>Ortopedia</h3></div>
+    <div class="card"><div class="emoji">🧠</div><h3>Neurologia</h3></div>
+    <div class="card"><div class="emoji">🤰</div><h3>Ginecologia</h3></div>
+    <div class="card"><div class="emoji">👁️</div><h3>Oftalmologia</h3></div>
+  </div>
+</section>
+
+<section class="section team">
+  <h2>Nossa equipe</h2>
+  <p>Médicos experientes e comprometidos em oferecer o melhor cuidado em cada consulta, com estrutura completa pra exames e procedimentos no mesmo local.</p>
+</section>
+
+<section class="final">
+  <h2>Marque sua consulta</h2>
+  <a class="cta" href="https://wa.me/5500000000000">Falar no WhatsApp</a>
+</section>
+
+<footer>Nome da Clínica — Endereço, Cidade/UF</footer>
 </body>
 </html>`,
   },
@@ -73,6 +252,22 @@ function SiteForm({
   const [slug, setSlug] = useState(initial?.slug ?? '')
   const [slugTouched, setSlugTouched] = useState(!!initial)
   const [content, setContent] = useState(initial?.content ?? '')
+  const [aiPrompt, setAiPrompt] = useState('')
+  const [generating, setGenerating] = useState(false)
+
+  async function handleGenerate() {
+    if (!aiPrompt.trim()) return
+    setGenerating(true)
+    try {
+      const res = await api.post('/sites-mine/generate', { prompt: aiPrompt })
+      setContent(res.data.html)
+      toast({ title: 'Página gerada — revise o conteúdo antes de salvar', variant: 'success' })
+    } catch (err: any) {
+      toast({ title: err?.response?.data?.message || 'Erro ao gerar com IA', variant: 'destructive' })
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   function handleNameChange(value: string) {
     setName(value)
@@ -120,6 +315,29 @@ function SiteForm({
           </div>
         </div>
       )}
+
+      <div className="mt-4 rounded-lg border border-dashed border-teal-200 bg-teal-50/40 p-4">
+        <Label>Ou gerar com IA</Label>
+        <p className="mb-2 mt-1 text-xs text-muted-foreground">
+          Descreva o negócio e o que a página deve ter — a IA gera um HTML completo pra você revisar e ajustar.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Textarea
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            placeholder="Ex: página de vendas pra uma barbearia masculina, tom moderno, com seção de serviços (corte, barba, combo) e botão de agendar no WhatsApp"
+            className="h-20 flex-1 text-xs sm:h-10"
+          />
+          <Button
+            type="button"
+            className="shrink-0 bg-teal-600 text-white hover:bg-teal-700"
+            disabled={!aiPrompt.trim() || generating}
+            onClick={handleGenerate}
+          >
+            {generating ? 'Gerando...' : 'Gerar com IA'}
+          </Button>
+        </div>
+      </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div>

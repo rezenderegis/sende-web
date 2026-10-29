@@ -1395,6 +1395,7 @@ function SiteForm({
   const [focusCodeOnMount, setFocusCodeOnMount] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [mobileTab, setMobileTab] = useState<'code' | 'preview'>('code')
   const codeRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -1582,20 +1583,47 @@ function SiteForm({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <div>
-          <Label>Código HTML da página</Label>
+      {/* Abaixo de lg (a maioria dos tablets), código e preview empilhados em
+          68vh cada ficava muito espremido — exige scroll pra ver um e outro.
+          Abaixo desse breakpoint troca pra abas (só um visível por vez, em
+          vez de dividir a tela); no desktop continua lado a lado. */}
+      <div className="mt-5 flex gap-2 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileTab('code')}
+          className={cn(
+            'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+            mobileTab === 'code' ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600',
+          )}
+        >
+          Código
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('preview')}
+          className={cn(
+            'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+            mobileTab === 'preview' ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600',
+          )}
+        >
+          Preview
+        </button>
+      </div>
+
+      <div className="mt-3 grid gap-5 lg:mt-5 lg:grid-cols-2">
+        <div className={mobileTab === 'code' ? '' : 'hidden lg:block'}>
+          <Label className="hidden lg:block">Código HTML da página</Label>
           <Textarea
             ref={codeRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Cole aqui o HTML completo da página..."
-            className="mt-1.5 h-[68vh] min-h-[480px] resize-none font-mono text-sm"
+            className="mt-1.5 h-[75vh] min-h-[480px] resize-none font-mono text-sm lg:h-[68vh]"
           />
         </div>
-        <div>
-          <Label>Preview</Label>
-          <div className="mt-1.5 h-[68vh] min-h-[480px]">
+        <div className={mobileTab === 'preview' ? '' : 'hidden lg:block'}>
+          <Label className="hidden lg:block">Preview</Label>
+          <div className="mt-1.5 h-[75vh] min-h-[480px] lg:h-[68vh]">
             <SitePreview html={content} />
           </div>
         </div>
